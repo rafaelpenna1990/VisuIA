@@ -281,10 +281,10 @@ function UploadButton({ apiKey, maxImages, onSelect, onClear }) {
       ? `${count} of ${maxImages} images selected — click to manage`
       : isMulti
       ? `1 image selected — click to add more (up to ${maxImages})`
-      : "Reference image"
+      : "Imagem de referência"
     : isMulti
     ? `Add up to ${maxImages} images`
-    : "Reference image";
+    : "Imagem de referência";
 
   return (
     <div className="relative">
@@ -366,7 +366,7 @@ function UploadButton({ apiKey, maxImages, onSelect, onClear }) {
                   <polyline points="17 8 12 3 7 8" />
                   <line x1="12" y1="3" x2="12" y2="15" />
                 </svg>
-                {isMulti ? "Upload files" : "Upload new"}
+                {isMulti ? "Enviar arquivos" : "Enviar nova"}
               </button>
             </div>
           </div>
@@ -387,7 +387,7 @@ function UploadButton({ apiKey, maxImages, onSelect, onClear }) {
                 <polyline points="17 8 12 3 7 8" />
                 <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
-              <span className="text-xs text-secondary">No uploads yet</span>
+              <span className="text-xs text-secondary">Nenhum envio ainda</span>
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-2 max-h-56 overflow-y-auto custom-scrollbar pr-0.5">
@@ -423,7 +423,7 @@ function UploadButton({ apiKey, maxImages, onSelect, onClear }) {
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/cell:opacity-100 transition-opacity flex items-end justify-end p-1">
                         <button
                           type="button"
-                          title="Remove from history"
+                          title="Remover do histórico"
                           onClick={(e) => handleRemoveFromHistory(e, entry)}
                           className="w-5 h-5 bg-red-500/80 hover:bg-red-500 rounded-md flex items-center justify-center transition-colors"
                         >
@@ -503,7 +503,7 @@ function ModelDropdown({ models, selectedModel, onSelect, onClose }) {
           </svg>
           <input
             type="text"
-            placeholder="Search models..."
+            placeholder="Buscar modelos..."
             value={search}
             onClick={(e) => e.stopPropagation()}
             onChange={(e) => setSearch(e.target.value)}
@@ -746,12 +746,12 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
 
     if (imageMode) {
       if (uploadedImageUrls.length === 0) {
-        alert("Please upload a reference image first.");
+        alert("Envie uma imagem de referência primeiro.");
         return;
       }
     } else {
       if (!prompt.trim()) {
-        alert("Please enter a prompt to generate an image.");
+        alert("Digite um prompt para gerar uma imagem.");
         return;
       }
     }
@@ -802,7 +802,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
           type: "image",
         });
       } else {
-        throw new Error("No image URL returned by API");
+        throw new Error("A API não retornou a URL da imagem");
       }
     } catch (e) {
       console.error("[ImageStudio] Generation failed:", e);
@@ -818,7 +818,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
       ? `${uploadedImageUrls.length} images selected — describe the transformation (optional)`
       : imageMode
       ? "Describe how to transform this image (optional)"
-      : "Describe the image you want to create";
+      : "Descreva a imagem que você quer criar";
 
   // ── Render ───────────────────────────────────────────────────────────────
   return (
@@ -849,13 +849,13 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
                   >
                     <img
                       src={entry.url}
-                      alt={entry.prompt?.substring(0, 30) || "Generated"}
+                      alt={entry.prompt?.substring(0, 30) || "Gerada"}
                       className="w-full aspect-square object-cover"
                     />
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center gap-1">
                       <button
                         type="button"
-                        title="Download"
+                        title="Baixar"
                         onClick={(e) => {
                           e.stopPropagation();
                           downloadImage(entry.url, `muapi-${entry.id || idx}.jpg`);
@@ -877,7 +877,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
           <div className="relative group">
             <img
               src={currentImageUrl}
-              alt={history[activeHistoryIdx]?.prompt || "Generated image"}
+              alt={history[activeHistoryIdx]?.prompt || "Imagem gerada"}
               className="max-h-[60vh] max-w-[80vw] rounded-3xl shadow-3xl border border-white/10 interactive-glow object-contain"
             />
           </div>
@@ -890,7 +890,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
               disabled={generating}
               className="bg-white/10 hover:bg-white/20 px-6 py-2.5 rounded-2xl text-xs font-bold transition-all border border-white/5 backdrop-blur-lg text-white disabled:opacity-50"
             >
-              ↻ Regenerate
+              ↻ Gerar de novo
             </button>
             <button
               type="button"
@@ -900,14 +900,14 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
               }}
               className="bg-primary text-black px-6 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-glow active:scale-95"
             >
-              ↓ Download
+              ↓ Baixar
             </button>
             <button
               type="button"
               onClick={resetToPrompt}
               className="bg-white/10 hover:bg-white/20 px-6 py-2.5 rounded-2xl text-xs font-bold transition-all border border-white/5 backdrop-blur-lg text-white"
             >
-              + New
+              + Nova
             </button>
           </div>
         </div>
@@ -951,10 +951,10 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
               </div>
             </div>
             <h1 className="text-2xl sm:text-4xl md:text-7xl font-black text-white tracking-widest uppercase mb-4 selection:bg-primary selection:text-black text-center px-4">
-              Image Studio
+              Estúdio de Imagem
             </h1>
             <p className="text-secondary text-sm font-medium tracking-wide opacity-60">
-              Transform images with AI — upscale, stylize, animate and more
+              Transforme imagens com IA — melhore, estilize, anime e muito mais
             </p>
           </div>
 
@@ -1075,7 +1075,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
                         className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#150E1C] rounded-3xl p-3 shadow-4xl border border-white/10 max-w-[240px]"
                       >
                         <SimpleDropdown
-                          title="Aspect Ratio"
+                          title="Proporção"
                           options={currentAspectRatios}
                           selected={selectedAr}
                           onSelect={(val) => setSelectedAr(val)}
@@ -1129,7 +1129,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
                           className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#150E1C] rounded-3xl p-3 shadow-4xl border border-white/10 max-w-[200px]"
                         >
                           <SimpleDropdown
-                            title="Resolution"
+                            title="Resolução"
                             options={currentResolutions}
                             selected={selectedQuality}
                             onSelect={(val) => setSelectedQuality(val)}
@@ -1151,12 +1151,12 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
                   {generating ? (
                     <>
                       <span className="animate-spin inline-block text-black">◌</span>
-                      Generating...
+                      Gerando...
                     </>
                   ) : generateError ? (
-                    `Error: ${generateError}`
+                    `Erro: ${generateError}`
                   ) : (
-                    "Generate ✨"
+                    "Gerar ✨"
                   )}
                 </button>
               </div>

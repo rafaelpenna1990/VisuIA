@@ -117,7 +117,7 @@ function ModelDropdown({ imageMode, selectedModel, onSelect, onClose }) {
                 </div>
                 <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-bold text-white tracking-tight">{m.name}</span>
-                    {isV2V && <span className="text-[9px] text-orange-400/70">Upload a video to use</span>}
+                    {isV2V && <span className="text-[9px] text-orange-400/70">Envie um vídeo pra usar</span>}
                 </div>
             </div>
             {selectedModel === m.id && <CheckSvg />}
@@ -134,7 +134,7 @@ function ModelDropdown({ imageMode, selectedModel, onSelect, onClose }) {
                     </svg>
                     <input
                         type="text"
-                        placeholder="Search models..."
+                        placeholder="Buscar modelos..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         onClick={e => e.stopPropagation()}
@@ -143,14 +143,14 @@ function ModelDropdown({ imageMode, selectedModel, onSelect, onClose }) {
                 </div>
             </div>
             <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-3 py-2 shrink-0">
-                Video models
+                Modelos de vídeo
             </div>
             <div className="flex flex-col gap-1.5 overflow-y-auto custom-scrollbar pr-1 pb-2">
                 {filteredMain.map(m => renderItem(m, false))}
                 {filteredV2V.length > 0 && (
                     <>
                         <div className="text-[10px] font-bold text-orange-400/70 uppercase tracking-widest px-3 py-2 mt-1 border-t border-white/5">
-                            Video Tools
+                            Ferramentas de vídeo
                         </div>
                         {filteredV2V.map(m => renderItem(m, true))}
                     </>
@@ -343,7 +343,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
         const file = e.target.files[0];
         if (!file) return;
         if (file.size > 10 * 1024 * 1024) {
-          alert("Image exceeds 10MB limit.");
+          alert("A imagem ultrapassa o limite de 10MB.");
           return;
         }
         setImageUploading(true);
@@ -370,7 +370,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
             setPromptDisabled(false);
         } catch (err) {
             console.error('[VideoStudio] Image upload failed:', err);
-            alert(`Image upload failed: ${err.message}`);
+            alert(`Falha ao enviar a imagem: ${err.message}`);
         } finally {
             setImageUploading(false);
             setImageProgress(0);
@@ -393,7 +393,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
         const file = e.target.files[0];
         if (!file) return;
         if (file.size > 50 * 1024 * 1024) {
-          alert("Video exceeds 50MB limit.");
+          alert("O vídeo ultrapassa o limite de 50MB.");
           return;
         }
         setVideoUploading(true);
@@ -419,7 +419,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
             setPromptDisabled(true);
         } catch (err) {
             console.error('[VideoStudio] Video upload failed:', err);
-            alert(`Video upload failed: ${err.message}`);
+            alert(`Falha ao enviar o vídeo: ${err.message}`);
         } finally {
             setVideoUploading(false);
             setVideoProgress(0);
@@ -483,13 +483,13 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
         const trimmedPrompt = prompt.trim();
 
         if (v2vMode) {
-            if (!uploadedVideoUrl) { alert('Please upload a video first.'); return; }
+            if (!uploadedVideoUrl) { alert('Envie um vídeo primeiro.'); return; }
         } else if (isExtendMode) {
-            if (!lastGenerationId) { alert('No Seedance 2.0 generation found to extend. Generate a video first.'); return; }
+            if (!lastGenerationId) { alert('Nenhuma geração do Seedance 2.0 encontrada pra continuar. Gere um vídeo primeiro.'); return; }
         } else if (imageMode) {
-            if (!uploadedImageUrl) { alert('Please upload a start frame image first.'); return; }
+            if (!uploadedImageUrl) { alert('Envie uma imagem inicial primeiro.'); return; }
         } else {
-            if (!trimmedPrompt) { alert('Please enter a prompt to generate a video.'); return; }
+            if (!trimmedPrompt) { alert('Digite um prompt para gerar um vídeo.'); return; }
         }
 
         setGenerating(true);
@@ -506,7 +506,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                     model: selectedModel,
                     video_url: uploadedVideoUrl,
                 });
-                if (!res?.url) throw new Error('No video URL returned by API');
+                if (!res?.url) throw new Error('A API não retornou a URL do vídeo');
 
                 const genId = res.id || Date.now().toString();
                 setLastGenerationId(null);
@@ -527,12 +527,12 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                 if (selectedQuality) i2vParams.quality = selectedQuality;
                 if (selectedMode) i2vParams.mode = selectedMode;
                 if (showEffectName) {
-                    if (!selectedEffectName) throw new Error('Select an effect type first.');
+                    if (!selectedEffectName) throw new Error('Escolha um tipo de efeito primeiro.');
                     i2vParams.name = selectedEffectName;
                 }
 
                 res = await generateI2V(apiKey, i2vParams);
-                if (!res?.url) throw new Error('No video URL returned by API');
+                if (!res?.url) throw new Error('A API não retornou a URL do vídeo');
 
                 const genId = res.id || Date.now().toString();
                 if (selectedModel === 'seedance-v2.0-i2v') {
@@ -566,7 +566,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                 if (selectedMode) params.mode = selectedMode;
 
                 res = await generateVideo(apiKey, params);
-                if (!res?.url) throw new Error('No video URL returned by API');
+                if (!res?.url) throw new Error('A API não retornou a URL do vídeo');
 
                 const genId = res.id || Date.now().toString();
                 if (selectedModel === 'seedance-v2.0-t2v' || selectedModel === 'seedance-v2.0-i2v') {
@@ -637,12 +637,12 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
     const isExtendMode = currentModelObj?.requiresRequestId;
 
     const promptPlaceholder = v2vMode
-        ? 'Video ready — click Generate to remove watermark'
+        ? 'Vídeo pronto — clique em Gerar pra remover a marca d\u2019água'
         : imageMode
-            ? 'Describe the motion or effect (optional)'
+            ? 'Descreva o movimento ou efeito (opcional)'
             : isExtendMode
-                ? 'Optional: describe how to continue the video...'
-                : 'Describe the video you want to create';
+                ? 'Opcional: descreva como continuar o vídeo...'
+                : 'Descreva o vídeo que você quer criar';
 
     const toggleDropdown = (type) => (e) => {
         e.stopPropagation();
@@ -658,7 +658,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
             {/* ── History Sidebar ── */}
             {history.length > 0 && (
                 <div className="fixed right-0 top-0 h-full w-20 md:w-24 bg-black/60 backdrop-blur-xl border-l border-white/5 z-50 flex flex-col items-center py-4 gap-3 overflow-y-auto transition-all duration-500">
-                    <div className="text-[9px] font-bold text-muted uppercase tracking-widest mb-2">History</div>
+                    <div className="text-[9px] font-bold text-muted uppercase tracking-widest mb-2">Histórico</div>
                     <div className="flex flex-col gap-2 w-full px-2">
                         {history.map((entry, idx) => (
                             <div
@@ -682,7 +682,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                             >
                                 <video src={entry.url} preload="metadata" muted className="w-full aspect-square object-cover" />
                                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center gap-1">
-                                    <button className="hist-download p-1.5 bg-primary rounded-lg text-black hover:scale-110 transition-transform" title="Download">
+                                    <button className="hist-download p-1.5 bg-primary rounded-lg text-black hover:scale-110 transition-transform" title="Baixar">
                                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                                             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
                                         </svg>
@@ -717,16 +717,16 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                             disabled={generating}
                             className="bg-white/10 hover:bg-white/20 px-6 py-2.5 rounded-2xl text-xs font-bold transition-all border border-white/5 backdrop-blur-lg text-white"
                         >
-                            ↻ Regenerate
+                            ↻ Gerar de novo
                         </button>
                         {isSeedance2Canvas && (
                             <button
                                 type="button"
                                 onClick={handleExtend}
                                 className="bg-white/10 hover:bg-white/20 px-6 py-2.5 rounded-2xl text-xs font-bold transition-all border border-primary/30 text-primary backdrop-blur-lg"
-                                title="Extend this video using Seedance 2.0 Extend"
+                                title="Continuar este vídeo usando o Seedance 2.0 Extend"
                             >
-                                ↗ Extend
+                                ↗ Continuar
                             </button>
                         )}
                         <button
@@ -737,14 +737,14 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                             }}
                             className="bg-primary text-black px-6 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-glow active:scale-95"
                         >
-                            ↓ Download
+                            ↓ Baixar
                         </button>
                         <button
                             type="button"
                             onClick={handleNewPrompt}
                             className="bg-white/10 hover:bg-white/20 px-6 py-2.5 rounded-2xl text-xs font-bold transition-all border border-white/5 backdrop-blur-lg text-white"
                         >
-                            + New
+                            + Novo
                         </button>
                     </div>
                 </div>
@@ -770,10 +770,10 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                             </div>
                         </div>
                         <h1 className="text-2xl sm:text-4xl md:text-7xl font-black text-white tracking-widest uppercase mb-4 selection:bg-primary selection:text-black text-center px-4">
-                            Video Studio
+                            Estúdio de Vídeo
                         </h1>
                         <p className="text-secondary text-sm font-medium tracking-wide opacity-60">
-                            Animate images into stunning AI videos with motion effects
+                            Anime imagens em vídeos incríveis com IA e efeitos de movimento
                         </p>
                     </div>
 
@@ -795,7 +795,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                     />
                                     <button
                                         type="button"
-                                        title={uploadedImageUrl ? 'Clear image' : 'Upload image for Image-to-Video'}
+                                        title={uploadedImageUrl ? 'Remover imagem' : 'Enviar imagem para Imagem-para-Vídeo'}
                                         onClick={() => uploadedImageUrl ? clearImageUpload() : imageFileInputRef.current?.click()}
                                         className={`w-10 h-10 shrink-0 rounded-xl border transition-all flex items-center justify-center relative overflow-hidden ${uploadedImageUrl ? 'border-primary/60 bg-primary/10' : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-primary/40'} group`}
                                     >
@@ -829,7 +829,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                     />
                                     <button
                                         type="button"
-                                        title={uploadedVideoUrl ? `${uploadedVideoName} — click to clear` : 'Upload video to remove watermark'}
+                                        title={uploadedVideoUrl ? `${uploadedVideoName} — clique para remover` : 'Enviar vídeo para remover a marca d\u2019água'}
                                         onClick={() => uploadedVideoUrl ? clearVideoUpload() : videoFileInputRef.current?.click()}
                                         className={`w-10 h-10 shrink-0 rounded-xl border transition-all flex items-center justify-center relative overflow-hidden ${uploadedVideoUrl ? 'border-primary/60 bg-white/5' : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-primary/40'} group`}
                                     >
@@ -864,7 +864,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                         <path d="M5 12h14M12 5l7 7-7 7" />
                                     </svg>
-                                    <span>Extending previous Seedance 2.0 generation — add an optional prompt to guide the continuation</span>
+                                    <span>Continuando a geração anterior do Seedance 2.0 — adicione um prompt opcional pra guiar a continuação</span>
                                 </div>
                             )}
 
@@ -905,7 +905,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                             />
                                             {openDropdown === 'ar' && (
                                                 <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#150E1C] rounded-3xl p-3 border border-white/10 flex flex-col w-52 max-w-[240px]">
-                                                    <div className="text-[10px] font-bold text-muted uppercase tracking-widest px-3 py-2 border-b border-white/5 mb-2">Aspect Ratio</div>
+                                                    <div className="text-[10px] font-bold text-muted uppercase tracking-widest px-3 py-2 border-b border-white/5 mb-2">Proporção</div>
                                                     <div className="flex flex-col gap-1">
                                                         {getCurrentAspectRatios(selectedModel).map(r => (
                                                             <div
@@ -938,7 +938,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                             />
                                             {openDropdown === 'duration' && (
                                                 <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#150E1C] rounded-3xl p-3 border border-white/10 flex flex-col w-52 max-w-[240px]">
-                                                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-3 py-2 border-b border-white/5 mb-2">Duration</div>
+                                                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-3 py-2 border-b border-white/5 mb-2">Duração</div>
                                                     <div className="flex flex-col gap-1">
                                                         {getCurrentDurations(selectedModel).map(d => (
                                                             <DropdownItem key={d} label={`${d}s`} selected={selectedDuration === d} onClick={(e) => { e.stopPropagation(); setSelectedDuration(d); setOpenDropdown(null); }} />
@@ -959,7 +959,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                             />
                                             {openDropdown === 'resolution' && (
                                                 <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#150E1C] rounded-3xl p-3 border border-white/10 flex flex-col w-52 max-w-[240px]">
-                                                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-3 py-2 border-b border-white/5 mb-2">Resolution</div>
+                                                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-3 py-2 border-b border-white/5 mb-2">Resolução</div>
                                                     <div className="flex flex-col gap-1">
                                                         {getCurrentResolutions(selectedModel).map(r => (
                                                             <DropdownItem key={r} label={r} selected={selectedResolution === r} onClick={(e) => { e.stopPropagation(); setSelectedResolution(r); setOpenDropdown(null); }} />
@@ -975,12 +975,12 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                         <div className="relative">
                                             <ControlBtn
                                                 icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="opacity-60 text-secondary"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>}
-                                                label={selectedQuality || 'basic'}
+                                                label={selectedQuality || 'básica'}
                                                 onClick={toggleDropdown('quality')}
                                             />
                                             {openDropdown === 'quality' && (
                                                 <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#150E1C] rounded-3xl p-3 border border-white/10 flex flex-col w-52 max-w-[240px]">
-                                                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-3 py-2 border-b border-white/5 mb-2">Quality</div>
+                                                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-3 py-2 border-b border-white/5 mb-2">Qualidade</div>
                                                     <div className="flex flex-col gap-1">
                                                         {getQualitiesForModel(getCurrentModels(), selectedModel).map(q => (
                                                             <DropdownItem key={q} label={q} selected={selectedQuality === q} onClick={(e) => { e.stopPropagation(); setSelectedQuality(q); setOpenDropdown(null); }} />
@@ -1001,7 +1001,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                             />
                                             {openDropdown === 'mode' && (
                                                 <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#150E1C] rounded-3xl p-3 border border-white/10 flex flex-col w-52 max-w-[240px]">
-                                                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-3 py-2 border-b border-white/5 mb-2">Mode</div>
+                                                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-3 py-2 border-b border-white/5 mb-2">Modo</div>
                                                     <div className="flex flex-col gap-1">
                                                         {getModesForModel(selectedModel).map(m => (
                                                             <DropdownItem key={m} label={m} selected={selectedMode === m} onClick={(e) => { e.stopPropagation(); setSelectedMode(m); setOpenDropdown(null); }} />
@@ -1016,12 +1016,12 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                         <div className="relative">
                                             <ControlBtn
                                                 icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="opacity-60 text-secondary"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>}
-                                                label={selectedEffectName || 'Choose effect'}
+                                                label={selectedEffectName || 'Escolher efeito'}
                                                 onClick={toggleDropdown('effect')}
                                             />
                                             {openDropdown === 'effect' && (
                                                 <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#150E1C] rounded-3xl p-3 border border-white/10 flex flex-col w-64 max-w-[280px] max-h-80 overflow-y-auto">
-                                                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-3 py-2 border-b border-white/5 mb-2">Effect</div>
+                                                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-3 py-2 border-b border-white/5 mb-2">Efeito</div>
                                                     <div className="flex flex-col gap-1">
                                                         {getEffectNamesForModel(getCurrentModels(), selectedModel).map(n => (
                                                             <DropdownItem key={n} label={n} selected={selectedEffectName === n} onClick={(e) => { e.stopPropagation(); setSelectedEffectName(n); setOpenDropdown(null); }} />
@@ -1041,11 +1041,11 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                     className="bg-primary text-black px-6 md:px-8 py-3 md:py-3.5 rounded-xl md:rounded-[1.5rem] font-black text-sm md:text-base hover:shadow-glow hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto shadow-lg disabled:opacity-60 disabled:scale-100"
                                 >
                                     {generating ? (
-                                        <><span className="animate-spin inline-block text-black">◌</span> Generating...</>
+                                        <><span className="animate-spin inline-block text-black">◌</span> Gerando...</>
                                     ) : generateError ? (
-                                        `Error: ${generateError}`
+                                        `Erro: ${generateError}`
                                     ) : (
-                                        'Generate ✨'
+                                        'Gerar ✨'
                                     )}
                                 </button>
                             </div>

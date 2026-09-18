@@ -48,8 +48,8 @@ function MediaPickerButton({ accept, label, icon, onUpload, onClear, uploadState
             type="button"
             title={
                 uploadState === UPLOAD_STATE.READY
-                    ? `${fileName} — click to clear`
-                    : `Upload ${label.toLowerCase()} file`
+                    ? `${fileName} — clique para remover`
+                    : `Enviar arquivo de ${label.toLowerCase()}`
             }
             onClick={handleClick}
             className={`flex-shrink-0 w-14 h-14 rounded-xl border transition-all flex items-center justify-center relative overflow-hidden group ${borderClass}`}
@@ -187,7 +187,7 @@ function HistoryThumb({ entry, isActive, onSelect, onDownload }) {
                     type="button"
                     onClick={(e) => { e.stopPropagation(); onDownload(entry); }}
                     className="p-1.5 bg-primary rounded-lg text-black hover:scale-110 transition-transform"
-                    title="Download"
+                    title="Baixar"
                 >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
@@ -290,7 +290,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
     // ── Upload handlers ─────────────────────────────────────────────────────
     const handleImageUpload = useCallback(async (file) => {
         if (file.size > 10 * 1024 * 1024) {
-            alert("Image exceeds 10MB limit.");
+            alert("A imagem ultrapassa o limite de 10MB.");
             return;
         }
         setImageState(UPLOAD_STATE.UPLOADING);
@@ -304,7 +304,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
             setImageState(UPLOAD_STATE.READY);
         } catch (err) {
             setImageState(UPLOAD_STATE.IDLE);
-            alert(`Image upload failed: ${err.message}`);
+            alert(`Falha ao enviar a imagem: ${err.message}`);
         } finally {
             setImageProgress(0);
         }
@@ -312,7 +312,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
 
     const handleVideoPick = useCallback(async (file) => {
         if (file.size > 50 * 1024 * 1024) {
-            alert("Video exceeds 50MB limit.");
+            alert("O vídeo ultrapassa o limite de 50MB.");
             return;
         }
         setVideoState(UPLOAD_STATE.UPLOADING);
@@ -326,7 +326,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
             setVideoState(UPLOAD_STATE.READY);
         } catch (err) {
             setVideoState(UPLOAD_STATE.IDLE);
-            alert(`Video upload failed: ${err.message}`);
+            alert(`Falha ao enviar o vídeo: ${err.message}`);
         } finally {
             setVideoProgress(0);
         }
@@ -334,7 +334,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
 
     const handleAudioPick = useCallback(async (file) => {
         if (file.size > 10 * 1024 * 1024) {
-            alert("Audio file exceeds 10MB limit.");
+            alert("O arquivo de áudio ultrapassa o limite de 10MB.");
             return;
         }
         setAudioState(UPLOAD_STATE.UPLOADING);
@@ -348,7 +348,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
             setAudioState(UPLOAD_STATE.READY);
         } catch (err) {
             setAudioState(UPLOAD_STATE.IDLE);
-            alert(`Audio upload failed: ${err.message}`);
+            alert(`Falha ao enviar o áudio: ${err.message}`);
         } finally {
             setAudioProgress(0);
         }
@@ -404,9 +404,9 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
 
     // ── Generation ──────────────────────────────────────────────────────────
     const handleGenerate = async () => {
-        if (!audioUrl) { alert('Please upload an audio file first.'); return; }
-        if (inputMode === 'image' && !imageUrl) { alert('Please upload a portrait image first.'); return; }
-        if (inputMode === 'video' && !videoUrl) { alert('Please upload a source video first.'); return; }
+        if (!audioUrl) { alert('Envie um arquivo de áudio primeiro.'); return; }
+        if (inputMode === 'image' && !imageUrl) { alert('Envie uma imagem de retrato primeiro.'); return; }
+        if (inputMode === 'video' && !videoUrl) { alert('Envie um vídeo de origem primeiro.'); return; }
 
         setIsGenerating(true);
         setGenerateError(null);
@@ -486,7 +486,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
             {/* ── History sidebar ── */}
             {hasHistory && (
                 <div className="fixed right-0 top-0 h-full w-20 md:w-24 bg-black/60 backdrop-blur-xl border-l border-white/5 z-50 flex flex-col items-center py-4 gap-3 overflow-y-auto transition-all duration-500">
-                    <div className="text-[9px] font-bold text-muted uppercase tracking-widest mb-2">History</div>
+                    <div className="text-[9px] font-bold text-muted uppercase tracking-widest mb-2">Histórico</div>
                     <div className="flex flex-col gap-2 w-full px-2">
                         {history.map((entry, idx) => (
                             <HistoryThumb
@@ -531,10 +531,10 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
                             </div>
                         </div>
                         <h1 className="text-2xl sm:text-4xl md:text-7xl font-black text-white tracking-widest uppercase mb-4 selection:bg-primary selection:text-black text-center px-4">
-                            Lip Sync
+                            Sincronia Labial
                         </h1>
                         <p className="text-secondary text-sm font-medium tracking-wide opacity-60">
-                            Animate portraits or sync lips to audio with AI
+                            Anime retratos ou sincronize lábios com áudio usando IA
                         </p>
                     </div>
 
@@ -575,7 +575,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
                                 {inputMode === 'image' && (
                                     <MediaPickerButton
                                         accept="image/*"
-                                        label="Image"
+                                        label="Imagem"
                                         icon={
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-muted group-hover:text-primary transition-colors">
                                                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
@@ -602,7 +602,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
                                 {inputMode === 'video' && (
                                     <MediaPickerButton
                                         accept="video/*"
-                                        label="Video"
+                                        label="Vídeo"
                                         icon={<VideoIcon />}
                                         onUpload={handleVideoPick}
                                         onClear={() => { 
@@ -622,7 +622,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
                                 {/* Audio picker — always visible */}
                                 <MediaPickerButton
                                     accept="audio/*"
-                                    label="Audio"
+                                    label="Áudio"
                                     icon={<MicIcon />}
                                     onUpload={handleAudioPick}
                                     onClear={() => { setAudioUrl(null); setAudioState(UPLOAD_STATE.IDLE); setAudioName(''); }}
@@ -639,7 +639,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
                                     <textarea
                                         value={prompt}
                                         onChange={(e) => setPrompt(e.target.value)}
-                                        placeholder="Optional: describe the talking style or motion..."
+                                        placeholder="Opcional: descreva o estilo de fala ou movimento..."
                                         className="flex-1 bg-transparent text-white placeholder-muted/50 text-sm resize-none outline-none min-h-[56px] leading-relaxed pt-1"
                                         rows={2}
                                     />
@@ -726,11 +726,11 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
                                     className="ml-auto px-6 py-2.5 bg-primary text-black font-black text-sm rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-glow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                                 >
                                     {isGenerating ? (
-                                        <><span className="animate-spin inline-block mr-2 text-black">◌</span>Generating...</>
+                                        <><span className="animate-spin inline-block mr-2 text-black">◌</span>Gerando...</>
                                     ) : generateError ? (
-                                        `Error: ${generateError}`
+                                        `Erro: ${generateError}`
                                     ) : (
-                                        'Generate ✨'
+                                        'Gerar ✨'
                                     )}
                                 </button>
                             </div>
@@ -760,7 +760,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
                             disabled={isGenerating}
                             className="bg-white/10 hover:bg-white/20 px-6 py-2.5 rounded-2xl text-xs font-bold transition-all border border-white/5 backdrop-blur-lg text-white disabled:opacity-50"
                         >
-                            ↻ Regenerate
+                            ↻ Gerar de novo
                         </button>
                         <button
                             type="button"
@@ -770,14 +770,14 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
                             }}
                             className="bg-primary text-black px-6 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-glow active:scale-95"
                         >
-                            ↓ Download
+                            ↓ Baixar
                         </button>
                         <button
                             type="button"
                             onClick={handleNew}
                             className="bg-white/10 hover:bg-white/20 px-6 py-2.5 rounded-2xl text-xs font-bold transition-all border border-white/5 backdrop-blur-lg text-white"
                         >
-                            + New
+                            + Novo
                         </button>
                     </div>
                 </div>

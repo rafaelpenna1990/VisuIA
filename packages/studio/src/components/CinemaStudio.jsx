@@ -385,28 +385,28 @@ function CameraControlsOverlay({ isOpen, onClose, settings, onSettingsChange }) 
                 {/* Scroll columns */}
                 <div className="w-full flex justify-start md:justify-center gap-3 md:gap-6 py-4 md:py-8 overflow-x-auto no-scrollbar snap-x px-4 md:px-0">
                     <ScrollColumn
-                        title="Camera"
+                        title="Câmera"
                         items={CAMERAS}
                         columnKey="camera"
                         value={settings.camera}
                         onChange={updateSetting('camera')}
                     />
                     <ScrollColumn
-                        title="Lens"
+                        title="Lente"
                         items={LENSES}
                         columnKey="lens"
                         value={settings.lens}
                         onChange={updateSetting('lens')}
                     />
                     <ScrollColumn
-                        title="Focal Length"
+                        title="Distância Focal"
                         items={FOCAL_LENGTHS}
                         columnKey="focal"
                         value={settings.focal}
                         onChange={updateSetting('focal')}
                     />
                     <ScrollColumn
-                        title="Aperture"
+                        title="Abertura"
                         items={APERTURES}
                         columnKey="aperture"
                         value={settings.aperture}
@@ -524,7 +524,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
             }
         } catch (e) {
             console.error(e);
-            alert('Generation Failed: ' + e.message);
+            alert('Falha na geração: ' + e.message);
         } finally {
             setIsGenerating(false);
         }
@@ -601,10 +601,10 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                 className={`flex flex-col items-center justify-center text-center px-4 animate-fade-in-up transition-all duration-700 ${showCanvas ? 'opacity-0 pointer-events-none scale-95' : 'opacity-100 scale-100'}`}
             >
                 <div className="mb-4 text-xs font-bold text-white/40 tracking-[0.2em] uppercase">
-                    Cinema Studio 2.0
+                    Estúdio Cinema 2.0
                 </div>
                 <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 tracking-tight leading-tight mb-2">
-                    What would you shoot<br />with infinite budget?
+                    O que você filmaria<br />com orçamento infinito?
                 </h1>
             </div>
 
@@ -617,7 +617,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                         <img
                             ref={resultImgRef}
                             src={canvasUrl}
-                            alt="Generated cinema shot"
+                            alt="Cena de cinema gerada"
                             className="max-h-[60vh] max-w-[90vw] rounded-2xl shadow-2xl border border-white/10 object-contain"
                         />
                     )}
@@ -631,19 +631,19 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                         onClick={() => handleRegenerate()}
                         className="bg-white/10 hover:bg-white/20 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide transition-all border border-white/5 backdrop-blur-lg text-white hover:border-white/20"
                     >
-                        ↻ Regenerate
+                        ↻ Gerar de novo
                     </button>
                     <button
                         onClick={handleDownload}
                         className="bg-[#FF5A36] text-black px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wide hover:bg-white transition-colors shadow-glow-sm hover:scale-105 active:scale-95"
                     >
-                        ↓ Download
+                        ↓ Baixar
                     </button>
                     <button
                         onClick={resetToPrompt}
                         className="bg-white/10 hover:bg-white/20 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide transition-all border border-white/5 backdrop-blur-lg text-white hover:border-white/20"
                     >
-                        + New Shot
+                        + Nova Cena
                     </button>
                 </div>
             </div>
@@ -660,7 +660,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                         <div className="flex items-start gap-3 w-full">
                             <textarea
                                 ref={textareaRef}
-                                placeholder="Describe your scene - use @ to add characters & props"
+                                placeholder="Descreva sua cena - use @ para adicionar personagens e objetos"
                                 className="flex-1 bg-transparent border-none text-white text-lg font-medium placeholder:text-white/20 focus:outline-none resize-none h-[28px] leading-relaxed overflow-hidden"
                                 rows={1}
                                 onInput={handleTextareaInput}
@@ -739,7 +739,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                             disabled={isGenerating || !settings.prompt.trim()}
                             onClick={handleGenerate}
                         >
-                            {isGenerating ? 'SHOOTING...' : 'GENERATE ✨'}
+                            {isGenerating ? 'FILMANDO...' : 'GERAR ✨'}
                         </button>
                     </div>
                 </div>
