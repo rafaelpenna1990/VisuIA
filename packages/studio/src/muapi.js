@@ -105,8 +105,6 @@ export async function generateI2V(apiKey, params) {
     if (params.resolution) payload.resolution = params.resolution;
     if (params.quality) payload.quality = params.quality;
     if (params.mode) payload.mode = params.mode;
-    // "effects" family models (VFX, AI Video Effects, Video Effects) require
-    // this — it's the named effect to apply (e.g. "Car Explosion", "Flying").
     if (params.name) payload.name = params.name;
     return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
 }
@@ -129,11 +127,9 @@ export function uploadFile(apiKey, file, onProgress) {
         const url = `${BASE_URL}/api/v1/upload_file`;
         const formData = new FormData();
         formData.append('file', file);
-
         const xhr = new XMLHttpRequest();
         xhr.open('POST', url);
         xhr.setRequestHeader('x-api-key', apiKey);
-
         if (onProgress) {
             xhr.upload.onprogress = (event) => {
                 if (event.lengthComputable) {
@@ -142,7 +138,6 @@ export function uploadFile(apiKey, file, onProgress) {
                 }
             };
         }
-
         xhr.onload = () => {
             if (xhr.status >= 200 && xhr.status < 300) {
                 try {
@@ -162,10 +157,11 @@ export function uploadFile(apiKey, file, onProgress) {
                     const errObj = JSON.parse(xhr.responseText);
                     detail = errObj.detail || detail;
                 } catch (e) {
-                    // fallback to statusText
                 }
                 reject(new Error(`File upload failed: ${xhr.status} - ${detail}`));
             }
         };
-
-        xhr.onerror = () => reject(new Error('Network error
+        xhr.onerror = () => reject(new Error('Network error during file upload'));
+        xhr.send(formData);
+    });
+}
