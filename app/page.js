@@ -7,7 +7,7 @@ const FEATURES = [
   {
     id: 'image',
     title: 'Imagem',
-    desc: 'Crie imagens do zero a partir de uma descrição, ou edite fotos que você já tem — troque fundo, estilo, roupa, iluminação.',
+    desc: 'Crie imagens do zero a partir de uma descrição, ou edite fotos que você já tem: troque fundo, estilo, roupa, iluminação.',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
@@ -30,7 +30,7 @@ const FEATURES = [
   {
     id: 'lipsync',
     title: 'Sincronia Labial',
-    desc: 'Sincronize um áudio com um retrato ou vídeo — a boca acompanha a fala automaticamente.',
+    desc: 'Sincronize um áudio com um retrato ou vídeo, e a boca acompanha a fala automaticamente.',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
@@ -41,7 +41,7 @@ const FEATURES = [
   {
     id: 'cinema',
     title: 'Cinema',
-    desc: 'Aplique lentes e câmeras de cinema de verdade nas suas cenas — do 16mm vintage ao digital 8K.',
+    desc: 'Aplique lentes e câmeras de cinema de verdade nas suas cenas, do 16mm vintage ao digital 8K.',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M23 7l-7 5 7 5V7z" />
@@ -55,7 +55,7 @@ const STEPS = [
   {
     n: '1',
     title: 'Crie sua conta',
-    desc: 'Cadastro rápido, sem burocracia — e você já começa com créditos grátis pra testar.',
+    desc: 'Cadastro rápido, sem burocracia, e você já começa com créditos grátis pra testar.',
   },
   {
     n: '2',
@@ -65,7 +65,7 @@ const STEPS = [
   {
     n: '3',
     title: 'Baixe e use',
-    desc: 'Em segundos você tem o arquivo pronto — sem marca d\u2019água, seu pra usar onde quiser.',
+    desc: 'Em segundos você tem o arquivo pronto, sem marca d\u2019água, seu pra usar onde quiser.',
   },
 ];
 
@@ -100,7 +100,7 @@ export default function LandingPage() {
             <span className="text-primary">em segundos.</span>
           </h1>
           <p className="text-white/60 text-base md:text-lg leading-relaxed mb-10 max-w-xl">
-            A VisuIA transforma um texto simples em conteúdo visual pronto pra usar —
+            A VisuIA transforma um texto simples em conteúdo visual pronto pra usar:
             imagem, vídeo, sincronia labial ou efeitos de cinema, tudo num só lugar,
             sem precisar de software caro.
           </p>
@@ -123,7 +123,7 @@ export default function LandingPage() {
               </button>
             </div>
             <p className="text-white/30 text-xs mt-3">
-              Grátis pra testar — sem cartão de crédito
+              Grátis pra testar, sem cartão de crédito
             </p>
           </form>
         </div>
@@ -134,7 +134,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-black mb-3">O que você pode criar</h2>
           <p className="text-white/50 text-sm md:text-base mb-10 max-w-lg">
-            Quatro estúdios, um único lugar — escolha o que sua ideia precisa.
+            Quatro estúdios, um único lugar. Escolha o que sua ideia precisa.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {FEATURES.map((f) => (

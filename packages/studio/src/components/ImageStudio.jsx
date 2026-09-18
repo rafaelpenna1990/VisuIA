@@ -278,9 +278,9 @@ function UploadButton({ apiKey, maxImages, onSelect, onClear }) {
 
   const triggerTitle = hasSelection
     ? count > 1
-      ? `${count} of ${maxImages} images selected — click to manage`
+      ? `${count} de ${maxImages} imagens selecionadas, clique para gerenciar`
       : isMulti
-      ? `1 image selected — click to add more (up to ${maxImages})`
+      ? `1 imagem selecionada, clique para adicionar mais (até ${maxImages})`
       : "Imagem de referência"
     : isMulti
     ? `Add up to ${maxImages} images`
@@ -815,7 +815,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
 
   const placeholderText =
     uploadedImageUrls.length > 1
-      ? `${uploadedImageUrls.length} images selected — describe the transformation (optional)`
+      ? `${uploadedImageUrls.length} imagens selecionadas, descreva a transformação (opcional)`
       : imageMode
       ? "Describe how to transform this image (optional)"
       : "Descreva a imagem que você quer criar";
@@ -954,7 +954,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
               Estúdio de Imagem
             </h1>
             <p className="text-secondary text-sm font-medium tracking-wide opacity-60">
-              Transforme imagens com IA — melhore, estilize, anime e muito mais
+              Transforme imagens com IA: melhore, estilize, anime e muito mais
             </p>
           </div>
 

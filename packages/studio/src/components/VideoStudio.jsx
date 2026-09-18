@@ -637,7 +637,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
     const isExtendMode = currentModelObj?.requiresRequestId;
 
     const promptPlaceholder = v2vMode
-        ? 'Vídeo pronto — clique em Gerar pra remover a marca d\u2019água'
+        ? 'Vídeo pronto, clique em Gerar pra remover a marca d\u2019água'
         : imageMode
             ? 'Descreva o movimento ou efeito (opcional)'
             : isExtendMode
@@ -829,7 +829,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                     />
                                     <button
                                         type="button"
-                                        title={uploadedVideoUrl ? `${uploadedVideoName} — clique para remover` : 'Enviar vídeo para remover a marca d\u2019água'}
+                                        title={uploadedVideoUrl ? `${uploadedVideoName}, clique para remover` : 'Enviar vídeo para remover a marca d\u2019água'}
                                         onClick={() => uploadedVideoUrl ? clearVideoUpload() : videoFileInputRef.current?.click()}
                                         className={`w-10 h-10 shrink-0 rounded-xl border transition-all flex items-center justify-center relative overflow-hidden ${uploadedVideoUrl ? 'border-primary/60 bg-white/5' : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-primary/40'} group`}
                                     >
@@ -864,7 +864,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                         <path d="M5 12h14M12 5l7 7-7 7" />
                                     </svg>
-                                    <span>Continuando a geração anterior do Seedance 2.0 — adicione um prompt opcional pra guiar a continuação</span>
+                                    <span>Continuando a geração anterior do Seedance 2.0. Adicione um prompt opcional pra guiar a continuação</span>
                                 </div>
                             )}
 

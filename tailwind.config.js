@@ -21,7 +21,7 @@ module.exports = {
                 muted: '#6B5C82',
             },
             fontFamily: {
-                sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                sans: ['Baloo 2', 'system-ui', '-apple-system', 'sans-serif'],
             },
             borderRadius: {
                 'xl': '1rem',
