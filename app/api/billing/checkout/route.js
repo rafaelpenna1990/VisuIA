@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getSessionUser } from '../../../../lib/auth.js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
+const stripe = new Stripe((process.env.STRIPE_SECRET_KEY || '').trim(), {
+  maxNetworkRetries: 2,
+  timeout: 20000,
+});
 
 // Fixed top-up packs, priced in R$ (centavos, as Stripe expects).
 // Edit these once you've decided your final pricing from the margin calculator.
