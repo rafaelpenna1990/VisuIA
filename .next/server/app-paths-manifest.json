@@ -1,0 +1,6 @@
+{
+  "/api/auth/me/route": "app/api/auth/me/route.js",
+  "/api/billing/webhook/route": "app/api/billing/webhook/route.js",
+  "/api/generate/route": "app/api/generate/route.js",
+  "/studio/page": "app/studio/page.js"
+}
