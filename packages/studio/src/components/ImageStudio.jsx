@@ -321,7 +321,7 @@ function UploadButton({ apiKey, maxImages, onSelect, onClear }) {
         <div
           ref={panelRef}
           onClick={(e) => e.stopPropagation()}
-          className="absolute z-50 bottom-[calc(100%+8px)] left-0 bg-[#111] rounded-3xl p-3 shadow-4xl border border-white/10 w-72"
+          className="absolute z-50 bottom-[calc(100%+8px)] left-0 bg-[#150E1C] rounded-3xl p-3 shadow-4xl border border-white/10 w-72"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-1 pb-3 mb-2 border-b border-white/5">
@@ -544,7 +544,7 @@ function ModelDropdown({ models, selectedModel, onSelect, onClose }) {
               </div>
             </div>
             {selectedModel === m.id && (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d9ff00" strokeWidth="4">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF5A36" strokeWidth="4">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             )}
@@ -578,7 +578,7 @@ function SimpleDropdown({ title, options, selected, onSelect, onClose }) {
               {opt}
             </span>
             {selected === opt && (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d9ff00" strokeWidth="4">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF5A36" strokeWidth="4">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             )}
@@ -960,7 +960,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
 
           {/* Prompt bar */}
           <div className="w-full max-w-4xl relative z-40 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-            <div className="w-full bg-[#111]/90 backdrop-blur-xl border border-white/10 rounded-[1.5rem] md:rounded-[2.5rem] p-3 md:p-5 flex flex-col gap-3 md:gap-5 shadow-3xl">
+            <div className="w-full bg-[#150E1C]/90 backdrop-blur-xl border border-white/10 rounded-[1.5rem] md:rounded-[2.5rem] p-3 md:p-5 flex flex-col gap-3 md:gap-5 shadow-3xl">
 
               {/* Top row: upload picker + textarea */}
               <div className="flex items-start gap-5 px-2">
@@ -1020,7 +1020,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
                       <div
                         ref={dropdownRef}
                         onClick={(e) => e.stopPropagation()}
-                        className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#111] rounded-3xl p-3 shadow-4xl border border-white/10 w-[calc(100vw-3rem)] max-w-xs"
+                        className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#150E1C] rounded-3xl p-3 shadow-4xl border border-white/10 w-[calc(100vw-3rem)] max-w-xs"
                       >
                         <ModelDropdown
                           models={currentModels}
@@ -1072,7 +1072,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
                     {dropdownOpen === "ar" && (
                       <div
                         onClick={(e) => e.stopPropagation()}
-                        className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#111] rounded-3xl p-3 shadow-4xl border border-white/10 max-w-[240px]"
+                        className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#150E1C] rounded-3xl p-3 shadow-4xl border border-white/10 max-w-[240px]"
                       >
                         <SimpleDropdown
                           title="Aspect Ratio"
@@ -1126,7 +1126,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
                       {dropdownOpen === "quality" && (
                         <div
                           onClick={(e) => e.stopPropagation()}
-                          className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#111] rounded-3xl p-3 shadow-4xl border border-white/10 max-w-[200px]"
+                          className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#150E1C] rounded-3xl p-3 shadow-4xl border border-white/10 max-w-[200px]"
                         >
                           <SimpleDropdown
                             title="Resolution"

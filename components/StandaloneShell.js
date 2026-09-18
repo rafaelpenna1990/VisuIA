@@ -6,10 +6,10 @@ import AuthGate from './AuthGate';
 import TopUpModal from './TopUpModal';
 
 const TABS = [
-  { id: 'image',   label: 'Image Studio' },
-  { id: 'video',   label: 'Video Studio' },
-  { id: 'lipsync', label: 'Lip Sync' },
-  { id: 'cinema',  label: 'Cinema Studio' },
+  { id: 'image',   label: 'Imagem' },
+  { id: 'video',   label: 'Vídeo' },
+  { id: 'lipsync', label: 'Sincronia Labial' },
+  { id: 'cinema',  label: 'Cinema' },
 ];
 
 function formatBRL(n) {
@@ -34,8 +34,6 @@ export default function StandaloneShell() {
     refreshUser();
   }, [refreshUser]);
 
-  // Refresh balance whenever the tab regains focus (e.g. after a generation
-  // or after coming back from the Stripe checkout tab).
   useEffect(() => {
     const onFocus = () => refreshUser();
     window.addEventListener('focus', onFocus);
@@ -49,8 +47,8 @@ export default function StandaloneShell() {
   }, []);
 
   if (!hasMounted) return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-      <div className="animate-spin text-[#d9ff00] text-3xl">◌</div>
+    <div className="min-h-screen bg-[#0D0810] flex items-center justify-center">
+      <div className="animate-spin text-[#FF5A36] text-3xl">◌</div>
     </div>
   );
 
@@ -58,18 +56,15 @@ export default function StandaloneShell() {
     return <AuthGate onAuthenticated={setUser} />;
   }
 
-  // The studio components still take an `apiKey` prop, but api-client.js
-  // ignores it — the real Muapi key lives only on the server now. Any
-  // non-empty placeholder keeps their existing prop checks happy.
   const placeholderKey = 'server-managed';
 
   return (
-    <div className="h-screen bg-[#050505] flex flex-col overflow-hidden">
+    <div className="h-screen bg-[#0D0810] flex flex-col overflow-hidden">
       {/* Header */}
       <header className="flex-shrink-0 flex items-center justify-between px-4 pt-4 pb-0 border-b border-white/5">
         <div className="flex items-center gap-3">
           <span className="text-white font-black text-lg tracking-wider uppercase">
-            Open Higgsfield AI
+            VisuIA
           </span>
         </div>
 
@@ -81,7 +76,7 @@ export default function StandaloneShell() {
               onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
                 activeTab === tab.id
-                  ? 'bg-[#d9ff00] text-black'
+                  ? 'bg-[#FF5A36] text-black'
                   : 'text-white/50 hover:text-white'
               }`}
             >
@@ -93,7 +88,7 @@ export default function StandaloneShell() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowTopUp(true)}
-            className="text-xs font-semibold px-3 py-1.5 rounded-full bg-[#d9ff00]/10 text-[#d9ff00] hover:bg-[#d9ff00]/20 transition-colors"
+            className="text-xs font-semibold px-3 py-1.5 rounded-full bg-[#FF5A36]/10 text-[#FF5A36] hover:bg-[#FF5A36]/20 transition-colors"
           >
             {formatBRL(user.credits_balance)}
           </button>
@@ -117,13 +112,13 @@ export default function StandaloneShell() {
       {/* Account Modal */}
       {showSettings && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-          <div className="bg-[#111] border border-white/10 rounded-2xl p-8 w-full max-w-md">
+          <div className="bg-[#150E1C] border border-white/10 rounded-2xl p-8 w-full max-w-md">
             <h2 className="text-white font-bold text-xl mb-6">Conta</h2>
             <p className="text-white/50 text-sm mb-2">
               Logado como <span className="text-white/80">{user.email}</span>
             </p>
             <p className="text-white/50 text-sm mb-6">
-              Saldo: <span className="text-[#d9ff00] font-semibold">{formatBRL(user.credits_balance)}</span>
+              Saldo: <span className="text-[#FF5A36] font-semibold">{formatBRL(user.credits_balance)}</span>
             </p>
             <div className="flex gap-3">
               <button

@@ -147,7 +147,7 @@ function Dropdown({ isOpen, items, selectedId, onSelect, onClose, anchorRef }) {
         <div
             ref={dropRef}
             style={{ position: 'fixed', zIndex: 100, minWidth: 200, overflowY: 'auto', ...style }}
-            className="bg-[#111] border border-white/10 rounded-2xl shadow-3xl p-2 custom-scrollbar"
+            className="bg-[#150E1C] border border-white/10 rounded-2xl shadow-3xl p-2 custom-scrollbar"
         >
             {items.map((item) => (
                 <button
@@ -540,7 +540,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
 
                     {/* Input bar */}
                     <div className="w-full max-w-4xl relative z-40 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                        <div className="w-full bg-[#111]/90 backdrop-blur-xl border border-white/10 rounded-[1.5rem] md:rounded-[2.5rem] p-3 md:p-5 flex flex-col gap-3 md:gap-5 shadow-3xl">
+                        <div className="w-full bg-[#150E1C]/90 backdrop-blur-xl border border-white/10 rounded-[1.5rem] md:rounded-[2.5rem] p-3 md:p-5 flex flex-col gap-3 md:gap-5 shadow-3xl">
 
                             {/* Mode toggle row */}
                             <div className="flex items-center gap-2 px-2">

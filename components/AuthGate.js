@@ -30,12 +30,12 @@ export default function AuthGate({ onAuthenticated }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#0D0810] flex items-center justify-center px-4">
       <form
         onSubmit={submit}
-        className="bg-[#111] border border-white/10 rounded-2xl p-8 w-full max-w-sm"
+        className="bg-[#150E1C] border border-white/10 rounded-2xl p-8 w-full max-w-sm"
       >
-        <h1 className="text-white font-black text-xl mb-1">Open Higgsfield AI</h1>
+        <h1 className="text-white font-black text-xl mb-1">VisuIA</h1>
         <p className="text-white/50 text-sm mb-6">
           {mode === 'login' ? 'Entre na sua conta.' : 'Crie sua conta para começar.'}
         </p>
@@ -46,7 +46,7 @@ export default function AuthGate({ onAuthenticated }) {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full mb-4 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-[#d9ff00]/50"
+          className="w-full mb-4 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-[#FF5A36]/50"
         />
 
         <label className="block text-white/60 text-xs mb-1">Senha</label>
@@ -56,7 +56,7 @@ export default function AuthGate({ onAuthenticated }) {
           minLength={8}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full mb-4 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-[#d9ff00]/50"
+          className="w-full mb-4 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-[#FF5A36]/50"
         />
 
         {error && <p className="text-red-400 text-xs mb-4">{error}</p>}
@@ -64,7 +64,7 @@ export default function AuthGate({ onAuthenticated }) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-2 rounded-lg bg-[#d9ff00] text-black font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="w-full py-2 rounded-lg bg-[#FF5A36] text-black font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {loading ? 'Aguarde…' : mode === 'login' ? 'Entrar' : 'Criar conta'}
         </button>

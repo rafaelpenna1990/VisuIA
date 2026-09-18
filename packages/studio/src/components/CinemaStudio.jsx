@@ -635,7 +635,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                     </button>
                     <button
                         onClick={handleDownload}
-                        className="bg-[#d9ff00] text-black px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wide hover:bg-white transition-colors shadow-glow-sm hover:scale-105 active:scale-95"
+                        className="bg-[#FF5A36] text-black px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wide hover:bg-white transition-colors shadow-glow-sm hover:scale-105 active:scale-95"
                     >
                         ↓ Download
                     </button>
@@ -735,7 +735,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
 
                         {/* Generate Button */}
                         <button
-                            className="h-[56px] px-8 bg-[#d9ff00] text-black rounded-xl font-black text-xs uppercase hover:bg-white transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="h-[56px] px-8 bg-[#FF5A36] text-black rounded-xl font-black text-xs uppercase hover:bg-white transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled={isGenerating || !settings.prompt.trim()}
                             onClick={handleGenerate}
                         >
@@ -754,7 +754,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                     {history.map((entry, idx) => (
                         <div
                             key={entry.timestamp ?? idx}
-                            className={`relative group/thumb cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 aspect-square ${idx === activeHistoryIndex ? 'border-[#d9ff00] shadow-glow-sm' : 'border-white/10 hover:border-white/30'}`}
+                            className={`relative group/thumb cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 aspect-square ${idx === activeHistoryIndex ? 'border-[#FF5A36] shadow-glow-sm' : 'border-white/10 hover:border-white/30'}`}
                             onClick={() => loadHistoryItem(entry, idx)}
                         >
                             <img
