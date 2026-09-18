@@ -2,9 +2,6 @@ import { NextResponse } from 'next/server';
 import { getSessionUser } from '../../../lib/auth.js';
 import { chargeCredits, refundCredits, logGeneration } from '../../../lib/db.js';
 import { estimatedChargeBRL, actualChargeBRL } from '../../../lib/pricing.js';
-// Reused as-is from the original client — it's plain fetch-based JS, so it
-// works unmodified on the server. The only thing that changes is WHERE the
-// api key comes from: process.env instead of the browser's localStorage.
 import {
   generateImage,
   generateI2I,
@@ -15,9 +12,6 @@ import {
 
 const MUAPI_KEY = process.env.MUAPI_API_KEY;
 
-// Handles every generation kind the studio offers: 'image', 'i2i', 'video',
-// 'i2v', 'lipsync'. The credit-check / charge / logging logic is identical
-// for all of them — only which Muapi function gets called differs.
 export async function POST(request) {
   const user = await getSessionUser();
   if (!user) {
@@ -34,7 +28,6 @@ export async function POST(request) {
   const body = await request.json();
   const kind = body.kind || 'image'; // 'image' | 'i2i' | 'video' | 'i2v' | 'lipsync'
 
-  // 1) Pre-flight: block obviously-unaffordable requests before we spend anything.
   const estimate = estimatedChargeBRL(kind);
   try {
     chargeCredits(user.id, estimate, `pré-cobrança estimada — ${body.model}`);
@@ -48,7 +41,6 @@ export async function POST(request) {
     throw err;
   }
 
-  // 2) Call Muapi with the server's own key — the client never sees it.
   let result;
   try {
     if (kind === 'i2i') {
@@ -82,6 +74,7 @@ export async function POST(request) {
         resolution: body.resolution,
         quality: body.quality,
         mode: body.mode,
+        name: body.name,
       });
     } else if (kind === 'lipsync') {
       result = await processLipSync(MUAPI_KEY, {
@@ -106,21 +99,18 @@ export async function POST(request) {
       });
     }
   } catch (err) {
-    // Generation failed — refund the pre-charge in full, nothing to true-up.
     refundCredits(user.id, estimate, `estorno — geração falhou: ${err.message}`);
     logGeneration(user.id, body.model, kind, 0, 'failed', null);
     return NextResponse.json({ error: `Falha na geração: ${err.message}` }, { status: 502 });
   }
 
-  // 3) True-up: refund the estimate, charge the REAL cost Muapi reported.
   const realCharge = actualChargeBRL(result, kind);
   refundCredits(user.id, estimate, 'estorno da pré-cobrança estimada');
   try {
     chargeCredits(user.id, realCharge, `${body.model} — cobrança real`);
   } catch {
-    // Balance dropped below the real cost between steps (e.g. concurrent
-    // request drained it) — still deliver the result the user already
-    // paid the estimate for, but log the shortfall for reconciliation.
+    // Balance dropped below the real cost between steps — deliver the result
+    // anyway, log the shortfall for reconciliation.
   }
   logGeneration(user.id, body.model, kind, realCharge, 'completed', result.url);
 

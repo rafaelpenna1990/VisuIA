@@ -105,6 +105,9 @@ export async function generateI2V(apiKey, params) {
     if (params.resolution) payload.resolution = params.resolution;
     if (params.quality) payload.quality = params.quality;
     if (params.mode) payload.mode = params.mode;
+    // "effects" family models (VFX, AI Video Effects, Video Effects) require
+    // this — it's the named effect to apply (e.g. "Car Explosion", "Flying").
+    if (params.name) payload.name = params.name;
     return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
 }
 
@@ -165,8 +168,4 @@ export function uploadFile(apiKey, file, onProgress) {
             }
         };
 
-        xhr.onerror = () => reject(new Error('Network error during file upload'));
-        xhr.send(formData);
-    });
-}
-
+        xhr.onerror = () => reject(new Error('Network error
