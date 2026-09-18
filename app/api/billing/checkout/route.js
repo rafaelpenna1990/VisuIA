@@ -25,21 +25,31 @@ export async function POST(request) {
 
   const origin = request.headers.get('origin') || process.env.APP_URL;
 
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    payment_method_types: ['card'], // add 'boleto' here once enabled on your Stripe BR account
-    line_items: [{
-      price_data: {
-        currency: 'brl',
-        product_data: { name: chosen.label },
-        unit_amount: chosen.amount_cents,
-      },
-      quantity: 1,
-    }],
-    metadata: { user_id: String(user.id), amount_brl: String(chosen.amount_cents / 100) },
-    success_url: `${origin}/studio?topup=success`,
-    cancel_url: `${origin}/studio?topup=cancelled`,
-  });
+  let session;
+  try {
+    session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      payment_method_types: ['card'], // add 'boleto' here once enabled on your Stripe BR account
+      line_items: [{
+        price_data: {
+          currency: 'brl',
+          product_data: { name: chosen.label },
+          unit_amount: chosen.amount_cents,
+        },
+        quantity: 1,
+      }],
+      metadata: { user_id: String(user.id), amount_brl: String(chosen.amount_cents / 100) },
+      success_url: `${origin}/studio?topup=success`,
+      cancel_url: `${origin}/studio?topup=cancelled`,
+    });
+  } catch (err) {
+    // Surface the real Stripe error instead of letting the request crash with
+    // an empty body (which shows up client-side as "Unexpected end of JSON input").
+    return NextResponse.json(
+      { error: `Falha ao criar checkout no Stripe: ${err.message}` },
+      { status: 502 }
+    );
+  }
 
   return NextResponse.json({ checkout_url: session.url });
 }
