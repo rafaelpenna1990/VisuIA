@@ -13,7 +13,7 @@ async function pollForResult(requestId, key, maxAttempts = 900, interval = 2000)
             if (!response.ok) {
                 const errText = await response.text();
                 if (response.status >= 500) continue;
-                throw new Error(`Poll Failed: ${response.status} - ${errText.slice(0, 100)}`);
+                throw new Error(`Poll Failed: ${response.status} - ${errText.slice(0, 800)}`);
             }
             const data = await response.json();
             const status = data.status?.toLowerCase();
@@ -35,7 +35,7 @@ async function submitAndPoll(endpoint, payload, key, onRequestId, maxAttempts = 
     });
     if (!response.ok) {
         const errText = await response.text();
-        throw new Error(`API Request Failed: ${response.status} ${response.statusText} - ${errText.slice(0, 100)}`);
+        throw new Error(`API Request Failed: ${response.status} ${response.statusText} - ${errText.slice(0, 800)}`);
     }
     const submitData = await response.json();
     const requestId = submitData.request_id || submitData.id;
