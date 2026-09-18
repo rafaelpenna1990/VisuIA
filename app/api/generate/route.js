@@ -5,16 +5,19 @@ import { estimatedChargeBRL, actualChargeBRL } from '../../../lib/pricing.js';
 // Reused as-is from the original client — it's plain fetch-based JS, so it
 // works unmodified on the server. The only thing that changes is WHERE the
 // api key comes from: process.env instead of the browser's localStorage.
-import { generateImage, generateI2I } from '../../../packages/studio/src/muapi.js';
+import {
+  generateImage,
+  generateI2I,
+  generateVideo,
+  generateI2V,
+  processLipSync,
+} from '../../../packages/studio/src/muapi.js';
 
 const MUAPI_KEY = process.env.MUAPI_API_KEY;
 
-// Today this route wires up text-to-image ("image") and image-to-image
-// ("i2i" — editing with reference images). To add video, i2v or lip sync:
-// import the matching function from muapi.js (generateVideo, generateI2V,
-// processLipSync), add its kind to ESTIMATED_CEILING_USD in lib/pricing.js,
-// and add a branch in the switch below — the credit-check / charge /
-// logging logic is identical for every kind.
+// Handles every generation kind the studio offers: 'image', 'i2i', 'video',
+// 'i2v', 'lipsync'. The credit-check / charge / logging logic is identical
+// for all of them — only which Muapi function gets called differs.
 export async function POST(request) {
   const user = await getSessionUser();
   if (!user) {
@@ -29,7 +32,7 @@ export async function POST(request) {
   }
 
   const body = await request.json();
-  const kind = body.kind || 'image'; // 'image' | 'i2i'
+  const kind = body.kind || 'image'; // 'image' | 'i2i' | 'video' | 'i2v' | 'lipsync'
 
   // 1) Pre-flight: block obviously-unaffordable requests before we spend anything.
   const estimate = estimatedChargeBRL(kind);
@@ -57,6 +60,38 @@ export async function POST(request) {
         aspect_ratio: body.aspect_ratio,
         resolution: body.resolution,
         quality: body.quality,
+      });
+    } else if (kind === 'video') {
+      result = await generateVideo(MUAPI_KEY, {
+        model: body.model,
+        prompt: body.prompt,
+        aspect_ratio: body.aspect_ratio,
+        duration: body.duration,
+        resolution: body.resolution,
+        quality: body.quality,
+        mode: body.mode,
+        image_url: body.image_url,
+      });
+    } else if (kind === 'i2v') {
+      result = await generateI2V(MUAPI_KEY, {
+        model: body.model,
+        prompt: body.prompt,
+        image_url: body.image_url,
+        aspect_ratio: body.aspect_ratio,
+        duration: body.duration,
+        resolution: body.resolution,
+        quality: body.quality,
+        mode: body.mode,
+      });
+    } else if (kind === 'lipsync') {
+      result = await processLipSync(MUAPI_KEY, {
+        model: body.model,
+        audio_url: body.audio_url,
+        image_url: body.image_url,
+        video_url: body.video_url,
+        prompt: body.prompt,
+        resolution: body.resolution,
+        seed: body.seed,
       });
     } else {
       result = await generateImage(MUAPI_KEY, {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { generateVideo, generateI2V, uploadFile } from '../muapi.js';
+import { generateVideo, generateI2V, uploadFile } from '../api-client.js';
 import {
     t2vModels,
     i2vModels,
