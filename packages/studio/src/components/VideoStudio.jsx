@@ -22,6 +22,14 @@ function getQualitiesForModel(modelList, modelId) {
     return model?.inputs?.quality?.enum || [];
 }
 
+// Models in the "effects" family (VFX, AI Video Effects, Video Effects) require
+// a specific named effect instead of a free-form prompt driving the motion —
+// Muapi rejects the request with a 422 if this field is missing for them.
+function getEffectNamesForModel(modelList, modelId) {
+    const model = modelList.find(m => m.id === modelId);
+    return model?.inputs?.name?.enum || [];
+}
+
 async function downloadFile(url, filename) {
     try {
         const response = await fetch(url);
@@ -191,6 +199,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
     const [selectedResolution, setSelectedResolution] = useState(defaultModel.inputs?.resolution?.default || '');
     const [selectedQuality, setSelectedQuality] = useState(defaultModel.inputs?.quality?.default || '');
     const [selectedMode, setSelectedMode] = useState('');
+    const [selectedEffectName, setSelectedEffectName] = useState('');
 
     // ── upload progress ──
     const [imageProgress, setImageProgress] = useState(0);
@@ -202,6 +211,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
     const [showResolution, setShowResolution] = useState(false);
     const [showQuality, setShowQuality] = useState(false);
     const [showMode, setShowMode] = useState(false);
+    const [showEffectName, setShowEffectName] = useState(false);
 
     // ── uploads ──
     const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
@@ -266,7 +276,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
     const applyControlsForModel = useCallback((modelId, isImageMode, isV2vMode) => {
         if (isV2vMode) {
             setShowAr(false); setShowDuration(false); setShowResolution(false);
-            setShowQuality(false); setShowMode(false);
+            setShowQuality(false); setShowMode(false); setShowEffectName(false);
             return;
         }
 
@@ -293,6 +303,12 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
             setSelectedMode(model?.inputs?.mode?.default || modes[0]);
             setShowMode(true);
         } else { setSelectedMode(''); setShowMode(false); }
+
+        const effectNames = getEffectNamesForModel(modelList, modelId);
+        if (effectNames.length > 0) {
+            setSelectedEffectName(model?.inputs?.name?.default || effectNames[0]);
+            setShowEffectName(true);
+        } else { setSelectedEffectName(''); setShowEffectName(false); }
     }, []);
 
     // Initialise controls for default model on mount
@@ -510,6 +526,10 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                 if (resolutions.length > 0) i2vParams.resolution = selectedResolution;
                 if (selectedQuality) i2vParams.quality = selectedQuality;
                 if (selectedMode) i2vParams.mode = selectedMode;
+                if (showEffectName) {
+                    if (!selectedEffectName) throw new Error('Select an effect type first.');
+                    i2vParams.name = selectedEffectName;
+                }
 
                 res = await generateI2V(apiKey, i2vParams);
                 if (!res?.url) throw new Error('No video URL returned by API');
@@ -571,7 +591,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
         }
     }, [
         apiKey, prompt, v2vMode, imageMode, selectedModel, selectedAr, selectedDuration,
-        selectedResolution, selectedQuality, selectedMode, uploadedImageUrl, uploadedVideoUrl,
+        selectedResolution, selectedQuality, selectedMode, selectedEffectName, showEffectName, uploadedImageUrl, uploadedVideoUrl,
         lastGenerationId, getCurrentModel, addToLocalHistory, showVideoInCanvas, onGenerationComplete,
     ]);
 
@@ -985,6 +1005,26 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                                     <div className="flex flex-col gap-1">
                                                         {getModesForModel(selectedModel).map(m => (
                                                             <DropdownItem key={m} label={m} selected={selectedMode === m} onClick={(e) => { e.stopPropagation(); setSelectedMode(m); setOpenDropdown(null); }} />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                    {/* Effect type btn (effects-family i2v models: VFX, AI Video Effects, Video Effects) */}
+                                    {showEffectName && (
+                                        <div className="relative">
+                                            <ControlBtn
+                                                icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="opacity-60 text-secondary"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>}
+                                                label={selectedEffectName || 'Choose effect'}
+                                                onClick={toggleDropdown('effect')}
+                                            />
+                                            {openDropdown === 'effect' && (
+                                                <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#111] rounded-3xl p-3 border border-white/10 flex flex-col w-64 max-w-[280px] max-h-80 overflow-y-auto">
+                                                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-3 py-2 border-b border-white/5 mb-2">Effect</div>
+                                                    <div className="flex flex-col gap-1">
+                                                        {getEffectNamesForModel(getCurrentModels(), selectedModel).map(n => (
+                                                            <DropdownItem key={n} label={n} selected={selectedEffectName === n} onClick={(e) => { e.stopPropagation(); setSelectedEffectName(n); setOpenDropdown(null); }} />
                                                         ))}
                                                     </div>
                                                 </div>
