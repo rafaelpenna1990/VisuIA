@@ -8,7 +8,7 @@ export async function GET(request) {
     return NextResponse.json({ error: 'GOOGLE_CLIENT_ID não configurado no servidor' }, { status: 500 });
   }
 
-  const origin = request.nextUrl.origin;
+  const origin = process.env.APP_URL;
   const redirectUri = `${origin}/api/auth/google/callback`;
   const state = crypto.randomBytes(16).toString('hex');
 

@@ -11,7 +11,7 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 
 export async function GET(request) {
-  const origin = request.nextUrl.origin;
+  const origin = process.env.APP_URL;
   const code = request.nextUrl.searchParams.get('code');
   const state = request.nextUrl.searchParams.get('state');
   const savedState = request.cookies.get('google_oauth_state')?.value;
