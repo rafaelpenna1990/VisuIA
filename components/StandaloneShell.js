@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ImageStudio, VideoStudio, LipSyncStudio, CinemaStudio } from 'studio';
 import AuthGate from './AuthGate';
 import TopUpModal from './TopUpModal';
@@ -17,8 +17,12 @@ const TABS = [
 
 export default function StandaloneShell() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const validTabs = TABS.map((t) => t.id);
+  const initialTab = validTabs.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'image';
+
   const [user, setUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('image');
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [showTopUp, setShowTopUp] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
   const [resuming, setResuming] = useState(false);

@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import StandaloneShell from '@/components/StandaloneShell';
 
 export const metadata = {
@@ -5,5 +6,9 @@ export const metadata = {
 };
 
 export default function StudioPage() {
-  return <StandaloneShell />;
+  return (
+    <Suspense fallback={null}>
+      <StandaloneShell />
+    </Suspense>
+  );
 }

@@ -10,6 +10,7 @@ const FEATURES = [
   {
     id: 'image',
     title: 'Imagem',
+    placeholder: 'Descreva a imagem que você quer criar...',
     desc: 'Crie imagens do zero a partir de uma descrição, ou edite fotos que você já tem: troque fundo, estilo, roupa, iluminação.',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -22,6 +23,7 @@ const FEATURES = [
   {
     id: 'video',
     title: 'Vídeo',
+    placeholder: 'Descreva o vídeo que você quer criar...',
     desc: 'Anime uma foto parada, ou descreva uma cena em texto e receba um vídeo curto pronto pra postar.',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -33,6 +35,7 @@ const FEATURES = [
   {
     id: 'lipsync',
     title: 'Sincronia Labial',
+    placeholder: 'Envie um áudio e um retrato pra sincronizar...',
     desc: 'Sincronize um áudio com um retrato ou vídeo, e a boca acompanha a fala automaticamente.',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -44,6 +47,7 @@ const FEATURES = [
   {
     id: 'cinema',
     title: 'Cinema',
+    placeholder: 'Descreva a cena que você quer filmar...',
     desc: 'Aplique lentes e câmeras de cinema de verdade nas suas cenas, do 16mm vintage ao digital 8K.',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -75,6 +79,7 @@ const STEPS = [
 export default function LandingPage() {
   const router = useRouter();
   const [prompt, setPrompt] = useState('');
+  const [selectedType, setSelectedType] = useState('image');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authModal, setAuthModal] = useState(null); // null | 'login' | 'signup'
   const [showSubModal, setShowSubModal] = useState(false);
@@ -91,7 +96,7 @@ export default function LandingPage() {
 
   const goToStudioOrAuth = (mode) => {
     if (isLoggedIn) {
-      router.push('/studio');
+      router.push(`/studio?tab=${selectedType}`);
     } else {
       setAuthModal(mode);
     }
@@ -105,11 +110,11 @@ export default function LandingPage() {
   const handleAuthenticated = (user, mode) => {
     setAuthModal(null);
     // First-time signup → show the plan popup right here; a plain login
-    // just wants back into the studio.
+    // just wants back into the studio, on the type they were browsing.
     if (mode === 'signup') {
       setShowSubModal(true);
     } else {
-      router.push('/studio');
+      router.push(`/studio?tab=${selectedType}`);
     }
   };
 
@@ -142,12 +147,30 @@ export default function LandingPage() {
 
           {/* Prompt starter */}
           <form onSubmit={startGenerating} className="w-full max-w-xl">
+            {/* Type tabs */}
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
+              {FEATURES.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setSelectedType(f.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                    selectedType === f.id
+                      ? 'bg-primary text-black'
+                      : 'bg-card-bg text-white/50 hover:text-white border border-white/10'
+                  }`}
+                >
+                  {f.title}
+                </button>
+              ))}
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-3 bg-card-bg border border-white/10 rounded-2xl p-2 sm:p-2">
               <input
                 type="text"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Descreva o que você quer criar..."
+                placeholder={FEATURES.find((f) => f.id === selectedType)?.placeholder}
                 className="flex-1 bg-transparent px-4 py-3 text-sm md:text-base text-white placeholder:text-white/30 outline-none"
               />
               <button
@@ -173,16 +196,23 @@ export default function LandingPage() {
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {FEATURES.map((f) => (
-              <div
+              <button
                 key={f.id}
-                className="bg-panel-bg border border-white/10 rounded-2xl p-6 hover:border-primary/30 transition-colors"
+                type="button"
+                onClick={() => {
+                  setSelectedType(f.id);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className={`text-left bg-panel-bg border rounded-2xl p-6 transition-colors ${
+                  selectedType === f.id ? 'border-primary/50' : 'border-white/10 hover:border-primary/30'
+                }`}
               >
                 <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-4">
                   {f.icon}
                 </div>
                 <h3 className="font-bold text-base mb-2">{f.title}</h3>
                 <p className="text-white/50 text-sm leading-relaxed">{f.desc}</p>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -243,13 +273,13 @@ export default function LandingPage() {
 
       {showSubModal && (
         <SubscriptionModal
-          onClose={() => { setShowSubModal(false); router.push('/studio'); }}
+          onClose={() => { setShowSubModal(false); router.push(`/studio?tab=${selectedType}`); }}
           onBuyWithoutSubscription={() => { setShowSubModal(false); setShowTopUp(true); }}
         />
       )}
 
       {showTopUp && (
-        <TopUpModal onClose={() => { setShowTopUp(false); router.push('/studio'); }} />
+        <TopUpModal onClose={() => { setShowTopUp(false); router.push(`/studio?tab=${selectedType}`); }} />
       )}
     </div>
   );
