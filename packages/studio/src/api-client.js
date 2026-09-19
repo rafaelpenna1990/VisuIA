@@ -12,9 +12,43 @@
 // is. That keeps every single request short — nothing sits open long
 // enough for Railway's ~60s proxy timeout to cut it, which is what used to
 // 502 on longer video generations.
+//
+// While a job is pending, its id is saved to localStorage. If the page is
+// refreshed or closed mid-generation, the in-memory polling loop dies —
+// but the job keeps running on Muapi's side, and the pre-charged estimate
+// is still sitting on it. resumePendingJob() (called once on app load, see
+// StandaloneShell.js) picks that saved id back up and keeps polling until
+// it settles, so the credit always gets properly refunded/charged and the
+// result isn't silently lost.
 
 const POLL_INTERVAL_MS = 3000;
 const MAX_POLLS = 600; // 600 * 3s = 30 minutes, matches the old video budget
+const PENDING_JOB_KEY = 'visuia_pending_job';
+
+function savePendingJob(jobId, kind) {
+  try {
+    localStorage.setItem(PENDING_JOB_KEY, JSON.stringify({ jobId, kind, savedAt: Date.now() }));
+  } catch {
+    // localStorage unavailable (private browsing, etc.) — worst case the
+    // resume-on-refresh feature just doesn't kick in; generation itself
+    // still works normally.
+  }
+}
+
+function clearPendingJob() {
+  try {
+    localStorage.removeItem(PENDING_JOB_KEY);
+  } catch {}
+}
+
+export function getPendingJob() {
+  try {
+    const raw = localStorage.getItem(PENDING_JOB_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
 
 async function postJSON(url, body) {
   const response = await fetch(url, {
@@ -39,6 +73,19 @@ async function getJSON(url) {
   return data;
 }
 
+async function pollUntilDone(jobId) {
+  for (let attempt = 0; attempt < MAX_POLLS; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+    const poll = await getJSON(`/api/generate/poll?job_id=${jobId}`);
+    if (poll.done) {
+      clearPendingJob();
+      if (poll.error) throw new Error(poll.error);
+      return { url: poll.url, charged_brl: poll.charged_brl };
+    }
+  }
+  throw new Error('A geração demorou demais. Tente de novo em instantes.');
+}
+
 async function submitAndPoll(kind, params) {
   const initial = await postJSON('/api/generate', { kind, ...params });
 
@@ -47,16 +94,24 @@ async function submitAndPoll(kind, params) {
     return { url: initial.url, charged_brl: initial.charged_brl };
   }
 
-  const jobId = initial.job_id;
-  for (let attempt = 0; attempt < MAX_POLLS; attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-    const poll = await getJSON(`/api/generate/poll?job_id=${jobId}`);
-    if (poll.done) {
-      if (poll.error) throw new Error(poll.error);
-      return { url: poll.url, charged_brl: poll.charged_brl };
-    }
+  savePendingJob(initial.job_id, kind);
+  return pollUntilDone(initial.job_id);
+}
+
+// Called once when the app loads (StandaloneShell.js). If there's a job
+// left over from before a refresh/close, keeps polling it in the
+// background until it settles — same money-safety guarantee as a normal
+// generation, just without a studio screen watching it live.
+export async function resumePendingJob() {
+  const pending = getPendingJob();
+  if (!pending) return null;
+  try {
+    const result = await pollUntilDone(pending.jobId);
+    return { ...result, kind: pending.kind };
+  } catch (err) {
+    clearPendingJob();
+    throw err;
   }
-  throw new Error('A geração demorou demais. Tente de novo em instantes.');
 }
 
 export async function generateImage(_apiKey, params) {

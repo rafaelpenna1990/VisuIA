@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { ImageStudio, VideoStudio, LipSyncStudio, CinemaStudio } from 'studio';
 import AuthGate from './AuthGate';
 import TopUpModal from './TopUpModal';
-import { formatTokens, formatTokensCompact } from '../lib/tokens.js';
+import { formatTokensCompact } from '../lib/tokens.js';
+import { resumePendingJob, getPendingJob } from 'studio/src/api-client.js';
 
 const TABS = [
   { id: 'image',   label: 'Imagem' },
@@ -14,11 +16,12 @@ const TABS = [
 ];
 
 export default function StandaloneShell() {
+  const router = useRouter();
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('image');
-  const [showSettings, setShowSettings] = useState(false);
   const [showTopUp, setShowTopUp] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
+  const [resuming, setResuming] = useState(false);
 
   const refreshUser = useCallback(async () => {
     const res = await fetch('/api/auth/me', { credentials: 'include' });
@@ -31,17 +34,37 @@ export default function StandaloneShell() {
     refreshUser();
   }, [refreshUser]);
 
+  // If a generation was left running when the page was closed/refreshed
+  // (the money was already pre-charged and the job is still going on
+  // Muapi's side), pick it back up so the credit gets settled correctly
+  // and the result isn't lost.
+  useEffect(() => {
+    if (!getPendingJob()) return;
+    setResuming(true);
+    resumePendingJob()
+      .then((result) => {
+        if (result) {
+          window.alert(
+            `Sua geração anterior (${result.kind}) terminou enquanto você estava fora!\n\nLink: ${result.url}`
+          );
+        }
+      })
+      .catch((err) => {
+        window.alert(`Não foi possível recuperar sua geração anterior: ${err.message}`);
+      })
+      .finally(() => {
+        setResuming(false);
+        refreshUser();
+      });
+  }, [refreshUser]);
+
+  // Refresh balance whenever the tab regains focus (e.g. after a generation
+  // or after coming back from the Stripe checkout tab, or the account page).
   useEffect(() => {
     const onFocus = () => refreshUser();
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
   }, [refreshUser]);
-
-  const handleLogout = useCallback(async () => {
-    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-    setUser(null);
-    setShowSettings(false);
-  }, []);
 
   if (!hasMounted) return (
     <div className="min-h-screen bg-[#0D0810] flex items-center justify-center">
@@ -53,6 +76,9 @@ export default function StandaloneShell() {
     return <AuthGate onAuthenticated={setUser} />;
   }
 
+  // The studio components still take an `apiKey` prop, but api-client.js
+  // ignores it — the real Muapi key lives only on the server now. Any
+  // non-empty placeholder keeps their existing prop checks happy.
   const placeholderKey = 'server-managed';
 
   return (
@@ -63,6 +89,12 @@ export default function StandaloneShell() {
           <span className="text-white font-black text-lg tracking-wider uppercase">
             VisuIA
           </span>
+          {resuming && (
+            <span className="text-[10px] text-white/40 flex items-center gap-1.5">
+              <span className="animate-spin inline-block">◌</span>
+              Retomando geração anterior…
+            </span>
+          )}
         </div>
 
         {/* Tabs */}
@@ -84,13 +116,19 @@ export default function StandaloneShell() {
 
         <div className="flex items-center gap-3">
           <button
+            onClick={() => router.push('/conta?tab=projetos')}
+            className="text-white/40 hover:text-white text-sm transition-colors"
+          >
+            Meus Projetos
+          </button>
+          <button
             onClick={() => setShowTopUp(true)}
             className="text-xs font-semibold px-3 py-1.5 rounded-full bg-[#FF5A36]/10 text-[#FF5A36] hover:bg-[#FF5A36]/20 transition-colors"
           >
             {formatTokensCompact(user.credits_balance)}
           </button>
           <button
-            onClick={() => setShowSettings(true)}
+            onClick={() => router.push('/conta')}
             className="text-white/40 hover:text-white text-sm transition-colors"
           >
             ⚙ Conta
@@ -105,35 +143,6 @@ export default function StandaloneShell() {
         {activeTab === 'lipsync' && <LipSyncStudio apiKey={placeholderKey} />}
         {activeTab === 'cinema'  && <CinemaStudio  apiKey={placeholderKey} />}
       </div>
-
-      {/* Account Modal */}
-      {showSettings && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-          <div className="bg-[#150E1C] border border-white/10 rounded-2xl p-8 w-full max-w-md">
-            <h2 className="text-white font-bold text-xl mb-6">Conta</h2>
-            <p className="text-white/50 text-sm mb-2">
-              Logado como <span className="text-white/80">{user.email}</span>
-            </p>
-            <p className="text-white/50 text-sm mb-6">
-              Saldo: <span className="text-[#FF5A36] font-semibold">{formatTokens(user.credits_balance)}</span>
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={handleLogout}
-                className="flex-1 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm transition-colors"
-              >
-                Sair
-              </button>
-              <button
-                onClick={() => setShowSettings(false)}
-                className="flex-1 py-2 rounded-lg bg-white/5 text-white hover:bg-white/10 text-sm transition-colors"
-              >
-                Fechar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showTopUp && <TopUpModal onClose={() => setShowTopUp(false)} />}
     </div>
