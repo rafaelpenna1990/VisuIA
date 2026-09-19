@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { formatTokens } from '../../lib/tokens.js';
+import { PLANS } from '../../lib/plans.js';
 
 const TABS = [
   { id: 'perfil', label: 'Perfil' },
@@ -36,6 +37,9 @@ function ContaContent() {
   const [projects, setProjects] = useState(null);
   const [projectsError, setProjectsError] = useState(null);
   const [projectFilter, setProjectFilter] = useState('all');
+  const [subscription, setSubscription] = useState(undefined); // undefined = loading, null = none
+  const [subscribing, setSubscribing] = useState(null);
+  const [canceling, setCanceling] = useState(false);
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
@@ -56,6 +60,47 @@ function ContaContent() {
       })
       .catch((err) => setProjectsError(err.message));
   }, [tab, projects]);
+
+  useEffect(() => {
+    if (tab !== 'assinatura' || subscription !== undefined) return;
+    fetch('/api/billing/subscription', { credentials: 'include' })
+      .then((res) => res.json())
+      .then((data) => setSubscription(data.subscription || null))
+      .catch(() => setSubscription(null));
+  }, [tab, subscription]);
+
+  const handleSubscribe = async (planId) => {
+    setSubscribing(planId);
+    try {
+      const res = await fetch('/api/billing/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ plan: planId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Não foi possível iniciar a assinatura');
+      window.location.href = data.checkout_url;
+    } catch (err) {
+      alert(err.message);
+      setSubscribing(null);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!confirm('Cancelar sua assinatura? Você continua com acesso até o fim do período já pago.')) return;
+    setCanceling(true);
+    try {
+      const res = await fetch('/api/billing/cancel-subscription', { method: 'POST', credentials: 'include' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Não foi possível cancelar');
+      setSubscription((prev) => (prev ? { ...prev, status: 'canceling' } : prev));
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setCanceling(false);
+    }
+  };
 
   const changeTab = (id) => {
     setTab(id);
@@ -214,13 +259,64 @@ function ContaContent() {
 
         {/* Assinatura */}
         {tab === 'assinatura' && (
-          <div className="max-w-md">
-            <div className="bg-card-bg border border-white/10 rounded-2xl p-6">
-              <p className="text-white font-bold mb-2">Nenhuma assinatura ativa</p>
-              <p className="text-white/50 text-sm mb-4">
-                Por enquanto você compra VisuTokens avulsos. Planos mensais com desconto chegam em breve.
-              </p>
-            </div>
+          <div className="max-w-2xl">
+            {subscription === undefined && (
+              <div className="flex items-center justify-center py-16">
+                <div className="animate-spin text-primary text-2xl">◌</div>
+              </div>
+            )}
+
+            {subscription === null && (
+              <div>
+                <p className="text-white/50 text-sm mb-6">
+                  Assine um plano mensal e receba VisuTokens todo mês, com bônus quanto maior o plano.
+                  Os tokens acumulam se você não usar tudo.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {Object.values(PLANS).map((plan) => (
+                    <div key={plan.id} className="bg-card-bg border border-white/10 rounded-2xl p-6 flex flex-col">
+                      <p className="text-white font-black text-lg mb-1">{plan.name}</p>
+                      <p className="text-primary font-bold text-2xl mb-1">
+                        R$ {(plan.amount_cents / 100).toFixed(0)}
+                        <span className="text-white/40 text-sm font-normal">/mês</span>
+                      </p>
+                      <p className="text-white/50 text-sm mb-6">{plan.tokens.toLocaleString('pt-BR')} VisuTokens/mês</p>
+                      <button
+                        onClick={() => handleSubscribe(plan.id)}
+                        disabled={subscribing !== null}
+                        className="mt-auto w-full py-2.5 rounded-xl bg-primary text-black font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+                      >
+                        {subscribing === plan.id ? 'Redirecionando…' : 'Assinar'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {subscription && (
+              <div className="bg-card-bg border border-white/10 rounded-2xl p-6 max-w-md">
+                <p className="text-white/40 text-xs mb-1">Plano atual</p>
+                <p className="text-white font-black text-xl mb-4">{subscription.planName}</p>
+                <p className="text-white/40 text-xs mb-1">VisuTokens por mês</p>
+                <p className="text-primary font-bold text-lg mb-4">
+                  {subscription.tokensPerMonth.toLocaleString('pt-BR')} VisuTokens
+                </p>
+                {subscription.status === 'canceling' ? (
+                  <p className="text-yellow-400 text-sm mb-4">
+                    Cancelamento agendado — você mantém o acesso até o fim do período já pago.
+                  </p>
+                ) : (
+                  <button
+                    onClick={handleCancelSubscription}
+                    disabled={canceling}
+                    className="w-full py-2.5 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm font-semibold transition-colors disabled:opacity-50"
+                  >
+                    {canceling ? 'Cancelando…' : 'Cancelar assinatura'}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
