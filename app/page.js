@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthModal from '../components/AuthModal';
 import SubscriptionModal from '../components/SubscriptionModal';
+import TopUpModal from '../components/TopUpModal';
 
 const FEATURES = [
   {
@@ -77,6 +78,7 @@ export default function LandingPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authModal, setAuthModal] = useState(null); // null | 'login' | 'signup'
   const [showSubModal, setShowSubModal] = useState(false);
+  const [showTopUp, setShowTopUp] = useState(false);
 
   // Check session once on load so an already-logged-in visitor skips the
   // popup entirely and goes straight to the studio.
@@ -242,8 +244,12 @@ export default function LandingPage() {
       {showSubModal && (
         <SubscriptionModal
           onClose={() => { setShowSubModal(false); router.push('/studio'); }}
-          onSkip={() => { setShowSubModal(false); router.push('/studio'); }}
+          onBuyWithoutSubscription={() => { setShowSubModal(false); setShowTopUp(true); }}
         />
+      )}
+
+      {showTopUp && (
+        <TopUpModal onClose={() => { setShowTopUp(false); router.push('/studio'); }} />
       )}
     </div>
   );

@@ -35,6 +35,9 @@ export async function POST(request) {
         },
         quantity: 1,
       }],
+      subscription_data: {
+        trial_period_days: 7,
+      },
       metadata: { user_id: String(user.id), plan },
       success_url: `${origin}/conta?tab=assinatura&sub=success`,
       cancel_url: `${origin}/conta?tab=assinatura&sub=cancelled`,

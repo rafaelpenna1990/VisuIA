@@ -7,8 +7,9 @@ import {
   createSubscription,
   getSubscriptionByStripeId,
   updateSubscriptionStatus,
+  markFirstChargeDone,
 } from '../../../../lib/db.js';
-import { PLANS, planTokensToReais } from '../../../../lib/plans.js';
+import { PLANS, planTokensToReais, trialBonusReais } from '../../../../lib/plans.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
@@ -35,7 +36,8 @@ export async function POST(request) {
       const userId = Number(session.metadata?.user_id);
       const plan = session.metadata?.plan;
       if (userId && plan && PLANS[plan]) {
-        createSubscription(userId, session.subscription, session.customer, plan, 'active');
+        createSubscription(userId, session.subscription, session.customer, plan);
+        addCredits(userId, trialBonusReais(), `Bônus de 7 dias grátis — plano ${PLANS[plan].name}`, session.id);
       }
     } else {
       const userId = Number(session.metadata?.user_id);
@@ -52,8 +54,14 @@ export async function POST(request) {
     if (stripeSubscriptionId) {
       const sub = getSubscriptionByStripeId(stripeSubscriptionId);
       if (sub) {
-        const reais = planTokensToReais(sub.plan);
-        addCredits(sub.user_id, reais, `Assinatura ${PLANS[sub.plan]?.name || sub.plan} — renovação mensal`, invoice.id);
+        if (sub.first_charge_done) {
+          const reais = planTokensToReais(sub.plan);
+          addCredits(sub.user_id, reais, `Assinatura ${PLANS[sub.plan]?.name || sub.plan} — renovação mensal`, invoice.id);
+        } else {
+          const remainder = planTokensToReais(sub.plan) - trialBonusReais();
+          addCredits(sub.user_id, remainder, `Assinatura ${PLANS[sub.plan]?.name || sub.plan} — fim do período grátis`, invoice.id);
+          markFirstChargeDone(stripeSubscriptionId);
+        }
       }
     }
   }
