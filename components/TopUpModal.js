@@ -3,9 +3,9 @@
 import { useState } from 'react';
 
 const PACKS = [
-  { id: 'small', label: 'R$ 20' },
-  { id: 'medium', label: 'R$ 50' },
-  { id: 'large', label: 'R$ 120' },
+  { id: 'small', tokens: '2.000', price: 'R$ 20' },
+  { id: 'medium', tokens: '5.000', price: 'R$ 50' },
+  { id: 'large', tokens: '12.000', price: 'R$ 120' },
 ];
 
 export default function TopUpModal({ onClose }) {
@@ -32,8 +32,8 @@ export default function TopUpModal({ onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-      <div className="bg-[#111] border border-white/10 rounded-2xl p-8 w-full max-w-sm">
-        <h2 className="text-white font-bold text-xl mb-2">Adicionar créditos</h2>
+      <div className="bg-[#150E1C] border border-white/10 rounded-2xl p-8 w-full max-w-sm">
+        <h2 className="text-white font-bold text-xl mb-2">Adicionar VisuTokens</h2>
         <p className="text-white/50 text-sm mb-6">Pagamento seguro via Stripe.</p>
 
         <div className="flex flex-col gap-2 mb-4">
@@ -42,9 +42,16 @@ export default function TopUpModal({ onClose }) {
               key={p.id}
               onClick={() => buy(p.id)}
               disabled={loadingPack !== null}
-              className="w-full py-3 rounded-lg bg-[#d9ff00] text-black font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="w-full py-3 rounded-lg bg-[#FF5A36] text-black font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex flex-col items-center leading-tight"
             >
-              {loadingPack === p.id ? 'Redirecionando…' : `Comprar ${p.label}`}
+              {loadingPack === p.id ? (
+                'Redirecionando…'
+              ) : (
+                <>
+                  <span>{p.tokens} VisuTokens</span>
+                  <span className="text-[11px] font-normal opacity-70">{p.price}</span>
+                </>
+              )}
             </button>
           ))}
         </div>

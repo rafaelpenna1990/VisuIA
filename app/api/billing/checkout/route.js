@@ -7,12 +7,12 @@ const stripe = new Stripe((process.env.STRIPE_SECRET_KEY || '').trim(), {
   timeout: 20000,
 });
 
-// Fixed top-up packs, priced in R$ (centavos, as Stripe expects).
-// Edit these once you've decided your final pricing from the margin calculator.
+// Fixed top-up packs, priced in R$ (centavos, as Stripe expects) but
+// labeled in VisuTokens for the checkout page (100 VisuTokens = R$1).
 const PACKS = {
-  small: { label: 'R$ 20 em créditos', amount_cents: 2000 },
-  medium: { label: 'R$ 50 em créditos', amount_cents: 5000 },
-  large: { label: 'R$ 120 em créditos', amount_cents: 12000 },
+  small: { label: '2.000 VisuTokens', amount_cents: 2000 },
+  medium: { label: '5.000 VisuTokens', amount_cents: 5000 },
+  large: { label: '12.000 VisuTokens', amount_cents: 12000 },
 };
 
 export async function POST(request) {
@@ -32,7 +32,7 @@ export async function POST(request) {
   try {
     session = await stripe.checkout.sessions.create({
       mode: 'payment',
-      payment_method_types: ['card'], // add 'boleto' here once enabled on your Stripe BR account
+      payment_method_types: ['card'],
       line_items: [{
         price_data: {
           currency: 'brl',
@@ -46,8 +46,6 @@ export async function POST(request) {
       cancel_url: `${origin}/studio?topup=cancelled`,
     });
   } catch (err) {
-    // Surface the real Stripe error instead of letting the request crash with
-    // an empty body (which shows up client-side as "Unexpected end of JSON input").
     return NextResponse.json(
       { error: `Falha ao criar checkout no Stripe: ${err.message}` },
       { status: 502 }

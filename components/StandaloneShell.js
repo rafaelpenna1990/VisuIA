@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ImageStudio, VideoStudio, LipSyncStudio, CinemaStudio } from 'studio';
 import AuthGate from './AuthGate';
 import TopUpModal from './TopUpModal';
+import { formatTokens, formatTokensCompact } from '../lib/tokens.js';
 
 const TABS = [
   { id: 'image',   label: 'Imagem' },
@@ -11,10 +12,6 @@ const TABS = [
   { id: 'lipsync', label: 'Sincronia Labial' },
   { id: 'cinema',  label: 'Cinema' },
 ];
-
-function formatBRL(n) {
-  return (n ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
 
 export default function StandaloneShell() {
   const [user, setUser] = useState(null);
@@ -90,7 +87,7 @@ export default function StandaloneShell() {
             onClick={() => setShowTopUp(true)}
             className="text-xs font-semibold px-3 py-1.5 rounded-full bg-[#FF5A36]/10 text-[#FF5A36] hover:bg-[#FF5A36]/20 transition-colors"
           >
-            {formatBRL(user.credits_balance)}
+            {formatTokensCompact(user.credits_balance)}
           </button>
           <button
             onClick={() => setShowSettings(true)}
@@ -118,7 +115,7 @@ export default function StandaloneShell() {
               Logado como <span className="text-white/80">{user.email}</span>
             </p>
             <p className="text-white/50 text-sm mb-6">
-              Saldo: <span className="text-[#FF5A36] font-semibold">{formatBRL(user.credits_balance)}</span>
+              Saldo: <span className="text-[#FF5A36] font-semibold">{formatTokens(user.credits_balance)}</span>
             </p>
             <div className="flex gap-3">
               <button

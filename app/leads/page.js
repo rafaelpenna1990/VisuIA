@@ -1,16 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { formatTokens } from '../../lib/tokens.js';
 
 function formatDate(iso) {
   return new Date(iso + 'Z').toLocaleString('pt-BR', {
     dateStyle: 'short',
     timeStyle: 'short',
   });
-}
-
-function formatBRL(n) {
-  return (n ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 export default function LeadsPage() {
@@ -71,7 +68,7 @@ export default function LeadsPage() {
             <thead>
               <tr className="text-left text-white/40 text-xs uppercase tracking-widest border-b border-white/10">
                 <th className="px-5 py-3 font-semibold">E-mail</th>
-                <th className="px-5 py-3 font-semibold">Saldo</th>
+                <th className="px-5 py-3 font-semibold">Saldo (VisuTokens)</th>
                 <th className="px-5 py-3 font-semibold">Cadastrado em</th>
               </tr>
             </thead>
@@ -79,7 +76,7 @@ export default function LeadsPage() {
               {users.map((u) => (
                 <tr key={u.id} className="border-b border-white/5 last:border-0">
                   <td className="px-5 py-3 text-white">{u.email}</td>
-                  <td className="px-5 py-3 text-primary font-semibold">{formatBRL(u.credits_balance)}</td>
+                  <td className="px-5 py-3 text-primary font-semibold">{formatTokens(u.credits_balance)}</td>
                   <td className="px-5 py-3 text-white/50">{formatDate(u.created_at)}</td>
                 </tr>
               ))}
