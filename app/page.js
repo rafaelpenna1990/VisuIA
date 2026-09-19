@@ -76,6 +76,8 @@ export default function LandingPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authModal, setAuthModal] = useState(null); // null | 'login' | 'signup'
 
+  // Check session once on load so an already-logged-in visitor skips the
+  // popup entirely and goes straight to the studio.
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
       .then((res) => res.json())
@@ -98,11 +100,14 @@ export default function LandingPage() {
 
   const handleAuthenticated = (user, mode) => {
     setAuthModal(null);
+    // First-time signup → straight to plan options; a plain login just
+    // wants back into the studio.
     router.push(mode === 'signup' ? '/conta?tab=assinatura' : '/studio');
   };
 
   return (
     <div className="min-h-screen bg-app-bg text-white">
+      {/* Header */}
       <header className="flex items-center justify-between px-6 md:px-10 py-5 max-w-6xl mx-auto">
         <span className="font-black text-lg tracking-wider uppercase">VisuIA</span>
         <button
@@ -113,6 +118,7 @@ export default function LandingPage() {
         </button>
       </header>
 
+      {/* Hero */}
       <section className="px-6 md:px-10 pt-10 md:pt-20 pb-20 max-w-6xl mx-auto">
         <div className="max-w-3xl">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-black leading-[1.05] tracking-tight mb-6">
@@ -126,6 +132,7 @@ export default function LandingPage() {
             sem precisar de software caro.
           </p>
 
+          {/* Prompt starter */}
           <form onSubmit={startGenerating} className="w-full max-w-xl">
             <div className="flex flex-col sm:flex-row gap-3 bg-card-bg border border-white/10 rounded-2xl p-2 sm:p-2">
               <input
@@ -149,6 +156,7 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Features */}
       <section className="px-6 md:px-10 py-16 border-t border-white/5">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-black mb-3">O que você pode criar</h2>
@@ -172,6 +180,7 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* How it works */}
       <section className="px-6 md:px-10 py-16 border-t border-white/5">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-black mb-10">Como funciona</h2>
@@ -189,6 +198,7 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Pricing blurb */}
       <section className="px-6 md:px-10 py-16 border-t border-white/5">
         <div className="max-w-6xl mx-auto bg-panel-bg border border-white/10 rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
@@ -200,4 +210,28 @@ export default function LandingPage() {
           </div>
           <button
             onClick={() => goToStudioOrAuth('signup')}
-            className="shrink-0
+            className="shrink-0 bg-primary hover:opacity-90 text-black font-bold text-sm px-8 py-3.5 rounded-xl transition-opacity shadow-glow"
+          >
+            Criar conta grátis
+          </button>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="px-6 md:px-10 py-10 border-t border-white/5">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-white/30 text-xs">
+          <span>© {new Date().getFullYear()} VisuIA</span>
+          <span>Feito no Brasil</span>
+        </div>
+      </footer>
+
+      {authModal && (
+        <AuthModal
+          initialMode={authModal}
+          onAuthenticated={handleAuthenticated}
+          onClose={() => setAuthModal(null)}
+        />
+      )}
+    </div>
+  );
+}
