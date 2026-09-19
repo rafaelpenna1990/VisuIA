@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import AuthModal from '../components/AuthModal';
 
 const FEATURES = [
   {
@@ -72,26 +73,46 @@ const STEPS = [
 export default function LandingPage() {
   const router = useRouter();
   const [prompt, setPrompt] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authModal, setAuthModal] = useState(null); // null | 'login' | 'signup'
+
+  useEffect(() => {
+    fetch('/api/auth/me', { credentials: 'include' })
+      .then((res) => res.json())
+      .then((data) => setIsLoggedIn(!!data.user))
+      .catch(() => {});
+  }, []);
+
+  const goToStudioOrAuth = (mode) => {
+    if (isLoggedIn) {
+      router.push('/studio');
+    } else {
+      setAuthModal(mode);
+    }
+  };
 
   const startGenerating = (e) => {
     e.preventDefault();
-    router.push('/studio');
+    goToStudioOrAuth('signup');
+  };
+
+  const handleAuthenticated = (user, mode) => {
+    setAuthModal(null);
+    router.push(mode === 'signup' ? '/conta?tab=assinatura' : '/studio');
   };
 
   return (
     <div className="min-h-screen bg-app-bg text-white">
-      {/* Header */}
       <header className="flex items-center justify-between px-6 md:px-10 py-5 max-w-6xl mx-auto">
         <span className="font-black text-lg tracking-wider uppercase">VisuIA</span>
         <button
-          onClick={() => router.push('/studio')}
+          onClick={() => goToStudioOrAuth('login')}
           className="text-sm font-semibold text-white/70 hover:text-white transition-colors"
         >
           Entrar
         </button>
       </header>
 
-      {/* Hero */}
       <section className="px-6 md:px-10 pt-10 md:pt-20 pb-20 max-w-6xl mx-auto">
         <div className="max-w-3xl">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-black leading-[1.05] tracking-tight mb-6">
@@ -105,7 +126,6 @@ export default function LandingPage() {
             sem precisar de software caro.
           </p>
 
-          {/* Prompt starter */}
           <form onSubmit={startGenerating} className="w-full max-w-xl">
             <div className="flex flex-col sm:flex-row gap-3 bg-card-bg border border-white/10 rounded-2xl p-2 sm:p-2">
               <input
@@ -129,7 +149,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Features */}
       <section className="px-6 md:px-10 py-16 border-t border-white/5">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-black mb-3">O que você pode criar</h2>
@@ -153,7 +172,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* How it works */}
       <section className="px-6 md:px-10 py-16 border-t border-white/5">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-black mb-10">Como funciona</h2>
@@ -171,32 +189,15 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing blurb */}
       <section className="px-6 md:px-10 py-16 border-t border-white/5">
         <div className="max-w-6xl mx-auto bg-panel-bg border border-white/10 rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
             <h2 className="text-xl md:text-2xl font-black mb-2">Pague só pelo que gerar</h2>
             <p className="text-white/50 text-sm md:text-base max-w-md">
-              Sem mensalidade fixa. Compra créditos quando precisar, e cada geração
+              Sem mensalidade obrigatória. Compra VisuTokens quando precisar, e cada geração
               debita só o valor exato dela.
             </p>
           </div>
           <button
-            onClick={() => router.push('/studio')}
-            className="shrink-0 bg-primary hover:opacity-90 text-black font-bold text-sm px-8 py-3.5 rounded-xl transition-opacity shadow-glow"
-          >
-            Criar conta grátis
-          </button>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="px-6 md:px-10 py-10 border-t border-white/5">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-white/30 text-xs">
-          <span>© {new Date().getFullYear()} VisuIA</span>
-          <span>Feito no Brasil</span>
-        </div>
-      </footer>
-    </div>
-  );
-}
+            onClick={() => goToStudioOrAuth('signup')}
+            className="shrink-0
