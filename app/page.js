@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthModal from '../components/AuthModal';
+import SubscriptionModal from '../components/SubscriptionModal';
 
 const FEATURES = [
   {
@@ -75,6 +76,7 @@ export default function LandingPage() {
   const [prompt, setPrompt] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authModal, setAuthModal] = useState(null); // null | 'login' | 'signup'
+  const [showSubModal, setShowSubModal] = useState(false);
 
   // Check session once on load so an already-logged-in visitor skips the
   // popup entirely and goes straight to the studio.
@@ -100,9 +102,13 @@ export default function LandingPage() {
 
   const handleAuthenticated = (user, mode) => {
     setAuthModal(null);
-    // First-time signup → straight to plan options; a plain login just
-    // wants back into the studio.
-    router.push(mode === 'signup' ? '/conta?tab=assinatura' : '/studio');
+    // First-time signup → show the plan popup right here; a plain login
+    // just wants back into the studio.
+    if (mode === 'signup') {
+      setShowSubModal(true);
+    } else {
+      router.push('/studio');
+    }
   };
 
   return (
@@ -230,6 +236,13 @@ export default function LandingPage() {
           initialMode={authModal}
           onAuthenticated={handleAuthenticated}
           onClose={() => setAuthModal(null)}
+        />
+      )}
+
+      {showSubModal && (
+        <SubscriptionModal
+          onClose={() => { setShowSubModal(false); router.push('/studio'); }}
+          onSkip={() => { setShowSubModal(false); router.push('/studio'); }}
         />
       )}
     </div>
