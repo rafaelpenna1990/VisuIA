@@ -6,7 +6,10 @@ export async function POST(request) {
   const { email, password } = await request.json();
 
   const user = getUserByEmail(email);
-  if (!user || !(await verifyPassword(password, user.password_hash))) {
+  if (!user || !user.password_hash) {
+    return NextResponse.json({ error: 'E-mail ou senha incorretos' }, { status: 401 });
+  }
+  if (!(await verifyPassword(password, user.password_hash))) {
     return NextResponse.json({ error: 'E-mail ou senha incorretos' }, { status: 401 });
   }
 
