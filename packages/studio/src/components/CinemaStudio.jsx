@@ -128,7 +128,7 @@ function Dropdown({ items, selected, onSelect, triggerRef, onClose }) {
     return (
         <div
             ref={menuRef}
-            className="custom-dropdown fixed bg-[#1a1a1a] border border-white/10 rounded-xl py-1 shadow-2xl z-50 flex flex-col min-w-[100px] animate-fade-in"
+            className="custom-dropdown fixed bg-[#150E1C] border border-white/10 rounded-xl py-1 shadow-2xl z-50 flex flex-col min-w-[100px] animate-fade-in"
             style={{ bottom: position.bottom, left: position.left }}
         >
             {items.map(item => (
@@ -281,11 +281,11 @@ function ScrollColumn({ title, items, columnKey, value, onChange }) {
             <div className="mb-3 text-[9px] font-black text-white/40 uppercase tracking-[0.2em] text-center">
                 {title}
             </div>
-            <div className="relative overflow-hidden w-full h-[40vh] md:h-[320px] bg-[#1a1a1a]/80 rounded-[2rem] border border-white/5 shadow-2xl backdrop-blur-xl transition-transform duration-300 hover:scale-[1.02] hover:border-white/10">
+            <div className="relative overflow-hidden w-full h-[40vh] md:h-[320px] bg-[#150E1C]/80 rounded-[2rem] border border-white/5 shadow-2xl backdrop-blur-xl transition-transform duration-300 hover:scale-[1.02] hover:border-white/10">
                 {/* Top mask */}
-                <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#1a1a1a] via-[#1a1a1a]/80 to-transparent z-20 pointer-events-none rounded-t-[2rem]" />
+                <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#150E1C] via-[#150E1C]/80 to-transparent z-20 pointer-events-none rounded-t-[2rem]" />
                 {/* Bottom mask */}
-                <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#1a1a1a] via-[#1a1a1a]/80 to-transparent z-20 pointer-events-none rounded-b-[2rem]" />
+                <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#150E1C] via-[#150E1C]/80 to-transparent z-20 pointer-events-none rounded-b-[2rem]" />
                 {/* Center glow */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4/5 h-[80px] bg-primary/5 blur-xl rounded-full pointer-events-none z-0" />
 
@@ -594,16 +594,22 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
     const showCanvas = canvasUrl !== null;
 
     return (
-        <div className="w-full h-full flex flex-col items-center justify-center bg-black relative overflow-hidden">
+        <div className="w-full h-full flex flex-col items-center justify-center bg-app-bg relative overflow-hidden">
 
             {/* ── 1. Hero Section (Empty State) ── */}
             <div
                 className={`flex flex-col items-center justify-center text-center px-4 animate-fade-in-up transition-all duration-700 ${showCanvas ? 'opacity-0 pointer-events-none scale-95' : 'opacity-100 scale-100'}`}
             >
-                <div className="mb-4 text-xs font-bold text-white/40 tracking-[0.2em] uppercase">
-                    Estúdio Cinema 2.0
+                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 shadow-glow mb-5">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-primary">
+                        <path d="M23 7l-7 5 7 5V7z" />
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                    </svg>
                 </div>
-                <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 tracking-tight leading-tight mb-2">
+                <div className="mb-3 text-xs font-bold text-white/40 tracking-[0.2em] uppercase">
+                    Estúdio Cinema
+                </div>
+                <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight mb-2 uppercase">
                     O que você filmaria<br />com orçamento infinito?
                 </h1>
             </div>
@@ -635,7 +641,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                     </button>
                     <button
                         onClick={handleDownload}
-                        className="bg-[#FF5A36] text-black px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wide hover:bg-white transition-colors shadow-glow-sm hover:scale-105 active:scale-95"
+                        className="bg-primary text-black px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wide hover:bg-white transition-colors shadow-glow-sm hover:scale-105 active:scale-95"
                     >
                         ↓ Baixar
                     </button>
@@ -652,7 +658,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
             <div
                 className={`absolute bottom-8 left-4 right-4 md:left-0 md:right-0 md:mx-auto md:max-w-4xl z-30 transition-all duration-700 ${showCanvas ? 'opacity-0 pointer-events-none translate-y-20' : 'opacity-100 translate-y-0'}`}
             >
-                <div className="bg-[#1a1a1a] border border-white/10 rounded-[2rem] p-4 flex justify-between shadow-3xl items-end relative">
+                <div className="bg-[#150E1C] border border-white/10 rounded-[2rem] p-4 flex justify-between shadow-3xl items-end relative">
 
                     {/* Left Column */}
                     <div className="flex-1 flex flex-col gap-3 min-h-[80px] justify-between py-1 px-1">
@@ -735,11 +741,11 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
 
                         {/* Generate Button */}
                         <button
-                            className="h-[56px] px-8 bg-[#FF5A36] text-black rounded-xl font-black text-xs uppercase hover:bg-white transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="h-[56px] px-8 bg-primary text-black rounded-xl font-black text-xs uppercase hover:opacity-90 transition-opacity shadow-glow disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled={isGenerating || !settings.prompt.trim()}
                             onClick={handleGenerate}
                         >
-                            {isGenerating ? 'FILMANDO...' : 'GERAR ✨'}
+                            {isGenerating ? 'Gerando...' : 'Gerar ✨'}
                         </button>
                     </div>
                 </div>
@@ -754,7 +760,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                     {history.map((entry, idx) => (
                         <div
                             key={entry.timestamp ?? idx}
-                            className={`relative group/thumb cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 aspect-square ${idx === activeHistoryIndex ? 'border-[#FF5A36] shadow-glow-sm' : 'border-white/10 hover:border-white/30'}`}
+                            className={`relative group/thumb cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 aspect-square ${idx === activeHistoryIndex ? 'border-primary shadow-glow-sm' : 'border-white/10 hover:border-white/30'}`}
                             onClick={() => loadHistoryItem(entry, idx)}
                         >
                             <img
