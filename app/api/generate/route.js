@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { getSessionUser } from '../../../lib/auth.js';
-import { chargeCredits, refundCredits, logGeneration } from '../../../lib/db.js';
+import { chargeCredits, refundCredits, logGeneration, createPendingGeneration } from '../../../lib/db.js';
 import { estimatedChargeBRL, actualChargeBRL } from '../../../lib/pricing.js';
 import {
-  generateImage,
-  generateI2I,
-  generateVideo,
-  generateI2V,
-  processLipSync,
+  buildImageRequest,
+  buildI2IRequest,
+  buildVideoRequest,
+  buildI2VRequest,
+  buildLipSyncRequest,
+  submitGeneration,
 } from '../../../packages/studio/src/muapi.js';
 
 const MUAPI_KEY = process.env.MUAPI_API_KEY;
@@ -26,7 +27,7 @@ export async function POST(request) {
   }
 
   const body = await request.json();
-  const kind = body.kind || 'image'; // 'image' | 'i2i' | 'video' | 'i2v' | 'lipsync'
+  const kind = body.kind || 'image';
 
   const estimate = estimatedChargeBRL(kind);
   try {
@@ -41,81 +42,60 @@ export async function POST(request) {
     throw err;
   }
 
+  let endpoint, payload;
+  if (kind === 'i2i') {
+    ({ endpoint, payload } = buildI2IRequest({
+      model: body.model, prompt: body.prompt, images_list: body.images_list,
+      image_url: body.image_url, aspect_ratio: body.aspect_ratio,
+      resolution: body.resolution, quality: body.quality,
+    }));
+  } else if (kind === 'video') {
+    ({ endpoint, payload } = buildVideoRequest({
+      model: body.model, prompt: body.prompt, aspect_ratio: body.aspect_ratio,
+      duration: body.duration, resolution: body.resolution, quality: body.quality,
+      mode: body.mode, image_url: body.image_url,
+    }));
+  } else if (kind === 'i2v') {
+    ({ endpoint, payload } = buildI2VRequest({
+      model: body.model, prompt: body.prompt, image_url: body.image_url,
+      aspect_ratio: body.aspect_ratio, duration: body.duration,
+      resolution: body.resolution, quality: body.quality, mode: body.mode, name: body.name,
+    }));
+  } else if (kind === 'lipsync') {
+    ({ endpoint, payload } = buildLipSyncRequest({
+      model: body.model, audio_url: body.audio_url, image_url: body.image_url,
+      video_url: body.video_url, prompt: body.prompt, resolution: body.resolution, seed: body.seed,
+    }));
+  } else {
+    ({ endpoint, payload } = buildImageRequest({
+      model: body.model, prompt: body.prompt, aspect_ratio: body.aspect_ratio,
+      resolution: body.resolution, quality: body.quality, image_url: body.image_url,
+      strength: body.strength, seed: body.seed,
+    }));
+  }
+
   let result;
   try {
-    if (kind === 'i2i') {
-      result = await generateI2I(MUAPI_KEY, {
-        model: body.model,
-        prompt: body.prompt,
-        images_list: body.images_list,
-        image_url: body.image_url,
-        aspect_ratio: body.aspect_ratio,
-        resolution: body.resolution,
-        quality: body.quality,
-      });
-    } else if (kind === 'video') {
-      result = await generateVideo(MUAPI_KEY, {
-        model: body.model,
-        prompt: body.prompt,
-        aspect_ratio: body.aspect_ratio,
-        duration: body.duration,
-        resolution: body.resolution,
-        quality: body.quality,
-        mode: body.mode,
-        image_url: body.image_url,
-      });
-    } else if (kind === 'i2v') {
-      result = await generateI2V(MUAPI_KEY, {
-        model: body.model,
-        prompt: body.prompt,
-        image_url: body.image_url,
-        aspect_ratio: body.aspect_ratio,
-        duration: body.duration,
-        resolution: body.resolution,
-        quality: body.quality,
-        mode: body.mode,
-        name: body.name,
-      });
-    } else if (kind === 'lipsync') {
-      result = await processLipSync(MUAPI_KEY, {
-        model: body.model,
-        audio_url: body.audio_url,
-        image_url: body.image_url,
-        video_url: body.video_url,
-        prompt: body.prompt,
-        resolution: body.resolution,
-        seed: body.seed,
-      });
-    } else {
-      result = await generateImage(MUAPI_KEY, {
-        model: body.model,
-        prompt: body.prompt,
-        aspect_ratio: body.aspect_ratio,
-        resolution: body.resolution,
-        quality: body.quality,
-        image_url: body.image_url,
-        strength: body.strength,
-        seed: body.seed,
-      });
-    }
+    result = await submitGeneration(endpoint, payload, MUAPI_KEY);
   } catch (err) {
     refundCredits(user.id, estimate, `estorno — geração falhou: ${err.message}`);
     logGeneration(user.id, body.model, kind, 0, 'failed', null);
     return NextResponse.json({ error: `Falha na geração: ${err.message}` }, { status: 502 });
   }
 
-  const realCharge = actualChargeBRL(result, kind);
-  refundCredits(user.id, estimate, 'estorno da pré-cobrança estimada');
-  try {
-    chargeCredits(user.id, realCharge, `${body.model} — cobrança real`);
-  } catch {
-    // Balance dropped below the real cost between steps — deliver the result
-    // anyway, log the shortfall for reconciliation.
+  if (result.done) {
+    const realCharge = actualChargeBRL(result.raw, kind);
+    refundCredits(user.id, estimate, 'estorno da pré-cobrança estimada');
+    try {
+      chargeCredits(user.id, realCharge, `${body.model} — cobrança real`);
+    } catch {
+      // Balance dropped below the real cost between steps — still deliver
+      // the result the user already paid the estimate for.
+    }
+    logGeneration(user.id, body.model, kind, realCharge, 'completed', result.url);
+    return NextResponse.json({ done: true, url: result.url, charged_brl: realCharge });
   }
-  logGeneration(user.id, body.model, kind, realCharge, 'completed', result.url);
 
-  return NextResponse.json({
-    url: result.url,
-    charged_brl: realCharge,
-  });
+  const jobId = createPendingGeneration(user.id, body.model, kind, result.requestId, estimate);
+  return NextResponse.json({ done: false, job_id: jobId });
 }
