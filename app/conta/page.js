@@ -76,6 +76,7 @@ function ContaContent() {
   return (
     <div className="min-h-screen bg-app-bg px-4 sm:px-6 py-8">
       <div className="max-w-5xl mx-auto">
+        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-white font-black text-2xl">Minha Conta</h1>
           <button
@@ -86,6 +87,7 @@ function ContaContent() {
           </button>
         </div>
 
+        {/* Tabs */}
         <div className="flex items-center gap-2 mb-8 border-b border-white/10">
           {TABS.map((t) => (
             <button
@@ -102,6 +104,7 @@ function ContaContent() {
           ))}
         </div>
 
+        {/* Perfil */}
         {tab === 'perfil' && user && (
           <div className="max-w-md">
             <div className="bg-card-bg border border-white/10 rounded-2xl p-6 mb-4">
@@ -119,6 +122,7 @@ function ContaContent() {
           </div>
         )}
 
+        {/* Projetos */}
         {tab === 'projetos' && (
           <div>
             <div className="flex items-center gap-2 mb-6">
@@ -181,7 +185,7 @@ function ContaContent() {
                       ) : (
                         <img src={item.output_url} alt={item.model} className="w-full h-full object-cover" />
                       )}
-                      
+                      <a
                         href={item.output_url}
                         download
                         target="_blank"
@@ -208,6 +212,7 @@ function ContaContent() {
           </div>
         )}
 
+        {/* Assinatura */}
         {tab === 'assinatura' && (
           <div className="max-w-md">
             <div className="bg-card-bg border border-white/10 rounded-2xl p-6">
