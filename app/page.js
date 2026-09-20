@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import AuthModal from '../components/AuthModal';
 import SubscriptionModal from '../components/SubscriptionModal';
 import TopUpModal from '../components/TopUpModal';
+import { ImageStudio, VideoStudio, LipSyncStudio, CinemaStudio } from 'studio';
 
 const FEATURES = [
   {
@@ -78,7 +79,6 @@ const STEPS = [
 
 export default function LandingPage() {
   const router = useRouter();
-  const [prompt, setPrompt] = useState('');
   const [selectedType, setSelectedType] = useState('image');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authModal, setAuthModal] = useState(null); // null | 'login' | 'signup'
@@ -100,11 +100,6 @@ export default function LandingPage() {
     } else {
       setAuthModal(mode);
     }
-  };
-
-  const startGenerating = (e) => {
-    e.preventDefault();
-    goToStudioOrAuth('signup');
   };
 
   const handleAuthenticated = (user, mode) => {
@@ -144,47 +139,49 @@ export default function LandingPage() {
             imagem, vídeo, sincronia labial ou efeitos de cinema, tudo num só lugar,
             sem precisar de software caro.
           </p>
-
-          {/* Prompt starter */}
-          <form onSubmit={startGenerating} className="w-full max-w-xl">
-            {/* Type tabs */}
-            <div className="flex items-center gap-2 mb-3 flex-wrap">
-              {FEATURES.map((f) => (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => setSelectedType(f.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                    selectedType === f.id
-                      ? 'bg-primary text-black'
-                      : 'bg-card-bg text-white/50 hover:text-white border border-white/10'
-                  }`}
-                >
-                  {f.title}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3 bg-card-bg border border-white/10 rounded-2xl p-2 sm:p-2">
-              <input
-                type="text"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder={FEATURES.find((f) => f.id === selectedType)?.placeholder}
-                className="flex-1 bg-transparent px-4 py-3 text-sm md:text-base text-white placeholder:text-white/30 outline-none"
-              />
-              <button
-                type="submit"
-                className="bg-primary hover:opacity-90 text-black font-bold text-sm px-6 py-3 rounded-xl transition-opacity shadow-glow"
-              >
-                Gerar
-              </button>
-            </div>
-            <p className="text-white/30 text-xs mt-3">
-              Grátis pra testar, sem cartão de crédito
-            </p>
-          </form>
         </div>
+
+        {/* Type tabs */}
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
+          {FEATURES.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => setSelectedType(f.id)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs md:text-sm font-semibold transition-colors ${
+                selectedType === f.id
+                  ? 'bg-primary text-black'
+                  : 'bg-card-bg text-white/50 hover:text-white border border-white/10'
+              }`}
+            >
+              {f.title}
+            </button>
+          ))}
+        </div>
+
+        {/* Live studio preview — the real controls (model, duração, resolução
+            etc.), so people see exactly what they'll get. Logged-out
+            visitors can look and click around, but any click opens the
+            signup modal instead of actually generating — the studios
+            underneath still require a real session to call /api/generate. */}
+        <div className="relative w-full rounded-3xl overflow-hidden border border-white/10 bg-black" style={{ height: '680px' }}>
+          {selectedType === 'image' && <ImageStudio apiKey="preview" />}
+          {selectedType === 'video' && <VideoStudio apiKey="preview" />}
+          {selectedType === 'lipsync' && <LipSyncStudio apiKey="preview" />}
+          {selectedType === 'cinema' && <CinemaStudio apiKey="preview" />}
+
+          {!isLoggedIn && (
+            <button
+              type="button"
+              onClick={() => goToStudioOrAuth('signup')}
+              className="absolute inset-0 z-50 cursor-pointer bg-transparent"
+              aria-label="Criar conta para gerar"
+            />
+          )}
+        </div>
+        <p className="text-white/30 text-xs mt-3">
+          Grátis pra testar, sem cartão de crédito
+        </p>
       </section>
 
       {/* Features */}
