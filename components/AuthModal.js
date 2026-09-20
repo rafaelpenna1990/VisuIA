@@ -51,9 +51,7 @@ export default function AuthModal({ initialMode = 'login', onAuthenticated, onCl
           ✕
         </button>
 
-        <h1 className="font-black text-xl mb-1">
-          <span className="text-primary">Visu</span><span className="text-accent">IA</span>
-        </h1>
+        <img src="/logo.png" alt="VisuIA" className="h-10 w-auto mb-2" />
         <p className="text-white/50 text-sm mb-6">
           {mode === 'login' ? 'Entre na sua conta.' : 'Crie sua conta para começar.'}
         </p>
