@@ -48,7 +48,7 @@ function MediaPickerButton({ accept, label, icon, onUpload, onClear, uploadState
             type="button"
             title={
                 uploadState === UPLOAD_STATE.READY
-                    ? `${fileName} — clique para remover`
+                    ? `${fileName}, clique para remover`
                     : `Enviar arquivo de ${label.toLowerCase()}`
             }
             onClick={handleClick}
@@ -147,7 +147,7 @@ function Dropdown({ isOpen, items, selectedId, onSelect, onClose, anchorRef }) {
         <div
             ref={dropRef}
             style={{ position: 'fixed', zIndex: 100, minWidth: 200, overflowY: 'auto', ...style }}
-            className="bg-[#150E1C] border border-white/10 rounded-2xl shadow-3xl p-2 custom-scrollbar"
+            className="bg-[#0F1119] border border-white/10 rounded-2xl shadow-3xl p-2 custom-scrollbar"
         >
             {items.map((item) => (
                 <button
@@ -509,10 +509,10 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
             {view === 'input' && (
                 <>
                     {/* Hero */}
-                    <div className="flex flex-col items-center mb-10 md:mb-20 animate-fade-in-up transition-all duration-700">
-                        <div className="mb-10 relative group">
+                    <div className="flex flex-col items-center mb-6 md:mb-10 animate-fade-in-up transition-all duration-700">
+                        <div className="mb-5 relative group">
                             <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full opacity-40 group-hover:opacity-70 transition-opacity duration-1000" />
-                            <div className="relative w-24 h-24 md:w-32 md:h-32 bg-teal-900/40 rounded-3xl flex items-center justify-center border border-white/5 overflow-hidden">
+                            <div className="relative w-20 h-20 md:w-28 md:h-28 bg-teal-900/40 rounded-3xl flex items-center justify-center border border-white/5 overflow-hidden">
                                 <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-primary opacity-20 absolute -right-4 -bottom-4">
                                     <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
                                     <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
@@ -530,7 +530,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
                                 <div className="absolute top-4 right-4 text-primary animate-pulse">🎙</div>
                             </div>
                         </div>
-                        <h1 className="text-2xl sm:text-4xl md:text-7xl font-black text-white tracking-widest uppercase mb-4 selection:bg-primary selection:text-black text-center px-4">
+                        <h1 className="text-xl sm:text-2xl md:text-4xl font-black text-white tracking-normal uppercase mb-2 selection:bg-primary selection:text-black text-center px-4">
                             Sincronia Labial
                         </h1>
                         <p className="text-secondary text-sm font-medium tracking-wide opacity-60">
@@ -540,7 +540,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
 
                     {/* Input bar */}
                     <div className="w-full max-w-4xl relative z-40 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                        <div className="w-full bg-[#150E1C]/90 backdrop-blur-xl border border-white/10 rounded-[1.5rem] md:rounded-[2.5rem] p-3 md:p-5 flex flex-col gap-3 md:gap-5 shadow-3xl">
+                        <div className="w-full bg-[#0F1119]/90 backdrop-blur-xl border border-white/10 rounded-[1.5rem] md:rounded-[2.5rem] p-3 md:p-5 flex flex-col gap-3 md:gap-5 shadow-3xl">
 
                             {/* Mode toggle row */}
                             <div className="flex items-center gap-2 px-2">

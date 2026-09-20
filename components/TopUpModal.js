@@ -32,7 +32,7 @@ export default function TopUpModal({ onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-      <div className="bg-[#150E1C] border border-white/10 rounded-2xl p-8 w-full max-w-sm">
+      <div className="bg-[#0F1119] border border-white/10 rounded-2xl p-8 w-full max-w-sm">
         <h2 className="text-white font-bold text-xl mb-2">Adicionar VisuTokens</h2>
         <p className="text-white/50 text-sm mb-6">Pagamento seguro via Stripe.</p>
 
@@ -42,7 +42,7 @@ export default function TopUpModal({ onClose }) {
               key={p.id}
               onClick={() => buy(p.id)}
               disabled={loadingPack !== null}
-              className="w-full py-3 rounded-lg bg-[#FF5A36] text-black font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex flex-col items-center leading-tight"
+              className="w-full py-3 rounded-lg bg-[#FF9500] text-black font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex flex-col items-center leading-tight"
             >
               {loadingPack === p.id ? (
                 'Redirecionando…'

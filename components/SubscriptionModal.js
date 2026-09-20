@@ -3,6 +3,10 @@
 import { useState } from 'react';
 import { PLANS, TRIAL_BONUS_TOKENS } from '../lib/plans.js';
 
+// Shown right after a first-time signup (see page.js) — same popup
+// pattern as AuthModal. The person either starts a plan's 7-day free
+// trial (getting the flat bonus immediately) or buys a token package
+// outright with onBuyWithoutSubscription — there's no free "skip".
 export default function SubscriptionModal({ onClose, onBuyWithoutSubscription }) {
   const [subscribing, setSubscribing] = useState(null);
   const [error, setError] = useState(null);
@@ -28,7 +32,7 @@ export default function SubscriptionModal({ onClose, onBuyWithoutSubscription })
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4 py-8 overflow-y-auto">
-      <div className="bg-[#150E1C] border border-primary/30 rounded-2xl p-6 sm:p-8 w-full max-w-2xl relative shadow-glow">
+      <div className="bg-[#0F1119] border border-primary/30 rounded-2xl p-6 sm:p-8 w-full max-w-2xl relative shadow-glow">
         <button
           type="button"
           onClick={onClose}

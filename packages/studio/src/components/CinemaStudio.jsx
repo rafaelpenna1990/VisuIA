@@ -128,7 +128,7 @@ function Dropdown({ items, selected, onSelect, triggerRef, onClose }) {
     return (
         <div
             ref={menuRef}
-            className="custom-dropdown fixed bg-[#150E1C] border border-white/10 rounded-xl py-1 shadow-2xl z-50 flex flex-col min-w-[100px] animate-fade-in"
+            className="custom-dropdown fixed bg-[#0F1119] border border-white/10 rounded-xl py-1 shadow-2xl z-50 flex flex-col min-w-[100px] animate-fade-in"
             style={{ bottom: position.bottom, left: position.left }}
         >
             {items.map(item => (
@@ -281,11 +281,11 @@ function ScrollColumn({ title, items, columnKey, value, onChange }) {
             <div className="mb-3 text-[9px] font-black text-white/40 uppercase tracking-[0.2em] text-center">
                 {title}
             </div>
-            <div className="relative overflow-hidden w-full h-[40vh] md:h-[320px] bg-[#150E1C]/80 rounded-[2rem] border border-white/5 shadow-2xl backdrop-blur-xl transition-transform duration-300 hover:scale-[1.02] hover:border-white/10">
+            <div className="relative overflow-hidden w-full h-[40vh] md:h-[320px] bg-[#0F1119]/80 rounded-[2rem] border border-white/5 shadow-2xl backdrop-blur-xl transition-transform duration-300 hover:scale-[1.02] hover:border-white/10">
                 {/* Top mask */}
-                <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#150E1C] via-[#150E1C]/80 to-transparent z-20 pointer-events-none rounded-t-[2rem]" />
+                <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#0F1119] via-[#0F1119]/80 to-transparent z-20 pointer-events-none rounded-t-[2rem]" />
                 {/* Bottom mask */}
-                <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#150E1C] via-[#150E1C]/80 to-transparent z-20 pointer-events-none rounded-b-[2rem]" />
+                <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#0F1119] via-[#0F1119]/80 to-transparent z-20 pointer-events-none rounded-b-[2rem]" />
                 {/* Center glow */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4/5 h-[80px] bg-primary/5 blur-xl rounded-full pointer-events-none z-0" />
 
@@ -658,10 +658,10 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
             {!showCanvas && (
                 <>
                     {/* Hero */}
-                    <div className="flex flex-col items-center mb-10 md:mb-20 animate-fade-in-up transition-all duration-700">
-                        <div className="mb-10 relative group">
+                    <div className="flex flex-col items-center mb-6 md:mb-10 animate-fade-in-up transition-all duration-700">
+                        <div className="mb-5 relative group">
                             <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full opacity-40 group-hover:opacity-70 transition-opacity duration-1000" />
-                            <div className="relative w-24 h-24 md:w-32 md:h-32 bg-teal-900/40 rounded-3xl flex items-center justify-center border border-white/5 overflow-hidden">
+                            <div className="relative w-20 h-20 md:w-28 md:h-28 bg-teal-900/40 rounded-3xl flex items-center justify-center border border-white/5 overflow-hidden">
                                 <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-primary opacity-20 absolute -right-4 -bottom-4">
                                     <path d="M23 7l-7 5 7 5V7z" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
                                 </svg>
@@ -673,7 +673,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                                 <div className="absolute top-4 right-4 text-primary animate-pulse">✨</div>
                             </div>
                         </div>
-                        <h1 className="text-2xl sm:text-4xl md:text-7xl font-black text-white tracking-widest uppercase mb-4 selection:bg-primary selection:text-black text-center px-4">
+                        <h1 className="text-xl sm:text-2xl md:text-4xl font-black text-white tracking-normal uppercase mb-2 selection:bg-primary selection:text-black text-center px-4">
                             Estúdio Cinema
                         </h1>
                         <p className="text-secondary text-sm font-medium tracking-wide opacity-60 text-center px-4">
@@ -683,7 +683,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
 
                     {/* Prompt Bar */}
                     <div className="w-full max-w-4xl relative z-40 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                        <div className="w-full bg-[#150E1C]/90 backdrop-blur-xl border border-white/10 rounded-[1.5rem] md:rounded-[2.5rem] p-3 md:p-5 flex flex-col gap-3 md:gap-5 shadow-3xl">
+                        <div className="w-full bg-[#0F1119]/90 backdrop-blur-xl border border-white/10 rounded-[1.5rem] md:rounded-[2.5rem] p-3 md:p-5 flex flex-col gap-3 md:gap-5 shadow-3xl">
 
                             {/* Input row */}
                             <div className="flex items-start gap-5 px-2">

@@ -20,7 +20,7 @@ function NavDropdown({ label, isOpen, onToggle, children, panelClassName }) {
         </svg>
       </button>
       {isOpen && (
-        <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-3 bg-[#150E1C] border border-white/10 rounded-2xl shadow-3xl z-50 ${panelClassName || 'w-80'}`}>
+        <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-3 bg-[#0F1119] border border-white/10 rounded-2xl shadow-3xl z-50 ${panelClassName || 'w-80'}`}>
           {children}
         </div>
       )}
@@ -59,7 +59,7 @@ export default function SiteHeader({ goToStudioOrAuth }) {
     <header ref={navRef} className="flex items-center justify-between px-6 md:px-10 py-5 max-w-6xl mx-auto relative">
       <div className="flex items-center gap-8">
         <button onClick={() => router.push('/')} className="font-black text-lg tracking-wider uppercase">
-          VisuIA
+          <span className="text-primary">Visu</span><span className="text-accent">IA</span>
         </button>
 
         <nav className="hidden md:flex items-center gap-6">

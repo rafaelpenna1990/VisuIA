@@ -40,7 +40,7 @@ export default function AuthModal({ initialMode = 'login', onAuthenticated, onCl
       <form
         onSubmit={submit}
         onClick={(e) => e.stopPropagation()}
-        className="bg-[#150E1C] border border-white/10 rounded-2xl p-8 w-full max-w-sm relative"
+        className="bg-[#0F1119] border border-white/10 rounded-2xl p-8 w-full max-w-sm relative"
       >
         <button
           type="button"
@@ -51,7 +51,9 @@ export default function AuthModal({ initialMode = 'login', onAuthenticated, onCl
           ✕
         </button>
 
-        <h1 className="text-white font-black text-xl mb-1">VisuIA</h1>
+        <h1 className="font-black text-xl mb-1">
+          <span className="text-primary">Visu</span><span className="text-accent">IA</span>
+        </h1>
         <p className="text-white/50 text-sm mb-6">
           {mode === 'login' ? 'Entre na sua conta.' : 'Crie sua conta para começar.'}
         </p>
@@ -71,6 +73,16 @@ export default function AuthModal({ initialMode = 'login', onAuthenticated, onCl
           Continuar com Google
         </a>
 
+        <a
+          href="/api/auth/facebook"
+          className="w-full mb-4 py-2.5 rounded-lg bg-[#1877F2] text-white font-semibold text-sm flex items-center justify-center gap-2.5 hover:opacity-90 transition-opacity"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+          </svg>
+          Continuar com Facebook
+        </a>
+
         <div className="flex items-center gap-3 mb-4">
           <div className="flex-1 h-px bg-white/10" />
           <span className="text-white/30 text-[10px] uppercase tracking-wider">ou</span>
@@ -84,7 +96,7 @@ export default function AuthModal({ initialMode = 'login', onAuthenticated, onCl
           autoFocus
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full mb-4 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-[#FF5A36]/50"
+          className="w-full mb-4 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-[#FF9500]/50"
         />
 
         <label className="block text-white/60 text-xs mb-1">Senha</label>
@@ -94,7 +106,7 @@ export default function AuthModal({ initialMode = 'login', onAuthenticated, onCl
           minLength={8}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full mb-4 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-[#FF5A36]/50"
+          className="w-full mb-4 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-[#FF9500]/50"
         />
 
         {error && <p className="text-red-400 text-xs mb-4">{error}</p>}
@@ -102,7 +114,7 @@ export default function AuthModal({ initialMode = 'login', onAuthenticated, onCl
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-2 rounded-lg bg-[#FF5A36] text-black font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="w-full py-2 rounded-lg bg-[#FF9500] text-black font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {loading ? 'Aguarde…' : mode === 'login' ? 'Entrar' : 'Criar conta'}
         </button>

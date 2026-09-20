@@ -104,8 +104,8 @@ export default function StandaloneShell() {
   }, [refreshUser]);
 
   if (!hasMounted) return (
-    <div className="min-h-screen bg-[#0D0810] flex items-center justify-center">
-      <div className="animate-spin text-[#FF5A36] text-3xl">◌</div>
+    <div className="min-h-screen bg-[#080910] flex items-center justify-center">
+      <div className="animate-spin text-[#FF9500] text-3xl">◌</div>
     </div>
   );
 
@@ -119,11 +119,13 @@ export default function StandaloneShell() {
   const placeholderKey = 'server-managed';
 
   return (
-    <div className="h-screen bg-[#0D0810] flex overflow-hidden">
+    <div className="h-screen bg-[#080910] flex overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-60 shrink-0 bg-[#150E1C] border-r border-white/5 flex flex-col py-6 px-4">
+      <aside className="w-60 shrink-0 bg-[#0F1119] border-r border-white/5 flex flex-col py-6 px-4">
         <div className="mb-8 px-2">
-          <span className="text-white font-black text-lg tracking-wider uppercase">VisuIA</span>
+          <span className="text-white font-black text-lg tracking-wider uppercase">
+            <span className="text-primary">Visu</span><span className="text-accent">IA</span>
+          </span>
           {resuming && (
             <div className="text-[10px] text-white/40 flex items-center gap-1.5 mt-1">
               <span className="animate-spin inline-block">◌</span>
@@ -142,7 +144,7 @@ export default function StandaloneShell() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors text-left ${
                 activeTab === tab.id
-                  ? 'bg-[#FF5A36] text-black'
+                  ? 'bg-[#FF9500] text-black'
                   : 'text-white/60 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -165,7 +167,7 @@ export default function StandaloneShell() {
           </button>
           <button
             onClick={() => setShowTopUp(true)}
-            className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold text-[#FF5A36] bg-[#FF5A36]/10 hover:bg-[#FF5A36]/20 transition-colors"
+            className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold text-[#FF9500] bg-[#FF9500]/10 hover:bg-[#FF9500]/20 transition-colors"
           >
             {formatTokens(user.credits_balance)}
           </button>
