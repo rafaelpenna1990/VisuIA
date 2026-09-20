@@ -51,9 +51,11 @@ export default function CriarTypePage({ params }) {
               onAuthRequired={auth.isLoggedIn ? undefined : () => auth.goToStudioOrAuth('signup')}
             />
           </div>
-          <p className="text-white/30 text-xs mt-3 mb-6">
-            Grátis pra testar, sem cartão de crédito
-          </p>
+          <div className="flex items-center gap-2 mt-3 mb-6">
+            <span className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 text-primary text-xs font-bold px-3 py-1.5 rounded-full">
+              🎁 7 dias grátis + 500 VisuTokens de bônus só por assinar
+            </span>
+          </div>
 
           <ExampleCarousel slug={feature.slug} />
         </section>

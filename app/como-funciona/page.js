@@ -37,9 +37,14 @@ export default function ComoFuncionaPage() {
           ))}
         </div>
 
+        <div className="flex items-center gap-2 mt-12 mb-4">
+          <span className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 text-primary text-xs font-bold px-3 py-1.5 rounded-full">
+            🎁 7 dias grátis + 500 VisuTokens de bônus
+          </span>
+        </div>
         <button
           onClick={() => auth.goToStudioOrAuth('signup')}
-          className="mt-12 bg-primary hover:opacity-90 text-black font-bold text-sm px-8 py-3.5 rounded-xl transition-opacity shadow-glow"
+          className="bg-primary hover:opacity-90 text-black font-bold text-sm px-8 py-3.5 rounded-xl transition-opacity shadow-glow"
         >
           Criar conta grátis
         </button>

@@ -62,9 +62,11 @@ export default function LandingPage() {
           {selectedType === 'lipsync' && <LipSyncStudio apiKey="preview" onAuthRequired={auth.isLoggedIn ? undefined : () => auth.goToStudioOrAuth('signup')} />}
           {selectedType === 'cinema' && <CinemaStudio apiKey="preview" onAuthRequired={auth.isLoggedIn ? undefined : () => auth.goToStudioOrAuth('signup')} />}
         </div>
-        <p className="text-white/30 text-xs mt-3 mb-6">
-          Grátis pra testar, sem cartão de crédito
-        </p>
+        <div className="flex items-center gap-2 mt-3 mb-6">
+          <span className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 text-primary text-xs font-bold px-3 py-1.5 rounded-full">
+            🎁 7 dias grátis + 500 VisuTokens de bônus só por assinar
+          </span>
+        </div>
 
         <ExampleCarousel slug={currentSlug} />
       </section>
@@ -73,6 +75,9 @@ export default function LandingPage() {
       <section className="px-6 md:px-10 py-16 border-t border-white/5">
         <div className="max-w-6xl mx-auto bg-panel-bg border border-white/10 rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
+            <span className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 text-primary text-xs font-bold px-3 py-1.5 rounded-full mb-3">
+              🎁 Oferta de boas-vindas: 7 dias grátis + 500 VisuTokens
+            </span>
             <h2 className="text-xl md:text-2xl font-black mb-2">Pague só pelo que gerar</h2>
             <p className="text-white/50 text-sm md:text-base max-w-md">
               Sem mensalidade obrigatória. Compra VisuTokens quando precisar, e cada geração
@@ -83,7 +88,7 @@ export default function LandingPage() {
             onClick={() => auth.goToStudioOrAuth('signup')}
             className="shrink-0 bg-primary hover:opacity-90 text-black font-bold text-sm px-8 py-3.5 rounded-xl transition-opacity shadow-glow"
           >
-            Criar conta grátis
+            Começar grátis agora
           </button>
         </div>
       </section>
