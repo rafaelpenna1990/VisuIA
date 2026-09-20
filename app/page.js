@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import AuthModal from '../components/AuthModal';
 import SubscriptionModal from '../components/SubscriptionModal';
 import TopUpModal from '../components/TopUpModal';
-import { ImageStudio, VideoStudio, LipSyncStudio, CinemaStudio } from 'studio';
 
 const FEATURES = [
   {
@@ -142,12 +141,20 @@ export default function LandingPage() {
       {/* Header */}
       <header className="flex items-center justify-between px-6 md:px-10 py-5 max-w-6xl mx-auto">
         <span className="font-black text-lg tracking-wider uppercase">VisuIA</span>
-        <button
-          onClick={() => goToStudioOrAuth('login')}
-          className="text-sm font-semibold text-white/70 hover:text-white transition-colors"
-        >
-          Entrar
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => goToStudioOrAuth('login')}
+            className="text-sm font-semibold text-white/70 hover:text-white transition-colors px-2"
+          >
+            Entrar
+          </button>
+          <button
+            onClick={() => goToStudioOrAuth('signup')}
+            className="bg-primary hover:opacity-90 text-black font-bold text-sm px-5 py-2 rounded-full transition-opacity"
+          >
+            Cadastrar
+          </button>
+        </div>
       </header>
 
       {/* Hero */}
@@ -163,8 +170,9 @@ export default function LandingPage() {
           </p>
         </div>
 
-        {/* Type tabs */}
-        <div className="flex items-center gap-2 mb-4 flex-wrap">
+        {/* Type tabs — pick what you're browsing; drives both the studio
+            tab you land on after signup and the model showcase below. */}
+        <div className="flex items-center gap-2 mb-6 flex-wrap">
           {FEATURES.map((f) => (
             <button
               key={f.id}
@@ -181,28 +189,21 @@ export default function LandingPage() {
           ))}
         </div>
 
-        {/* Live studio preview — the real controls (model, duração, resolução
-            etc.), so people see exactly what they'll get. Logged-out
-            visitors can look and click around, but any click opens the
-            signup modal instead of actually generating — the studios
-            underneath still require a real session to call /api/generate. */}
-        <div
-          className="relative w-full rounded-3xl overflow-hidden border border-white/10 bg-black"
-          style={{ height: 'min(78vh, 820px)', minHeight: '560px' }}
-        >
-          {selectedType === 'image' && <ImageStudio apiKey="preview" />}
-          {selectedType === 'video' && <VideoStudio apiKey="preview" />}
-          {selectedType === 'lipsync' && <LipSyncStudio apiKey="preview" />}
-          {selectedType === 'cinema' && <CinemaStudio apiKey="preview" />}
-
-          {!isLoggedIn && (
-            <button
-              type="button"
-              onClick={() => goToStudioOrAuth('signup')}
-              className="absolute inset-0 z-50 cursor-pointer bg-transparent"
-              aria-label="Criar conta para gerar"
-            />
-          )}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            type="button"
+            onClick={() => goToStudioOrAuth('signup')}
+            className="bg-primary hover:opacity-90 text-black font-bold text-sm md:text-base px-8 py-3.5 rounded-xl transition-opacity shadow-glow"
+          >
+            Começar grátis agora
+          </button>
+          <button
+            type="button"
+            onClick={() => goToStudioOrAuth('login')}
+            className="border border-white/15 hover:border-white/30 text-white font-semibold text-sm md:text-base px-8 py-3.5 rounded-xl transition-colors"
+          >
+            Já tenho conta
+          </button>
         </div>
         <p className="text-white/30 text-xs mt-3">
           Grátis pra testar, sem cartão de crédito

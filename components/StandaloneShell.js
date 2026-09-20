@@ -5,14 +5,47 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ImageStudio, VideoStudio, LipSyncStudio, CinemaStudio } from 'studio';
 import AuthGate from './AuthGate';
 import TopUpModal from './TopUpModal';
-import { formatTokensCompact } from '../lib/tokens.js';
+import { formatTokens } from '../lib/tokens.js';
 import { resumePendingJob, getPendingJob } from 'studio/src/api-client.js';
 
 const TABS = [
-  { id: 'image',   label: 'Imagem' },
-  { id: 'video',   label: 'Vídeo' },
-  { id: 'lipsync', label: 'Sincronia Labial' },
-  { id: 'cinema',  label: 'Cinema' },
+  {
+    id: 'image', label: 'Imagem',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+        <polyline points="21 15 16 10 5 21" />
+      </svg>
+    ),
+  },
+  {
+    id: 'video', label: 'Vídeo',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <polygon points="23 7 16 12 23 17 23 7" />
+        <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+      </svg>
+    ),
+  },
+  {
+    id: 'lipsync', label: 'Sincronia Labial',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+      </svg>
+    ),
+  },
+  {
+    id: 'cinema', label: 'Cinema',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M23 7l-7 5 7 5V7z" />
+        <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+      </svg>
+    ),
+  },
 ];
 
 export default function StandaloneShell() {
@@ -86,62 +119,71 @@ export default function StandaloneShell() {
   const placeholderKey = 'server-managed';
 
   return (
-    <div className="h-screen bg-[#0D0810] flex flex-col overflow-hidden">
-      {/* Header */}
-      <header className="flex-shrink-0 flex items-center justify-between px-4 pt-4 pb-0 border-b border-white/5">
-        <div className="flex items-center gap-3">
-          <span className="text-white font-black text-lg tracking-wider uppercase">
-            VisuIA
-          </span>
+    <div className="h-screen bg-[#0D0810] flex overflow-hidden">
+      {/* Sidebar */}
+      <aside className="w-60 shrink-0 bg-[#150E1C] border-r border-white/5 flex flex-col py-6 px-4">
+        <div className="mb-8 px-2">
+          <span className="text-white font-black text-lg tracking-wider uppercase">VisuIA</span>
           {resuming && (
-            <span className="text-[10px] text-white/40 flex items-center gap-1.5">
+            <div className="text-[10px] text-white/40 flex items-center gap-1.5 mt-1">
               <span className="animate-spin inline-block">◌</span>
-              Retomando geração anterior…
-            </span>
+              Retomando geração…
+            </div>
           )}
         </div>
 
-        {/* Tabs */}
-        <nav className="flex items-center gap-1">
+        <div className="text-[10px] font-bold text-white/30 uppercase tracking-widest px-2 mb-2">
+          Estúdios
+        </div>
+        <nav className="flex flex-col gap-1 mb-6">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors text-left ${
                 activeTab === tab.id
                   ? 'bg-[#FF5A36] text-black'
-                  : 'text-white/50 hover:text-white'
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
               }`}
             >
+              {tab.icon}
               {tab.label}
             </button>
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="mt-auto flex flex-col gap-1">
           <button
             onClick={() => router.push('/conta?tab=projetos')}
-            className="text-white/40 hover:text-white text-sm transition-colors"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white/60 hover:text-white hover:bg-white/5 transition-colors text-left"
           >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+            </svg>
             Meus Projetos
           </button>
           <button
             onClick={() => setShowTopUp(true)}
-            className="text-xs font-semibold px-3 py-1.5 rounded-full bg-[#FF5A36]/10 text-[#FF5A36] hover:bg-[#FF5A36]/20 transition-colors"
+            className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold text-[#FF5A36] bg-[#FF5A36]/10 hover:bg-[#FF5A36]/20 transition-colors"
           >
-            {formatTokensCompact(user.credits_balance)}
+            {formatTokens(user.credits_balance)}
           </button>
           <button
             onClick={() => router.push('/conta')}
-            className="text-white/40 hover:text-white text-sm transition-colors"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white/60 hover:text-white hover:bg-white/5 transition-colors text-left"
           >
-            ⚙ Conta
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09A1.65 1.65 0 0015 4.6a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+            </svg>
+            Conta
           </button>
         </div>
-      </header>
+      </aside>
 
       {/* Studio Content */}
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         {activeTab === 'image'   && <ImageStudio   apiKey={placeholderKey} onGenerationComplete={refreshUser} />}
         {activeTab === 'video'   && <VideoStudio   apiKey={placeholderKey} />}
         {activeTab === 'lipsync' && <LipSyncStudio apiKey={placeholderKey} />}
