@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { formatTokens } from '../../lib/tokens.js';
 import { usePromoText } from '../../lib/usePromoText.js';
+import TopUpModal from '../../components/TopUpModal';
 
 const TABS = [
   { id: 'perfil', label: 'Perfil' },
@@ -41,6 +42,7 @@ function ContaContent() {
   const [subscription, setSubscription] = useState(undefined); // undefined = loading, null = none
   const [plans, setPlans] = useState([]);
   const [subscribing, setSubscribing] = useState(null);
+  const [showTopUp, setShowTopUp] = useState(false);
   const [canceling, setCanceling] = useState(false);
   const [endingTrial, setEndingTrial] = useState(false);
 
@@ -296,6 +298,17 @@ function ContaContent() {
               </div>
             )}
 
+            {subscription !== undefined && (
+              <div className="flex justify-end mb-4">
+                <button
+                  onClick={() => setShowTopUp(true)}
+                  className="text-sm font-semibold text-primary hover:opacity-80 transition-opacity border border-primary/30 rounded-full px-4 py-2"
+                >
+                  Comprar VisuTokens avulsos
+                </button>
+              </div>
+            )}
+
             {subscription === null && (
               <div>
                 <div className="flex items-center gap-2 mb-4">
@@ -378,6 +391,8 @@ function ContaContent() {
           </div>
         )}
       </div>
+
+      {showTopUp && <TopUpModal onClose={() => setShowTopUp(false)} />}
     </div>
   );
 }
