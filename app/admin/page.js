@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Logo from '../../components/Logo';
 
 const CATEGORY_SLUGS = [
   { slug: 'imagem', label: 'Imagem' },
@@ -439,7 +440,7 @@ function AppearanceTab({ adminKey }) {
         <p className="text-white/40 text-xs mb-4">PNG, JPG ou WEBP. Aparece no cabeçalho, no menu lateral e na tela de login.</p>
         <div className="flex items-center gap-4 mb-4">
           <div className="w-20 h-20 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
-            <img src={`/api/assets/logo.png?v=${version}`} alt="Logo atual" className="max-w-full max-h-full object-contain" />
+            <Logo version={version} className="max-w-full max-h-full object-contain" />
           </div>
           <p className="text-white/30 text-xs">Prévia de como está agora</p>
         </div>

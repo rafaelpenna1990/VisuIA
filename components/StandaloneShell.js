@@ -7,6 +7,7 @@ import AuthGate from './AuthGate';
 import TopUpModal from './TopUpModal';
 import { formatTokens } from '../lib/tokens.js';
 import { useAssetsVersion } from '../lib/useAssetsVersion.js';
+import Logo from './Logo';
 import { resumePendingJob, getPendingJob } from 'studio/src/api-client.js';
 
 const TABS = [
@@ -126,7 +127,7 @@ export default function StandaloneShell() {
       <aside className="w-60 shrink-0 bg-[#0F1119] border-r border-white/5 flex flex-col py-6 px-4">
         <div className="mb-8 px-2">
           <button onClick={() => router.push('/')} className="block">
-            <img src={`/api/assets/logo.png?v=${assetsVersion}`} alt="VisuIA" className="h-60 w-auto max-w-full" />
+            <Logo version={assetsVersion} className="h-60 w-auto max-w-full" />
           </button>
           {resuming && (
             <div className="text-[10px] text-white/40 flex items-center gap-1.5 mt-1">

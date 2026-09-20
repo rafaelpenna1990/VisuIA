@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAssetsVersion } from '../lib/useAssetsVersion.js';
+import Logo from './Logo';
 
 export default function AuthGate({ onAuthenticated }) {
   const assetsVersion = useAssetsVersion();
@@ -37,7 +38,7 @@ export default function AuthGate({ onAuthenticated }) {
         onSubmit={submit}
         className="bg-[#0F1119] border border-white/10 rounded-2xl p-8 w-full max-w-sm"
       >
-        <img src={`/api/assets/logo.png?v=${assetsVersion}`} alt="VisuIA" className="h-96 w-auto max-w-full mb-2" />
+        <Logo version={assetsVersion} className="h-96 w-auto max-w-full mb-2" />
         <p className="text-white/50 text-sm mb-6">
           {mode === 'login' ? 'Entre na sua conta.' : 'Crie sua conta para começar.'}
         </p>

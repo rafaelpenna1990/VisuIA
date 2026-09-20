@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAssetsVersion } from '../lib/useAssetsVersion.js';
+import Logo from './Logo';
 
 // Same login/signup logic as AuthGate.js, but as an overlay instead of a
 // full-page takeover — used on the landing page so clicking "Gerar" (or
@@ -53,7 +54,7 @@ export default function AuthModal({ initialMode = 'login', onAuthenticated, onCl
           ✕
         </button>
 
-        <img src={`/api/assets/logo.png?v=${assetsVersion}`} alt="VisuIA" className="h-96 w-auto max-w-full mb-2" />
+        <Logo version={assetsVersion} className="h-96 w-auto max-w-full mb-2" />
         <p className="text-white/50 text-sm mb-6">
           {mode === 'login' ? 'Entre na sua conta.' : 'Crie sua conta para começar.'}
         </p>

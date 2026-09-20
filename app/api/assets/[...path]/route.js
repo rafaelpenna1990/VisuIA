@@ -38,6 +38,27 @@ export async function GET(request, { params }) {
   try {
     data = fs.readFileSync(filePath);
   } catch {
+    // The exact requested extension isn't in uploads — but if this slot
+    // was customized with a DIFFERENT extension (e.g. the admin replaced
+    // a .jpg photo with an .mp4 video, or uploaded a .jpg logo when
+    // everything requests logo.png), don't silently fall back to the old
+    // public/ placeholder — that would mask the real upload forever.
+    // Only fall back when NOTHING for this slot exists in uploads at all.
+    const dir = path.dirname(filePath);
+    const wantedBase = path.basename(filePath, path.extname(filePath));
+    let customizedElsewhere = false;
+    try {
+      customizedElsewhere = fs.readdirSync(dir).some(
+        (f) => path.basename(f, path.extname(f)) === wantedBase
+      );
+    } catch {
+      // dir doesn't exist yet — nothing uploaded for anything in it.
+    }
+
+    if (customizedElsewhere) {
+      return NextResponse.json({ error: 'Arquivo não encontrado' }, { status: 404 });
+    }
+
     const publicPath = path.join(process.cwd(), 'public', ...segments);
     try {
       data = fs.readFileSync(publicPath);
