@@ -127,16 +127,14 @@ export default function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="px-6 md:px-10 pt-10 md:pt-20 pb-20 max-w-6xl mx-auto">
+      <section className="px-6 md:px-10 pt-6 md:pt-8 pb-20 max-w-6xl mx-auto">
         <div className="max-w-3xl">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black leading-[1.05] tracking-tight mb-6">
-            Sua ideia vira imagem,<br />
-            vídeo ou cena de cinema<br />
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black leading-tight tracking-tight mb-3">
+            Sua ideia vira imagem, vídeo ou cena de cinema{' '}
             <span className="text-primary">em segundos.</span>
           </h1>
-          <p className="text-white/60 text-base md:text-lg leading-relaxed mb-10 max-w-xl">
-            A VisuIA transforma um texto simples em conteúdo visual pronto pra usar:
-            imagem, vídeo, sincronia labial ou efeitos de cinema, tudo num só lugar,
+          <p className="text-white/60 text-sm md:text-base leading-relaxed mb-5 max-w-xl">
+            Escolha abaixo o que você quer criar e já comece a mexer nas opções —
             sem precisar de software caro.
           </p>
         </div>
@@ -164,7 +162,10 @@ export default function LandingPage() {
             visitors can look and click around, but any click opens the
             signup modal instead of actually generating — the studios
             underneath still require a real session to call /api/generate. */}
-        <div className="relative w-full rounded-3xl overflow-hidden border border-white/10 bg-black" style={{ height: '680px' }}>
+        <div
+          className="relative w-full rounded-3xl overflow-hidden border border-white/10 bg-black"
+          style={{ height: 'min(78vh, 820px)', minHeight: '560px' }}
+        >
           {selectedType === 'image' && <ImageStudio apiKey="preview" />}
           {selectedType === 'video' && <VideoStudio apiKey="preview" />}
           {selectedType === 'lipsync' && <LipSyncStudio apiKey="preview" />}
