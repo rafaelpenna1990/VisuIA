@@ -7,8 +7,8 @@ const stripe = new Stripe((process.env.STRIPE_SECRET_KEY || '').trim(), {
   timeout: 20000,
 });
 
-// Fixed top-up packs, priced in R$ (centavos, as Stripe expects) but
-// labeled in VisuTokens for the checkout page (100 VisuTokens = R$1).
+// Fixed top-up packs, priced in R$ (centavos, as Stripe expects).
+// Edit these once you've decided your final pricing from the margin calculator.
 const PACKS = {
   small: { label: '2.000 VisuTokens', amount_cents: 2000 },
   medium: { label: '5.000 VisuTokens', amount_cents: 5000 },
@@ -32,7 +32,8 @@ export async function POST(request) {
   try {
     session = await stripe.checkout.sessions.create({
       mode: 'payment',
-      payment_method_types: ['card'],
+      locale: 'pt-BR',
+      payment_method_types: ['card'], // add 'boleto' or 'pix' here once enabled on your Stripe BR account
       line_items: [{
         price_data: {
           currency: 'brl',

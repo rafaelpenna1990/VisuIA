@@ -25,6 +25,7 @@ export async function POST(request) {
   try {
     session = await stripe.checkout.sessions.create({
       mode: 'subscription',
+      locale: 'pt-BR',
       payment_method_types: ['card'],
       line_items: [{
         price_data: {
