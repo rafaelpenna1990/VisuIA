@@ -1,4 +1,5 @@
 import './globals.css';
+import SupportBubble from '../components/SupportBubble';
 
 export const metadata = {
   title: 'VisuIA — Gere imagens e vídeos com IA',
@@ -16,7 +17,10 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <SupportBubble />
+      </body>
     </html>
   );
 }

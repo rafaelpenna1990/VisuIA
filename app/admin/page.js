@@ -231,6 +231,18 @@ function ConfigTab({ adminKey }) {
             className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
           />
         </div>
+        <div className="mb-4">
+          <label className="block text-xs text-white/50 mb-1">
+            E-mail que recebe as mensagens da bolinha de suporte
+          </label>
+          <input
+            type="email"
+            value={settings.support_email || ''}
+            onChange={(e) => setSettings({ ...settings, support_email: e.target.value })}
+            placeholder="seuemail@exemplo.com"
+            className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
+          />
+        </div>
         <p className="text-white/30 text-xs mb-4">
           Essas mudanças valem na hora, sem precisar reiniciar o site.
         </p>
