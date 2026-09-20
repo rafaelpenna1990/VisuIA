@@ -1,19 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthModal from '../components/AuthModal';
 import SubscriptionModal from '../components/SubscriptionModal';
 import TopUpModal from '../components/TopUpModal';
+import { ImageStudio, VideoStudio, LipSyncStudio, CinemaStudio } from 'studio';
 
 const FEATURES = [
   {
     id: 'image',
     title: 'Imagem',
-    placeholder: 'Descreva a imagem que você quer criar...',
     desc: 'Crie imagens do zero a partir de uma descrição, ou edite fotos que você já tem: troque fundo, estilo, roupa, iluminação.',
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
         <circle cx="8.5" cy="8.5" r="1.5" />
         <polyline points="21 15 16 10 5 21" />
@@ -23,10 +23,9 @@ const FEATURES = [
   {
     id: 'video',
     title: 'Vídeo',
-    placeholder: 'Descreva o vídeo que você quer criar...',
     desc: 'Anime uma foto parada, ou descreva uma cena em texto e receba um vídeo curto pronto pra postar.',
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <polygon points="23 7 16 12 23 17 23 7" />
         <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
       </svg>
@@ -35,10 +34,9 @@ const FEATURES = [
   {
     id: 'lipsync',
     title: 'Sincronia Labial',
-    placeholder: 'Envie um áudio e um retrato pra sincronizar...',
     desc: 'Sincronize um áudio com um retrato ou vídeo, e a boca acompanha a fala automaticamente.',
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
         <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
       </svg>
@@ -47,10 +45,9 @@ const FEATURES = [
   {
     id: 'cinema',
     title: 'Cinema',
-    placeholder: 'Descreva a cena que você quer filmar...',
     desc: 'Aplique lentes e câmeras de cinema de verdade nas suas cenas, do 16mm vintage ao digital 8K.',
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M23 7l-7 5 7 5V7z" />
         <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
       </svg>
@@ -60,45 +57,58 @@ const FEATURES = [
 
 const MODEL_HIGHLIGHTS = {
   image: [
-    { name: 'Nano Banana', desc: 'Edita fotos existentes mantendo o rosto e a identidade da pessoa — troca fundo, roupa, estilo, sem perder a semelhança.' },
-    { name: 'Flux', desc: 'Cria imagens do zero com alta qualidade e riqueza de detalhes, ótimo pra fotos realistas.' },
-    { name: 'Midjourney v7', desc: 'Visual artístico e composições criativas, ideal pra ilustrações e peças com estilo próprio.' },
+    { name: 'Nano Banana', desc: 'Edita fotos existentes mantendo o rosto e a identidade da pessoa.' },
+    { name: 'Flux', desc: 'Cria imagens do zero com alta qualidade e riqueza de detalhes.' },
+    { name: 'Midjourney v7', desc: 'Visual artístico, ideal pra ilustrações e composições criativas.' },
   ],
   video: [
-    { name: 'Kling', desc: 'Movimento fluido e realista, com boa consistência de cena do início ao fim do vídeo.' },
-    { name: 'Veo 3', desc: 'Gera o vídeo já com áudio sincronizado, incluindo fala e efeitos sonoros.' },
-    { name: 'Sora 2', desc: 'Cenas complexas com física e iluminação realistas, ótimo pra sequências mais elaboradas.' },
-    { name: 'Seedance', desc: 'Geração rápida com ótimo custo-benefício, boa pra quem precisa de volume de conteúdo.' },
+    { name: 'Kling', desc: 'Movimento fluido e realista, boa consistência de cena.' },
+    { name: 'Veo 3', desc: 'Gera o vídeo já com áudio sincronizado.' },
+    { name: 'Sora 2', desc: 'Cenas complexas com física e iluminação realistas.' },
+    { name: 'Seedance', desc: 'Geração rápida com ótimo custo-benefício.' },
   ],
   lipsync: [
-    { name: 'Sync', desc: 'Sincronização labial precisa a partir de qualquer áudio, funciona bem em vídeos e fotos.' },
+    { name: 'Sync', desc: 'Sincronização labial precisa a partir de qualquer áudio.' },
     { name: 'Veed Lipsync', desc: 'Resultado natural mesmo com ângulos de rosto variados.' },
-    { name: 'Infinite Talk', desc: 'Boa opção pra vídeos mais longos, mantendo a sincronia do começo ao fim.' },
+    { name: 'Infinite Talk', desc: 'Boa opção pra vídeos mais longos.' },
   ],
   cinema: [
-    { name: 'Câmeras profissionais', desc: 'Do 16mm vintage ao digital 8K — escolha o corpo de câmera que dá o visual certo pra sua cena.' },
-    { name: 'Lentes de cinema', desc: 'Anamórficas, macro, prime clássicas: cada lente muda completamente a textura da imagem.' },
-    { name: 'Distância focal e abertura', desc: 'Controle a perspectiva e a profundidade de campo igual um diretor de fotografia de verdade.' },
+    { name: 'Câmeras profissionais', desc: 'Do 16mm vintage ao digital 8K.' },
+    { name: 'Lentes de cinema', desc: 'Anamórficas, macro, prime clássicas.' },
+    { name: 'Focal e abertura', desc: 'Perspectiva e profundidade de campo sob controle.' },
   ],
 };
 
 const STEPS = [
-  {
-    n: '1',
-    title: 'Crie sua conta',
-    desc: 'Cadastro rápido, sem burocracia, e você já começa com créditos grátis pra testar.',
-  },
-  {
-    n: '2',
-    title: 'Descreva o que você quer',
-    desc: 'Um texto simples já basta. Escolha o modelo, o formato, e deixa a IA trabalhar.',
-  },
-  {
-    n: '3',
-    title: 'Baixe e use',
-    desc: 'Em segundos você tem o arquivo pronto, sem marca d\u2019água, seu pra usar onde quiser.',
-  },
+  { n: '1', title: 'Crie sua conta', desc: 'Cadastro rápido, e você já começa com créditos grátis pra testar.' },
+  { n: '2', title: 'Descreva o que você quer', desc: 'Um texto simples já basta. Escolha o modelo e o formato.' },
+  { n: '3', title: 'Baixe e use', desc: 'Em segundos você tem o arquivo pronto, sem marca d\u2019água.' },
 ];
+
+// Small dropdown wrapper used by the 3 nav menus below.
+function NavDropdown({ label, isOpen, onToggle, children, panelClassName }) {
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={onToggle}
+        className={`flex items-center gap-1.5 text-sm font-semibold transition-colors px-2 py-1 ${
+          isOpen ? 'text-primary' : 'text-white/70 hover:text-white'
+        }`}
+      >
+        {label}
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+      {isOpen && (
+        <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-3 bg-[#150E1C] border border-white/10 rounded-2xl shadow-3xl z-50 ${panelClassName || 'w-80'}`}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function LandingPage() {
   const router = useRouter();
@@ -107,6 +117,8 @@ export default function LandingPage() {
   const [authModal, setAuthModal] = useState(null); // null | 'login' | 'signup'
   const [showSubModal, setShowSubModal] = useState(false);
   const [showTopUp, setShowTopUp] = useState(false);
+  const [openNav, setOpenNav] = useState(null); // null | 'create' | 'models' | 'how'
+  const navRef = useRef(null);
 
   // Check session once on load so an already-logged-in visitor skips the
   // popup entirely and goes straight to the studio.
@@ -116,6 +128,16 @@ export default function LandingPage() {
       .then((data) => setIsLoggedIn(!!data.user))
       .catch(() => {});
   }, []);
+
+  // Close nav dropdowns on outside click.
+  useEffect(() => {
+    if (!openNav) return;
+    const handler = (e) => {
+      if (navRef.current && !navRef.current.contains(e.target)) setOpenNav(null);
+    };
+    window.addEventListener('click', handler);
+    return () => window.removeEventListener('click', handler);
+  }, [openNav]);
 
   const goToStudioOrAuth = (mode) => {
     if (isLoggedIn) {
@@ -136,11 +158,85 @@ export default function LandingPage() {
     }
   };
 
+  const toggleNav = (id) => (e) => {
+    e.stopPropagation();
+    setOpenNav((prev) => (prev === id ? null : id));
+  };
+
   return (
     <div className="min-h-screen bg-app-bg text-white">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 md:px-10 py-5 max-w-6xl mx-auto">
-        <span className="font-black text-lg tracking-wider uppercase">VisuIA</span>
+      <header ref={navRef} className="flex items-center justify-between px-6 md:px-10 py-5 max-w-6xl mx-auto relative">
+        <div className="flex items-center gap-8">
+          <span className="font-black text-lg tracking-wider uppercase">VisuIA</span>
+
+          <nav className="hidden md:flex items-center gap-6">
+            <NavDropdown label="O que você pode criar" isOpen={openNav === 'create'} onToggle={toggleNav('create')}>
+              <div className="p-3">
+                {FEATURES.map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => { setSelectedType(f.id); setOpenNav(null); }}
+                    className="w-full flex items-start gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors text-left"
+                  >
+                    <div className="w-9 h-9 shrink-0 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                      {f.icon}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-white mb-0.5">{f.title}</p>
+                      <p className="text-xs text-white/50 leading-relaxed">{f.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </NavDropdown>
+
+            <NavDropdown label="Os modelos por trás da mágica" isOpen={openNav === 'models'} onToggle={toggleNav('models')} panelClassName="w-[420px]">
+              <div className="p-4">
+                <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+                  {FEATURES.map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setSelectedType(f.id); }}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                        selectedType === f.id ? 'bg-primary text-black' : 'bg-white/5 text-white/50 hover:text-white'
+                      }`}
+                    >
+                      {f.title}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-col gap-1">
+                  {MODEL_HIGHLIGHTS[selectedType].map((m) => (
+                    <div key={m.name} className="p-3 rounded-xl hover:bg-white/5 transition-colors">
+                      <p className="text-sm font-bold text-primary mb-0.5">{m.name}</p>
+                      <p className="text-xs text-white/50 leading-relaxed">{m.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </NavDropdown>
+
+            <NavDropdown label="Como funciona" isOpen={openNav === 'how'} onToggle={toggleNav('how')} panelClassName="w-72">
+              <div className="p-3">
+                {STEPS.map((s) => (
+                  <div key={s.n} className="flex items-start gap-3 p-3">
+                    <div className="w-7 h-7 shrink-0 rounded-full border-2 border-primary text-primary flex items-center justify-center font-black text-xs">
+                      {s.n}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-white mb-0.5">{s.title}</p>
+                      <p className="text-xs text-white/50 leading-relaxed">{s.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </NavDropdown>
+          </nav>
+        </div>
+
         <div className="flex items-center gap-3">
           <button
             onClick={() => goToStudioOrAuth('login')}
@@ -170,9 +266,8 @@ export default function LandingPage() {
           </p>
         </div>
 
-        {/* Type tabs — pick what you're browsing; drives both the studio
-            tab you land on after signup and the model showcase below. */}
-        <div className="flex items-center gap-2 mb-6 flex-wrap">
+        {/* Type tabs */}
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
           {FEATURES.map((f) => (
             <button
               key={f.id}
@@ -189,113 +284,32 @@ export default function LandingPage() {
           ))}
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3">
-          <button
-            type="button"
-            onClick={() => goToStudioOrAuth('signup')}
-            className="bg-primary hover:opacity-90 text-black font-bold text-sm md:text-base px-8 py-3.5 rounded-xl transition-opacity shadow-glow"
-          >
-            Começar grátis agora
-          </button>
-          <button
-            type="button"
-            onClick={() => goToStudioOrAuth('login')}
-            className="border border-white/15 hover:border-white/30 text-white font-semibold text-sm md:text-base px-8 py-3.5 rounded-xl transition-colors"
-          >
-            Já tenho conta
-          </button>
+        {/* Live studio preview — the real controls, so people see exactly
+            what they'll get. Logged-out visitors can look and click
+            around, but any click opens the signup modal instead of
+            actually generating — the studios underneath still require a
+            real session to call /api/generate. */}
+        <div
+          className="relative w-full rounded-3xl overflow-hidden border border-white/10 bg-black"
+          style={{ height: 'min(75vh, 780px)', minHeight: '540px' }}
+        >
+          {selectedType === 'image' && <ImageStudio apiKey="preview" />}
+          {selectedType === 'video' && <VideoStudio apiKey="preview" />}
+          {selectedType === 'lipsync' && <LipSyncStudio apiKey="preview" />}
+          {selectedType === 'cinema' && <CinemaStudio apiKey="preview" />}
+
+          {!isLoggedIn && (
+            <button
+              type="button"
+              onClick={() => goToStudioOrAuth('signup')}
+              className="absolute inset-0 z-50 cursor-pointer bg-transparent"
+              aria-label="Criar conta para gerar"
+            />
+          )}
         </div>
         <p className="text-white/30 text-xs mt-3">
           Grátis pra testar, sem cartão de crédito
         </p>
-      </section>
-
-      {/* Features */}
-      <section className="px-6 md:px-10 py-16 border-t border-white/5">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-black mb-3">O que você pode criar</h2>
-          <p className="text-white/50 text-sm md:text-base mb-10 max-w-lg">
-            Quatro estúdios, um único lugar. Escolha o que sua ideia precisa.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {FEATURES.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => {
-                  setSelectedType(f.id);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className={`text-left bg-panel-bg border rounded-2xl p-6 transition-colors ${
-                  selectedType === f.id ? 'border-primary/50' : 'border-white/10 hover:border-primary/30'
-                }`}
-              >
-                <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-4">
-                  {f.icon}
-                </div>
-                <h3 className="font-bold text-base mb-2">{f.title}</h3>
-                <p className="text-white/50 text-sm leading-relaxed">{f.desc}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Models */}
-      <section className="px-6 md:px-10 py-16 border-t border-white/5">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-black mb-3">Os modelos por trás da mágica</h2>
-          <p className="text-white/50 text-sm md:text-base mb-8 max-w-lg">
-            A VisuIA combina os melhores modelos de IA do mercado — você escolhe o resultado, a gente cuida da tecnologia.
-          </p>
-
-          <div className="flex items-center gap-2 mb-8 flex-wrap">
-            {FEATURES.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => setSelectedType(f.id)}
-                className={`px-4 py-2 rounded-full text-xs md:text-sm font-semibold transition-colors ${
-                  selectedType === f.id
-                    ? 'bg-primary text-black'
-                    : 'bg-card-bg text-white/50 hover:text-white border border-white/10'
-                }`}
-              >
-                {f.title}
-              </button>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {MODEL_HIGHLIGHTS[selectedType].map((m) => (
-              <div
-                key={m.name}
-                className="bg-panel-bg border border-white/10 rounded-2xl p-6"
-              >
-                <h3 className="font-bold text-base mb-2 text-primary">{m.name}</h3>
-                <p className="text-white/50 text-sm leading-relaxed">{m.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section className="px-6 md:px-10 py-16 border-t border-white/5">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-black mb-10">Como funciona</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {STEPS.map((s) => (
-              <div key={s.n}>
-                <div className="w-10 h-10 rounded-full border-2 border-primary text-primary flex items-center justify-center font-black text-sm mb-4">
-                  {s.n}
-                </div>
-                <h3 className="font-bold text-base mb-2">{s.title}</h3>
-                <p className="text-white/50 text-sm leading-relaxed">{s.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
       </section>
 
       {/* Pricing blurb */}
