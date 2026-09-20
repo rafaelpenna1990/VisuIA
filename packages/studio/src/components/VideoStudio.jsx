@@ -1035,20 +1035,25 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                 </div>
 
                                 {/* Generate button */}
-                                <button
-                                    type="button"
-                                    onClick={handleGenerate}
-                                    disabled={generating}
-                                    className="bg-primary text-black px-6 md:px-8 py-3 md:py-3.5 rounded-xl md:rounded-[1.5rem] font-black text-sm md:text-base hover:shadow-glow hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto shadow-lg disabled:opacity-60 disabled:scale-100"
-                                >
-                                    {generating ? (
-                                        <><span className="animate-spin inline-block text-black">◌</span> Gerando...</>
-                                    ) : generateError ? (
-                                        `Erro: ${generateError}`
-                                    ) : (
-                                        'Gerar ✨'
+                                <div className="flex flex-col items-end gap-1.5 w-full sm:w-auto">
+                                    <button
+                                        type="button"
+                                        onClick={handleGenerate}
+                                        disabled={generating}
+                                        className="bg-primary text-black px-6 md:px-8 py-3 md:py-3.5 rounded-xl md:rounded-[1.5rem] font-black text-sm md:text-base hover:shadow-glow hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto shadow-lg disabled:opacity-60 disabled:scale-100"
+                                    >
+                                        {generating ? (
+                                            <><span className="animate-spin inline-block text-black">◌</span> Gerando...</>
+                                        ) : generateError ? (
+                                            `Erro: ${generateError}`
+                                        ) : (
+                                            'Gerar ✨'
+                                        )}
+                                    </button>
+                                    {generating && (
+                                        <p className="text-[10px] text-white/40">Aguarde, não feche esta página</p>
                                     )}
-                                </button>
+                                </div>
                             </div>
                         </div>
                     </div>

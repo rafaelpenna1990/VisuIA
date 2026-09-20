@@ -125,7 +125,9 @@ export default function StandaloneShell() {
       {/* Sidebar */}
       <aside className="w-60 shrink-0 bg-[#0F1119] border-r border-white/5 flex flex-col py-6 px-4">
         <div className="mb-8 px-2">
-          <img src={`/api/assets/logo.png?v=${assetsVersion}`} alt="VisuIA" className="h-60 w-auto max-w-full" />
+          <button onClick={() => router.push('/')} className="block">
+            <img src={`/api/assets/logo.png?v=${assetsVersion}`} alt="VisuIA" className="h-60 w-auto max-w-full" />
+          </button>
           {resuming && (
             <div className="text-[10px] text-white/40 flex items-center gap-1.5 mt-1">
               <span className="animate-spin inline-block">◌</span>

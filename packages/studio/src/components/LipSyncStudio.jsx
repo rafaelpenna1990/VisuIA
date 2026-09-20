@@ -697,20 +697,25 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
                                 )}
 
                                 {/* Generate button */}
-                                <button
-                                    type="button"
-                                    onClick={handleGenerate}
-                                    disabled={isGenerating}
-                                    className="ml-auto px-6 py-2.5 bg-primary text-black font-black text-sm rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-glow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                                >
-                                    {isGenerating ? (
-                                        <><span className="animate-spin inline-block mr-2 text-black">◌</span>Gerando...</>
-                                    ) : generateError ? (
-                                        `Erro: ${generateError}`
-                                    ) : (
-                                        'Gerar ✨'
+                                <div className="ml-auto flex flex-col items-end gap-1.5">
+                                    <button
+                                        type="button"
+                                        onClick={handleGenerate}
+                                        disabled={isGenerating}
+                                        className="px-6 py-2.5 bg-primary text-black font-black text-sm rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-glow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                                    >
+                                        {isGenerating ? (
+                                            <><span className="animate-spin inline-block mr-2 text-black">◌</span>Gerando...</>
+                                        ) : generateError ? (
+                                            `Erro: ${generateError}`
+                                        ) : (
+                                            'Gerar ✨'
+                                        )}
+                                    </button>
+                                    {isGenerating && (
+                                        <p className="text-[10px] text-white/40">Aguarde, não feche esta página</p>
                                     )}
-                                </button>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -97,17 +97,8 @@ function buildNanoBananaPrompt(basePrompt, camera, lens, focalLength, aperture) 
 
 function Dropdown({ items, selected, onSelect, triggerRef, onClose }) {
     const menuRef = useRef(null);
-    const [position, setPosition] = useState({ bottom: 0, left: 0 });
 
     useEffect(() => {
-        if (triggerRef.current) {
-            const rect = triggerRef.current.getBoundingClientRect();
-            setPosition({
-                bottom: window.innerHeight - rect.top + 8,
-                left: rect.left
-            });
-        }
-
         const handler = (e) => {
             if (
                 menuRef.current &&
@@ -128,8 +119,7 @@ function Dropdown({ items, selected, onSelect, triggerRef, onClose }) {
     return (
         <div
             ref={menuRef}
-            className="custom-dropdown fixed bg-[#0F1119] border border-white/10 rounded-xl py-1 shadow-2xl z-50 flex flex-col min-w-[100px] animate-fade-in"
-            style={{ bottom: position.bottom, left: position.left }}
+            className="custom-dropdown absolute bottom-[calc(100%+8px)] left-0 bg-[#0F1119] border border-white/10 rounded-xl py-1 shadow-2xl z-50 flex flex-col min-w-[100px] animate-fade-in"
         >
             {items.map(item => (
                 <button
@@ -758,18 +748,23 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                                     </button>
                                 </div>
 
-                                <button
-                                    type="button"
-                                    onClick={handleGenerate}
-                                    disabled={isGenerating || !settings.prompt.trim()}
-                                    className="bg-primary text-black px-6 md:px-8 py-3 md:py-3.5 rounded-xl md:rounded-[1.5rem] font-black text-sm md:text-base hover:shadow-glow hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto shadow-lg disabled:opacity-60 disabled:scale-100"
-                                >
-                                    {isGenerating ? (
-                                        <><span className="animate-spin inline-block text-black">◌</span> Gerando...</>
-                                    ) : (
-                                        'Gerar ✨'
+                                <div className="flex flex-col items-end gap-1.5 w-full sm:w-auto">
+                                    <button
+                                        type="button"
+                                        onClick={handleGenerate}
+                                        disabled={isGenerating || !settings.prompt.trim()}
+                                        className="bg-primary text-black px-6 md:px-8 py-3 md:py-3.5 rounded-xl md:rounded-[1.5rem] font-black text-sm md:text-base hover:shadow-glow hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto shadow-lg disabled:opacity-60 disabled:scale-100"
+                                    >
+                                        {isGenerating ? (
+                                            <><span className="animate-spin inline-block text-black">◌</span> Gerando...</>
+                                        ) : (
+                                            'Gerar ✨'
+                                        )}
+                                    </button>
+                                    {isGenerating && (
+                                        <p className="text-[10px] text-white/40">Aguarde, não feche esta página</p>
                                     )}
-                                </button>
+                                </div>
                             </div>
                         </div>
                     </div>
