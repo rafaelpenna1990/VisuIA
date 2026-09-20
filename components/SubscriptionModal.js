@@ -1,15 +1,29 @@
 'use client';
 
-import { useState } from 'react';
-import { PLANS, TRIAL_BONUS_TOKENS } from '../lib/plans.js';
+import { useState, useEffect } from 'react';
 
 // Shown right after a first-time signup (see page.js) — same popup
 // pattern as AuthModal. The person either starts a plan's 7-day free
 // trial (getting the flat bonus immediately) or buys a token package
 // outright with onBuyWithoutSubscription — there's no free "skip".
+//
+// Plans and the trial bonus are fetched from /api/plans (DB-backed,
+// editable in /admin) instead of being hardcoded here.
 export default function SubscriptionModal({ onClose, onBuyWithoutSubscription }) {
+  const [plans, setPlans] = useState([]);
+  const [trialBonusTokens, setTrialBonusTokens] = useState(500);
   const [subscribing, setSubscribing] = useState(null);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch('/api/plans')
+      .then((res) => res.json())
+      .then((data) => {
+        setPlans(data.plans || []);
+        if (data.trialBonusTokens) setTrialBonusTokens(data.trialBonusTokens);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSubscribe = async (planId) => {
     setError(null);
@@ -46,18 +60,18 @@ export default function SubscriptionModal({ onClose, onBuyWithoutSubscription })
           Oferta de boas-vindas
         </span>
         <h1 className="text-white font-black text-2xl mb-1">
-          Ganhe {TRIAL_BONUS_TOKENS.toLocaleString('pt-BR')} VisuTokens de graça
+          Ganhe {trialBonusTokens.toLocaleString('pt-BR')} VisuTokens de graça
         </h1>
         <p className="text-white/50 text-sm mb-6">
           Escolha um plano agora e comece com <span className="text-primary font-semibold">7 dias grátis</span> —
-          os {TRIAL_BONUS_TOKENS.toLocaleString('pt-BR')} VisuTokens caem na sua conta na hora, sem cobrar nada do cartão até o 7º dia.
+          os {trialBonusTokens.toLocaleString('pt-BR')} VisuTokens caem na sua conta na hora, sem cobrar nada do cartão até o 7º dia.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          {Object.values(PLANS).map((plan) => (
+          {plans.map((plan) => (
             <div key={plan.id} className="bg-card-bg border border-white/10 rounded-2xl p-5 flex flex-col relative">
               <span className="text-primary text-[10px] font-bold uppercase tracking-wider mb-2">
-                + {TRIAL_BONUS_TOKENS.toLocaleString('pt-BR')} grátis agora
+                + {trialBonusTokens.toLocaleString('pt-BR')} grátis agora
               </span>
               <p className="text-white font-black text-base mb-1">{plan.name}</p>
               <p className="text-primary font-bold text-xl mb-1">

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getSessionUser } from '../../../../lib/auth.js';
-import { PLANS } from '../../../../lib/plans.js';
+import { getPlanById } from '../../../../lib/db.js';
 
 const stripe = new Stripe((process.env.STRIPE_SECRET_KEY || '').trim(), {
   maxNetworkRetries: 2,
@@ -16,7 +16,7 @@ export async function POST(request) {
   }
 
   const { plan } = await request.json();
-  const chosen = PLANS[plan];
+  const chosen = getPlanById(plan);
   if (!chosen) return NextResponse.json({ error: 'Plano inválido' }, { status: 400 });
 
   const origin = request.headers.get('origin') || process.env.APP_URL;

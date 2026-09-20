@@ -3,7 +3,6 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { formatTokens } from '../../lib/tokens.js';
-import { PLANS } from '../../lib/plans.js';
 
 const TABS = [
   { id: 'perfil', label: 'Perfil' },
@@ -38,6 +37,7 @@ function ContaContent() {
   const [projectsError, setProjectsError] = useState(null);
   const [projectFilter, setProjectFilter] = useState('all');
   const [subscription, setSubscription] = useState(undefined); // undefined = loading, null = none
+  const [plans, setPlans] = useState([]);
   const [subscribing, setSubscribing] = useState(null);
   const [canceling, setCanceling] = useState(false);
   const [endingTrial, setEndingTrial] = useState(false);
@@ -69,6 +69,14 @@ function ContaContent() {
       .then((data) => setSubscription(data.subscription || null))
       .catch(() => setSubscription(null));
   }, [tab, subscription]);
+
+  useEffect(() => {
+    if (tab !== 'assinatura' || plans.length > 0) return;
+    fetch('/api/plans')
+      .then((res) => res.json())
+      .then((data) => setPlans(data.plans || []))
+      .catch(() => {});
+  }, [tab, plans]);
 
   const handleSubscribe = async (planId) => {
     setSubscribing(planId);
@@ -293,7 +301,7 @@ function ContaContent() {
                   Os tokens acumulam se você não usar tudo.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {Object.values(PLANS).map((plan) => (
+                  {plans.map((plan) => (
                     <div key={plan.id} className="bg-card-bg border border-white/10 rounded-2xl p-6 flex flex-col">
                       <p className="text-white font-black text-lg mb-1">{plan.name}</p>
                       <p className="text-primary font-bold text-2xl mb-1">

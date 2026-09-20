@@ -2,9 +2,14 @@
 
 import { useState } from 'react';
 
+// A visible row of example cards — like a small gallery strip. Each slot
+// works with EITHER a photo or a video: drop a file named
+// public/carousel/{slug}-1.jpg (or .mp4/.webm) — same for -2 and -3 — and
+// it just shows up, no code changes needed. If a .jpg is missing, it
+// automatically tries a video with the same name instead.
 function ExampleTile({ slug, index }) {
   const [triedVideo, setTriedVideo] = useState(false);
-  const base = `/carousel/${slug}-${index}`;
+  const base = `/api/assets/carousel/${slug}-${index}`;
 
   if (triedVideo) {
     return (
@@ -16,6 +21,8 @@ function ExampleTile({ slug, index }) {
         playsInline
         className="w-full h-full object-cover"
         onError={(e) => {
+          // Neither a jpg nor an mp4 exists for this slot — just show
+          // nothing rather than a broken icon.
           e.currentTarget.style.display = 'none';
         }}
       />

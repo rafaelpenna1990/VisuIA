@@ -51,7 +51,7 @@ export default function AuthModal({ initialMode = 'login', onAuthenticated, onCl
           ✕
         </button>
 
-        <img src="/logo.png" alt="VisuIA" className="h-96 w-auto max-w-full mb-2" />
+        <img src="/api/assets/logo.png" alt="VisuIA" className="h-96 w-auto max-w-full mb-2" />
         <p className="text-white/50 text-sm mb-6">
           {mode === 'login' ? 'Entre na sua conta.' : 'Crie sua conta para começar.'}
         </p>
