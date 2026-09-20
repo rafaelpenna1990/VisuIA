@@ -7,17 +7,21 @@ import { useAuthFlow } from '../lib/useAuthFlow.js';
 import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
 import AuthFlowModals from '../components/AuthFlowModals';
+import BackgroundCarousel from '../components/BackgroundCarousel';
 
 export default function LandingPage() {
   const [selectedType, setSelectedType] = useState('image');
   const auth = useAuthFlow(selectedType);
+  const currentSlug = FEATURES.find((f) => f.id === selectedType)?.slug || 'imagem';
 
   return (
     <div className="min-h-screen bg-app-bg text-white">
       <SiteHeader goToStudioOrAuth={auth.goToStudioOrAuth} isLoggedIn={auth.isLoggedIn} />
 
       {/* Hero */}
-      <section className="px-6 md:px-10 pt-6 md:pt-8 pb-20 max-w-6xl mx-auto">
+      <section className="relative px-6 md:px-10 pt-6 md:pt-8 pb-20 max-w-6xl mx-auto overflow-hidden">
+        <BackgroundCarousel slug={currentSlug} />
+        <div className="relative z-10">
         <div className="max-w-3xl">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-black leading-tight tracking-tight mb-3">
             Sua ideia vira imagem, vídeo ou cena de cinema{' '}
@@ -63,6 +67,7 @@ export default function LandingPage() {
         <p className="text-white/30 text-xs mt-3">
           Grátis pra testar, sem cartão de crédito
         </p>
+        </div>
       </section>
 
       {/* Pricing blurb */}

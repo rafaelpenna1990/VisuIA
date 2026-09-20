@@ -24,7 +24,7 @@ export default function BackgroundCarousel({ slug, count = 3, intervalMs = 5000 
           className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
           style={{
             backgroundImage: `url(/carousel/${slug}-${i + 1}.jpg)`,
-            opacity: i === index ? 0.55 : 0,
+            opacity: i === index ? 0.35 : 0,
           }}
         />
       ))}
