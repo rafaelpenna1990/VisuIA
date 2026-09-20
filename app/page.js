@@ -59,6 +59,30 @@ const FEATURES = [
   },
 ];
 
+const MODEL_HIGHLIGHTS = {
+  image: [
+    { name: 'Nano Banana', desc: 'Edita fotos existentes mantendo o rosto e a identidade da pessoa — troca fundo, roupa, estilo, sem perder a semelhança.' },
+    { name: 'Flux', desc: 'Cria imagens do zero com alta qualidade e riqueza de detalhes, ótimo pra fotos realistas.' },
+    { name: 'Midjourney v7', desc: 'Visual artístico e composições criativas, ideal pra ilustrações e peças com estilo próprio.' },
+  ],
+  video: [
+    { name: 'Kling', desc: 'Movimento fluido e realista, com boa consistência de cena do início ao fim do vídeo.' },
+    { name: 'Veo 3', desc: 'Gera o vídeo já com áudio sincronizado, incluindo fala e efeitos sonoros.' },
+    { name: 'Sora 2', desc: 'Cenas complexas com física e iluminação realistas, ótimo pra sequências mais elaboradas.' },
+    { name: 'Seedance', desc: 'Geração rápida com ótimo custo-benefício, boa pra quem precisa de volume de conteúdo.' },
+  ],
+  lipsync: [
+    { name: 'Sync', desc: 'Sincronização labial precisa a partir de qualquer áudio, funciona bem em vídeos e fotos.' },
+    { name: 'Veed Lipsync', desc: 'Resultado natural mesmo com ângulos de rosto variados.' },
+    { name: 'Infinite Talk', desc: 'Boa opção pra vídeos mais longos, mantendo a sincronia do começo ao fim.' },
+  ],
+  cinema: [
+    { name: 'Câmeras profissionais', desc: 'Do 16mm vintage ao digital 8K — escolha o corpo de câmera que dá o visual certo pra sua cena.' },
+    { name: 'Lentes de cinema', desc: 'Anamórficas, macro, prime clássicas: cada lente muda completamente a textura da imagem.' },
+    { name: 'Distância focal e abertura', desc: 'Controle a perspectiva e a profundidade de campo igual um diretor de fotografia de verdade.' },
+  ],
+};
+
 const STEPS = [
   {
     n: '1',
@@ -211,6 +235,45 @@ export default function LandingPage() {
                 <h3 className="font-bold text-base mb-2">{f.title}</h3>
                 <p className="text-white/50 text-sm leading-relaxed">{f.desc}</p>
               </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Models */}
+      <section className="px-6 md:px-10 py-16 border-t border-white/5">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-2xl md:text-3xl font-black mb-3">Os modelos por trás da mágica</h2>
+          <p className="text-white/50 text-sm md:text-base mb-8 max-w-lg">
+            A VisuIA combina os melhores modelos de IA do mercado — você escolhe o resultado, a gente cuida da tecnologia.
+          </p>
+
+          <div className="flex items-center gap-2 mb-8 flex-wrap">
+            {FEATURES.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setSelectedType(f.id)}
+                className={`px-4 py-2 rounded-full text-xs md:text-sm font-semibold transition-colors ${
+                  selectedType === f.id
+                    ? 'bg-primary text-black'
+                    : 'bg-card-bg text-white/50 hover:text-white border border-white/10'
+                }`}
+              >
+                {f.title}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {MODEL_HIGHLIGHTS[selectedType].map((m) => (
+              <div
+                key={m.name}
+                className="bg-panel-bg border border-white/10 rounded-2xl p-6"
+              >
+                <h3 className="font-bold text-base mb-2 text-primary">{m.name}</h3>
+                <p className="text-white/50 text-sm leading-relaxed">{m.desc}</p>
+              </div>
             ))}
           </div>
         </div>
