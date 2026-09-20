@@ -7,7 +7,7 @@ import { useAuthFlow } from '../lib/useAuthFlow.js';
 import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
 import AuthFlowModals from '../components/AuthFlowModals';
-import BackgroundCarousel from '../components/BackgroundCarousel';
+import ExampleCarousel from '../components/ExampleCarousel';
 
 export default function LandingPage() {
   const [selectedType, setSelectedType] = useState('image');
@@ -19,9 +19,7 @@ export default function LandingPage() {
       <SiteHeader goToStudioOrAuth={auth.goToStudioOrAuth} isLoggedIn={auth.isLoggedIn} />
 
       {/* Hero */}
-      <section className="relative px-6 md:px-10 pt-6 md:pt-8 pb-20 max-w-6xl mx-auto overflow-hidden">
-        <BackgroundCarousel slug={currentSlug} />
-        <div className="relative z-10">
+      <section className="px-6 md:px-10 pt-6 md:pt-8 pb-20 max-w-6xl mx-auto">
         <div className="max-w-3xl">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-black leading-tight tracking-tight mb-3">
             Sua ideia vira imagem, vídeo ou cena de cinema{' '}
@@ -64,10 +62,11 @@ export default function LandingPage() {
           {selectedType === 'lipsync' && <LipSyncStudio apiKey="preview" onAuthRequired={auth.isLoggedIn ? undefined : () => auth.goToStudioOrAuth('signup')} />}
           {selectedType === 'cinema' && <CinemaStudio apiKey="preview" onAuthRequired={auth.isLoggedIn ? undefined : () => auth.goToStudioOrAuth('signup')} />}
         </div>
-        <p className="text-white/30 text-xs mt-3">
+        <p className="text-white/30 text-xs mt-3 mb-6">
           Grátis pra testar, sem cartão de crédito
         </p>
-        </div>
+
+        <ExampleCarousel slug={currentSlug} />
       </section>
 
       {/* Pricing blurb */}
