@@ -34,7 +34,7 @@ function ExampleTile({ slug, index, version }) {
         muted
         loop
         playsInline
-        className="w-full h-full object-cover"
+        className="w-full h-full object-contain"
         onError={advance}
       />
     );
@@ -45,7 +45,7 @@ function ExampleTile({ slug, index, version }) {
       key={candidate.ext}
       src={`${base}.${candidate.ext}?v=${version}`}
       alt=""
-      className="w-full h-full object-cover"
+      className="w-full h-full object-contain"
       onError={advance}
     />
   );
