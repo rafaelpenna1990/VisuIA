@@ -13,6 +13,12 @@ import {
 
 const MUAPI_KEY = process.env.MUAPI_API_KEY;
 
+// Submits a generation and returns immediately — it does NOT wait for
+// Muapi to finish. Holding one HTTP request open until a video finishes
+// rendering is what used to 502 on Railway (its proxy cuts connections
+// idle past ~60s). Now: submit here, then the client polls
+// /api/generate/poll every few seconds until the job is done. Each of
+// those requests is fast, so nothing ever sits long enough to get cut.
 export async function POST(request) {
   const user = await getSessionUser();
   if (!user) {
@@ -27,9 +33,10 @@ export async function POST(request) {
   }
 
   const body = await request.json();
-  const kind = body.kind || 'image';
+  const kind = body.kind || 'image'; // 'image' | 'i2i' | 'video' | 'i2v' | 'lipsync'
 
-  const estimate = estimatedChargeBRL(kind);
+  // 1) Pre-flight: block obviously-unaffordable requests before we spend anything.
+  const estimate = estimatedChargeBRL(kind, body.model);
   try {
     chargeCredits(user.id, estimate, `pré-cobrança estimada — ${body.model}`);
   } catch (err) {
@@ -42,6 +49,7 @@ export async function POST(request) {
     throw err;
   }
 
+  // 2) Build the request for whichever kind this is.
   let endpoint, payload;
   if (kind === 'i2i') {
     ({ endpoint, payload } = buildI2IRequest({
@@ -74,6 +82,7 @@ export async function POST(request) {
     }));
   }
 
+  // 3) Submit to Muapi with the server's own key — the client never sees it.
   let result;
   try {
     result = await submitGeneration(endpoint, payload, MUAPI_KEY);
@@ -83,8 +92,9 @@ export async function POST(request) {
     return NextResponse.json({ error: `Falha na geração: ${err.message}` }, { status: 502 });
   }
 
+  // 4) A few models answer synchronously (fast images, mostly). True-up now.
   if (result.done) {
-    const realCharge = actualChargeBRL(result.raw, kind);
+    const realCharge = actualChargeBRL(result.raw, kind, body.model);
     refundCredits(user.id, estimate, 'estorno da pré-cobrança estimada');
     try {
       chargeCredits(user.id, realCharge, `${body.model} — cobrança real`);
@@ -96,6 +106,7 @@ export async function POST(request) {
     return NextResponse.json({ done: true, url: result.url, charged_brl: realCharge });
   }
 
+  // 5) Still running — hand the client a job to poll instead of waiting here.
   const jobId = createPendingGeneration(user.id, body.model, kind, result.requestId, estimate);
   return NextResponse.json({ done: false, job_id: jobId });
 }
