@@ -185,7 +185,7 @@ function ControlBtn({ icon, label, onClick, style }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function VideoStudio({ apiKey, onGenerationComplete, historyItems }) {
+export default function VideoStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired }) {
     // ── mode state ──
     const [imageMode, setImageMode] = useState(false);   // i2v
     const [v2vMode, setV2vMode] = useState(false);
@@ -478,6 +478,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
 
     // ── generate ──────────────────────────────────────────────────────────────
     const handleGenerate = useCallback(async () => {
+        if (onAuthRequired) { onAuthRequired(); return; }
         const currentModel = getCurrentModel();
         const isExtendMode = currentModel?.requiresRequestId;
         const trimmedPrompt = prompt.trim();
@@ -592,7 +593,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
     }, [
         apiKey, prompt, v2vMode, imageMode, selectedModel, selectedAr, selectedDuration,
         selectedResolution, selectedQuality, selectedMode, selectedEffectName, showEffectName, uploadedImageUrl, uploadedVideoUrl,
-        lastGenerationId, getCurrentModel, addToLocalHistory, showVideoInCanvas, onGenerationComplete,
+        lastGenerationId, getCurrentModel, addToLocalHistory, showVideoInCanvas, onGenerationComplete, onAuthRequired,
     ]);
 
     // ── reset to prompt bar ───────────────────────────────────────────────────

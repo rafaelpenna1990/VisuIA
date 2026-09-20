@@ -219,7 +219,7 @@ const VideoIcon = ({ className = 'text-muted group-hover:text-primary transition
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
-export default function LipSyncStudio({ apiKey, onGenerationComplete, historyItems }) {
+export default function LipSyncStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired }) {
     // ── Mode & model state ──────────────────────────────────────────────────
     const [inputMode, setInputMode] = useState('image'); // 'image' | 'video'
 
@@ -404,6 +404,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
 
     // ── Generation ──────────────────────────────────────────────────────────
     const handleGenerate = async () => {
+        if (onAuthRequired) { onAuthRequired(); return; }
         if (!audioUrl) { alert('Envie um arquivo de áudio primeiro.'); return; }
         if (inputMode === 'image' && !imageUrl) { alert('Envie uma imagem de retrato primeiro.'); return; }
         if (inputMode === 'video' && !videoUrl) { alert('Envie um vídeo de origem primeiro.'); return; }

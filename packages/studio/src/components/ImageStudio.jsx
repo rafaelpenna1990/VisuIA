@@ -591,7 +591,7 @@ function SimpleDropdown({ title, options, selected, onSelect, onClose }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function ImageStudio({ apiKey, onGenerationComplete, historyItems }) {
+export default function ImageStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired }) {
   // ── Model / mode state ──────────────────────────────────────────────────
   const [imageMode, setImageMode] = useState(false); // false=t2i, true=i2i
   const [selectedModelId, setSelectedModelId] = useState(t2iModels[0].id);
@@ -742,6 +742,10 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
 
   // ── Generation ───────────────────────────────────────────────────────────
   const handleGenerate = async () => {
+    // Preview mode on marketing pages: let the person type and pick
+    // options freely, but the actual generate action needs a real
+    // session — this is the ONLY moment we interrupt them.
+    if (onAuthRequired) { onAuthRequired(); return; }
     if (generating) return;
 
     if (imageMode) {

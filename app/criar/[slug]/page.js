@@ -48,15 +48,10 @@ export default function CriarTypePage({ params }) {
               className="relative w-full rounded-3xl overflow-hidden border border-white/10 bg-black"
               style={{ height: 'min(75vh, 780px)', minHeight: '540px' }}
             >
-              <StudioComponent apiKey="preview" />
-              {!auth.isLoggedIn && (
-                <button
-                  type="button"
-                  onClick={() => auth.goToStudioOrAuth('signup')}
-                  className="absolute inset-0 z-50 cursor-pointer bg-transparent"
-                  aria-label="Criar conta para gerar"
-                />
-              )}
+              <StudioComponent
+                apiKey="preview"
+                onAuthRequired={auth.isLoggedIn ? undefined : () => auth.goToStudioOrAuth('signup')}
+              />
             </div>
             <p className="text-white/30 text-xs mt-3">
               Grátis pra testar, sem cartão de crédito

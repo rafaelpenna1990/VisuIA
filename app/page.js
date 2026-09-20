@@ -47,27 +47,18 @@ export default function LandingPage() {
           ))}
         </div>
 
-        {/* Live studio preview — the real controls, so people see exactly
-            what they'll get. Logged-out visitors can look and click
-            around, but any click opens the signup modal instead of
-            actually generating. */}
+        {/* Live studio preview — the real controls, so people can type
+            their prompt and pick options freely. Only clicking "Gerar"
+            (which each studio now intercepts via onAuthRequired) opens
+            the signup modal — nothing before that is blocked. */}
         <div
           className="relative w-full rounded-3xl overflow-hidden border border-white/10 bg-black"
           style={{ height: 'min(75vh, 780px)', minHeight: '540px' }}
         >
-          {selectedType === 'image' && <ImageStudio apiKey="preview" />}
-          {selectedType === 'video' && <VideoStudio apiKey="preview" />}
-          {selectedType === 'lipsync' && <LipSyncStudio apiKey="preview" />}
-          {selectedType === 'cinema' && <CinemaStudio apiKey="preview" />}
-
-          {!auth.isLoggedIn && (
-            <button
-              type="button"
-              onClick={() => auth.goToStudioOrAuth('signup')}
-              className="absolute inset-0 z-50 cursor-pointer bg-transparent"
-              aria-label="Criar conta para gerar"
-            />
-          )}
+          {selectedType === 'image' && <ImageStudio apiKey="preview" onAuthRequired={auth.isLoggedIn ? undefined : () => auth.goToStudioOrAuth('signup')} />}
+          {selectedType === 'video' && <VideoStudio apiKey="preview" onAuthRequired={auth.isLoggedIn ? undefined : () => auth.goToStudioOrAuth('signup')} />}
+          {selectedType === 'lipsync' && <LipSyncStudio apiKey="preview" onAuthRequired={auth.isLoggedIn ? undefined : () => auth.goToStudioOrAuth('signup')} />}
+          {selectedType === 'cinema' && <CinemaStudio apiKey="preview" onAuthRequired={auth.isLoggedIn ? undefined : () => auth.goToStudioOrAuth('signup')} />}
         </div>
         <p className="text-white/30 text-xs mt-3">
           Grátis pra testar, sem cartão de crédito

@@ -59,7 +59,7 @@ export default function SiteHeader({ goToStudioOrAuth }) {
     <header ref={navRef} className="flex items-center justify-between px-6 md:px-10 py-5 max-w-6xl mx-auto relative">
       <div className="flex items-center gap-8">
         <button onClick={() => router.push('/')} className="flex items-center">
-          <img src="/logo.png" alt="VisuIA" className="h-8 w-auto" />
+          <img src="/logo.png" alt="VisuIA" className="h-12 w-auto" />
         </button>
 
         <nav className="hidden md:flex items-center gap-6">

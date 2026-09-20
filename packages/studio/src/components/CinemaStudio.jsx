@@ -420,7 +420,7 @@ function CameraControlsOverlay({ isOpen, onClose, settings, onSettingsChange }) 
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function CinemaStudio({ apiKey, onGenerationComplete, historyItems }) {
+export default function CinemaStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired }) {
     // ── Settings state ──
     const [settings, setSettings] = useState({
         prompt: '',
@@ -466,6 +466,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
 
     // ── Generate ──
     const handleGenerate = useCallback(async () => {
+        if (onAuthRequired) { onAuthRequired(); return; }
         const basePrompt = settings.prompt.trim();
         if (!basePrompt || isGenerating) return;
 
@@ -528,7 +529,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
         } finally {
             setIsGenerating(false);
         }
-    }, [settings, resolution, apiKey, isGenerating, onGenerationComplete, historyItems]);
+    }, [settings, resolution, apiKey, isGenerating, onGenerationComplete, historyItems, onAuthRequired]);
 
     // ── Regenerate ──
     const handleRegenerate = useCallback(() => {
