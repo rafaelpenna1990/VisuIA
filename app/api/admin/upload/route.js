@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { isAdminAuthorized } from '../../../../lib/adminAuth.js';
+import { bumpAssetsVersion } from '../../../../lib/db.js';
 
 const UPLOADS_DIR = process.env.UPLOADS_DIR || path.join(process.cwd(), 'data', 'uploads');
 
@@ -67,5 +68,6 @@ export async function POST(request) {
   const arrayBuffer = await file.arrayBuffer();
   fs.writeFileSync(destPath, Buffer.from(arrayBuffer));
 
-  return NextResponse.json({ ok: true, url: `/api/assets/${destRelPath.split(path.sep).join('/')}` });
+  const version = bumpAssetsVersion();
+  return NextResponse.json({ ok: true, url: `/api/assets/${destRelPath.split(path.sep).join('/')}`, version });
 }

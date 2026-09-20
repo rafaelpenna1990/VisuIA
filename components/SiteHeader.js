@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { FEATURES, STEPS } from '../lib/landing-data.js';
+import { useAssetsVersion } from '../lib/useAssetsVersion.js';
 
 function NavDropdown({ label, isOpen, onToggle, children, panelClassName }) {
   return (
@@ -32,6 +33,7 @@ function NavDropdown({ label, isOpen, onToggle, children, panelClassName }) {
 // /como-funciona). Each dropdown item is a real link to its own page —
 // see lib/landing-data.js for the shared copy.
 export default function SiteHeader({ goToStudioOrAuth, isLoggedIn }) {
+  const assetsVersion = useAssetsVersion();
   const router = useRouter();
   const [openNav, setOpenNav] = useState(null); // null | 'create' | 'models' | 'how'
   const navRef = useRef(null);
@@ -59,7 +61,7 @@ export default function SiteHeader({ goToStudioOrAuth, isLoggedIn }) {
     <header ref={navRef} className="flex items-center justify-between px-6 md:px-10 py-5 max-w-6xl mx-auto relative">
       <div className="flex items-center gap-8">
         <button onClick={() => router.push('/')} className="flex items-center">
-          <img src="/api/assets/logo.png" alt="VisuIA" className="h-60 w-auto max-w-full" />
+          <img src={`/api/assets/logo.png?v=${assetsVersion}`} alt="VisuIA" className="h-60 w-auto max-w-full" />
         </button>
 
         <nav className="hidden md:flex items-center gap-6">

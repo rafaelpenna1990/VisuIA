@@ -241,6 +241,17 @@ function ConfigTab({ adminKey }) {
                 }}
                 className="w-full mb-3 px-2.5 py-1.5 rounded-lg bg-black/40 border border-white/10 text-white text-xs outline-none focus:border-primary/50"
               />
+              <label className="block text-[10px] text-white/40 mb-1">Preço "de" riscado (R$, opcional — deixe vazio pra não mostrar)</label>
+              <input
+                type="number"
+                value={plan.promo_amount_cents != null ? plan.promo_amount_cents / 100 : ''}
+                placeholder="ex: 39"
+                onChange={(e) => {
+                  const val = e.target.value === '' ? null : Math.round(Number(e.target.value) * 100);
+                  const next = [...plans]; next[idx] = { ...plan, promo_amount_cents: val }; setPlans(next);
+                }}
+                className="w-full mb-3 px-2.5 py-1.5 rounded-lg bg-black/40 border border-white/10 text-white text-xs outline-none focus:border-primary/50"
+              />
               <label className="block text-[10px] text-white/40 mb-1">VisuTokens/mês</label>
               <input
                 type="number"
@@ -361,6 +372,14 @@ function UsersTab({ adminKey }) {
 function AppearanceTab({ adminKey }) {
   const [message, setMessage] = useState(null);
   const [uploading, setUploading] = useState(null);
+  const [version, setVersion] = useState(1);
+
+  useEffect(() => {
+    fetch('/api/assets-version')
+      .then((res) => res.json())
+      .then((data) => setVersion(data.version || 1))
+      .catch(() => {});
+  }, []);
 
   const upload = async (file, target, slot) => {
     if (!file) return;
@@ -378,7 +397,8 @@ function AppearanceTab({ adminKey }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Falha no envio');
-      setMessage('Enviado! Pode levar alguns segundos pra atualizar no site.');
+      setVersion(data.version); // bumps every <img>/<video> below immediately
+      setMessage('Salvo — a prévia abaixo já mostra o arquivo novo.');
     } catch (err) {
       setMessage(err.message);
     } finally {
@@ -391,6 +411,12 @@ function AppearanceTab({ adminKey }) {
       <div className="bg-card-bg border border-white/10 rounded-2xl p-6">
         <h2 className="font-bold text-base mb-1">Logo</h2>
         <p className="text-white/40 text-xs mb-4">PNG, JPG ou WEBP. Aparece no cabeçalho, no menu lateral e na tela de login.</p>
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-20 h-20 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+            <img src={`/api/assets/logo.png?v=${version}`} alt="Logo atual" className="max-w-full max-h-full object-contain" />
+          </div>
+          <p className="text-white/30 text-xs">Prévia de como está agora</p>
+        </div>
         <input
           type="file"
           accept=".png,.jpg,.jpeg,.webp"
@@ -415,6 +441,9 @@ function AppearanceTab({ adminKey }) {
                   return (
                     <div key={i} className="bg-black/30 border border-white/10 rounded-xl p-3">
                       <p className="text-white/40 text-[10px] mb-2">Posição {i}</p>
+                      <div className="w-full aspect-video rounded-lg bg-black/40 border border-white/10 mb-2 overflow-hidden flex items-center justify-center">
+                        <SlotPreview slug={cat.slug} index={i} version={version} />
+                      </div>
                       <input
                         type="file"
                         accept=".jpg,.jpeg,.png,.webp,.mp4,.webm"
@@ -433,5 +462,33 @@ function AppearanceTab({ adminKey }) {
 
       {message && <p className="text-primary text-sm">{message}</p>}
     </div>
+  );
+}
+
+// Shows whichever of .jpg/.mp4 currently exists for a carousel slot — same
+// try-image-then-video fallback the real site uses.
+function SlotPreview({ slug, index, version }) {
+  const [triedVideo, setTriedVideo] = useState(false);
+  const base = `/api/assets/carousel/${slug}-${index}`;
+  if (triedVideo) {
+    return (
+      <video
+        src={`${base}.mp4?v=${version}`}
+        muted
+        loop
+        autoPlay
+        playsInline
+        className="w-full h-full object-cover"
+        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+      />
+    );
+  }
+  return (
+    <img
+      src={`${base}.jpg?v=${version}`}
+      alt=""
+      className="w-full h-full object-cover"
+      onError={() => setTriedVideo(true)}
+    />
   );
 }

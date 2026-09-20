@@ -6,6 +6,7 @@ import { ImageStudio, VideoStudio, LipSyncStudio, CinemaStudio } from 'studio';
 import AuthGate from './AuthGate';
 import TopUpModal from './TopUpModal';
 import { formatTokens } from '../lib/tokens.js';
+import { useAssetsVersion } from '../lib/useAssetsVersion.js';
 import { resumePendingJob, getPendingJob } from 'studio/src/api-client.js';
 
 const TABS = [
@@ -49,6 +50,7 @@ const TABS = [
 ];
 
 export default function StandaloneShell() {
+  const assetsVersion = useAssetsVersion();
   const router = useRouter();
   const searchParams = useSearchParams();
   const validTabs = TABS.map((t) => t.id);
@@ -123,7 +125,7 @@ export default function StandaloneShell() {
       {/* Sidebar */}
       <aside className="w-60 shrink-0 bg-[#0F1119] border-r border-white/5 flex flex-col py-6 px-4">
         <div className="mb-8 px-2">
-          <img src="/api/assets/logo.png" alt="VisuIA" className="h-60 w-auto max-w-full" />
+          <img src={`/api/assets/logo.png?v=${assetsVersion}`} alt="VisuIA" className="h-60 w-auto max-w-full" />
           {resuming && (
             <div className="text-[10px] text-white/40 flex items-center gap-1.5 mt-1">
               <span className="animate-spin inline-block">◌</span>

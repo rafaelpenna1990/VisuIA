@@ -74,6 +74,11 @@ export default function SubscriptionModal({ onClose, onBuyWithoutSubscription })
                 + {trialBonusTokens.toLocaleString('pt-BR')} grátis agora
               </span>
               <p className="text-white font-black text-base mb-1">{plan.name}</p>
+              {plan.promo_amount_cents != null && plan.promo_amount_cents > plan.amount_cents && (
+                <p className="text-white/40 text-xs line-through mb-0.5">
+                  R$ {(plan.promo_amount_cents / 100).toFixed(0)}/mês
+                </p>
+              )}
               <p className="text-primary font-bold text-xl mb-1">
                 R$ {(plan.amount_cents / 100).toFixed(0)}
                 <span className="text-white/40 text-xs font-normal">/mês depois do 7º dia</span>

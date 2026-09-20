@@ -304,6 +304,11 @@ function ContaContent() {
                   {plans.map((plan) => (
                     <div key={plan.id} className="bg-card-bg border border-white/10 rounded-2xl p-6 flex flex-col">
                       <p className="text-white font-black text-lg mb-1">{plan.name}</p>
+                      {plan.promo_amount_cents != null && plan.promo_amount_cents > plan.amount_cents && (
+                        <p className="text-white/40 text-sm line-through mb-0.5">
+                          R$ {(plan.promo_amount_cents / 100).toFixed(0)}/mês
+                        </p>
+                      )}
                       <p className="text-primary font-bold text-2xl mb-1">
                         R$ {(plan.amount_cents / 100).toFixed(0)}
                         <span className="text-white/40 text-sm font-normal">/mês</span>

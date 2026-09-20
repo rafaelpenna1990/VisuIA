@@ -17,10 +17,10 @@ export async function POST(request) {
   if (!isAdminAuthorized(request)) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
-  const { id, name, amount_cents, tokens } = await request.json();
+  const { id, name, amount_cents, tokens, promo_amount_cents } = await request.json();
   if (!id || !name || !Number.isFinite(amount_cents) || !Number.isFinite(tokens)) {
     return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 });
   }
-  updatePlan(id, { name, amount_cents, tokens });
+  updatePlan(id, { name, amount_cents, tokens, promo_amount_cents });
   return NextResponse.json({ plans: getAllPlans() });
 }

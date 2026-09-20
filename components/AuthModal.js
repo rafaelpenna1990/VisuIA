@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useAssetsVersion } from '../lib/useAssetsVersion.js';
 
 // Same login/signup logic as AuthGate.js, but as an overlay instead of a
 // full-page takeover — used on the landing page so clicking "Gerar" (or
 // "Entrar") doesn't yank the visitor away to a blank auth screen.
 export default function AuthModal({ initialMode = 'login', onAuthenticated, onClose }) {
+  const assetsVersion = useAssetsVersion();
   const [mode, setMode] = useState(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -51,7 +53,7 @@ export default function AuthModal({ initialMode = 'login', onAuthenticated, onCl
           ✕
         </button>
 
-        <img src="/api/assets/logo.png" alt="VisuIA" className="h-96 w-auto max-w-full mb-2" />
+        <img src={`/api/assets/logo.png?v=${assetsVersion}`} alt="VisuIA" className="h-96 w-auto max-w-full mb-2" />
         <p className="text-white/50 text-sm mb-6">
           {mode === 'login' ? 'Entre na sua conta.' : 'Crie sua conta para começar.'}
         </p>
