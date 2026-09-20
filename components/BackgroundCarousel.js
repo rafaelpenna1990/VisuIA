@@ -24,12 +24,12 @@ export default function BackgroundCarousel({ slug, count = 3, intervalMs = 5000 
           className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
           style={{
             backgroundImage: `url(/carousel/${slug}-${i + 1}.jpg)`,
-            opacity: i === index ? 0.35 : 0,
+            opacity: i === index ? 0.9 : 0,
           }}
         />
       ))}
-      {/* Just enough darkening to keep text on top readable */}
-      <div className="absolute inset-0 bg-app-bg/35" />
+      {/* Just a light tint so the images don't fight with the text on top */}
+      <div className="absolute inset-0 bg-app-bg/10" />
     </div>
   );
 }
