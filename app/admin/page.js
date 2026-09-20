@@ -212,6 +212,24 @@ function ConfigTab({ adminKey }) {
             className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
           />
         </div>
+        <div className="mb-4">
+          <label className="block text-xs text-white/50 mb-1">
+            Título grande da página inicial — use **assim** ao redor do trecho que quer em laranja
+          </label>
+          <input
+            value={settings.hero_title || ''}
+            onChange={(e) => setSettings({ ...settings, hero_title: e.target.value })}
+            className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block text-xs text-white/50 mb-1">Subtítulo da página inicial</label>
+          <input
+            value={settings.hero_subtitle || ''}
+            onChange={(e) => setSettings({ ...settings, hero_subtitle: e.target.value })}
+            className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
+          />
+        </div>
         <p className="text-white/30 text-xs mb-4">
           Essas mudanças valem na hora, sem precisar reiniciar o site.
         </p>

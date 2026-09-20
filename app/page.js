@@ -5,6 +5,7 @@ import { ImageStudio, VideoStudio, LipSyncStudio, CinemaStudio } from 'studio';
 import { FEATURES } from '../lib/landing-data.js';
 import { useAuthFlow } from '../lib/useAuthFlow.js';
 import { usePromoText } from '../lib/usePromoText.js';
+import { useHeroContent, HighlightedText } from '../lib/useHeroContent.js';
 import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
 import AuthFlowModals from '../components/AuthFlowModals';
@@ -15,6 +16,7 @@ export default function LandingPage() {
   const auth = useAuthFlow(selectedType);
   const currentSlug = FEATURES.find((f) => f.id === selectedType)?.slug || 'imagem';
   const promoText = usePromoText();
+  const hero = useHeroContent();
 
   return (
     <div className="min-h-screen bg-app-bg text-white">
@@ -24,12 +26,10 @@ export default function LandingPage() {
       <section className="px-6 md:px-10 pt-6 md:pt-8 pb-20 max-w-6xl mx-auto">
         <div className="max-w-3xl">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-black leading-tight tracking-tight mb-3">
-            Sua ideia vira imagem, vídeo ou cena de cinema{' '}
-            <span className="text-primary">em segundos.</span>
+            <HighlightedText text={hero.title} />
           </h1>
           <p className="text-white/60 text-sm md:text-base leading-relaxed mb-5 max-w-xl">
-            Escolha abaixo o que você quer criar e já comece a mexer nas opções —
-            sem precisar de software caro.
+            {hero.subtitle}
           </p>
         </div>
 
