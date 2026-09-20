@@ -10,6 +10,9 @@ import { checkGeneration } from '../../../../packages/studio/src/muapi.js';
 
 const MUAPI_KEY = process.env.MUAPI_API_KEY;
 
+// The client calls this every few seconds after /api/generate returns
+// { done: false, job_id }. Each call does at most ONE check against
+// Muapi — fast, never at risk of a proxy timeout.
 export async function GET(request) {
   const user = await getSessionUser();
   if (!user) {
@@ -26,6 +29,9 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Geração não encontrada' }, { status: 404 });
   }
 
+  // Already settled (e.g. the browser polled again after finishing, or a
+  // second tab is open) — just hand back the stored result, don't touch
+  // Muapi or the balance again.
   if (job.status === 'completed') {
     return NextResponse.json({ done: true, url: job.output_url, charged_brl: job.cost_credits });
   }
@@ -33,6 +39,7 @@ export async function GET(request) {
     return NextResponse.json({ done: true, error: 'A geração falhou.' });
   }
 
+  // Still pending — check once.
   let result;
   try {
     result = await checkGeneration(job.request_id, MUAPI_KEY);
@@ -50,7 +57,7 @@ export async function GET(request) {
   // remove once the URL-extraction logic in muapi.js is confirmed correct.
   console.log('[poll] raw Muapi response:', JSON.stringify(result.raw));
 
-  const realCharge = actualChargeBRL(result.raw, job.kind);
+  const realCharge = actualChargeBRL(result.raw, job.kind, job.model);
   settleGenerationSuccess(job.id, realCharge, result.url);
   return NextResponse.json({ done: true, url: result.url, charged_brl: realCharge });
 }
