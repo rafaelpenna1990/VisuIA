@@ -62,6 +62,7 @@ export default function StandaloneShell() {
   const [showTopUp, setShowTopUp] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
   const [resuming, setResuming] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const refreshUser = useCallback(async () => {
     const res = await fetch('/api/auth/me', { credentials: 'include' });
@@ -123,8 +124,52 @@ export default function StandaloneShell() {
 
   return (
     <div className="h-screen bg-[#080910] flex overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-60 shrink-0 bg-[#0F1119] border-r border-white/5 flex flex-col py-6 px-4">
+      {/* Mobile top bar — hidden on desktop, where the sidebar is always visible */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-[#0F1119] border-b border-white/5 flex items-center justify-between px-4">
+        <button
+          onClick={() => setMobileMenuOpen(true)}
+          className="text-white/70 hover:text-white p-1 -ml-1"
+          aria-label="Abrir menu"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <button onClick={() => router.push('/')}>
+          <Logo version={assetsVersion} className="h-7 w-auto max-w-[120px]" />
+        </button>
+        <button
+          onClick={() => setShowTopUp(true)}
+          className="text-[#FF9500] text-xs font-bold px-2.5 py-1.5 rounded-lg bg-[#FF9500]/10"
+        >
+          {formatTokens(user.credits_balance)}
+        </button>
+      </div>
+
+      {/* Backdrop — only rendered while the mobile drawer is open */}
+      {mobileMenuOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/60 z-40"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar — a slide-in drawer on mobile, a normal fixed column on desktop */}
+      <aside
+        className={`fixed md:static inset-y-0 left-0 z-50 w-60 shrink-0 bg-[#0F1119] border-r border-white/5 flex flex-col py-6 px-4 transform transition-transform duration-300 ease-out ${
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        } md:translate-x-0`}
+      >
+        <button
+          onClick={() => setMobileMenuOpen(false)}
+          className="md:hidden self-end text-white/40 hover:text-white mb-2"
+          aria-label="Fechar menu"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+
         <div className="mb-8 px-2">
           <button onClick={() => router.push('/')} className="block">
             <Logo version={assetsVersion} className="h-60 w-auto max-w-full" />
@@ -144,7 +189,7 @@ export default function StandaloneShell() {
           {TABS.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => { setActiveTab(tab.id); setMobileMenuOpen(false); }}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors text-left ${
                 activeTab === tab.id
                   ? 'bg-[#FF9500] text-black'
@@ -188,7 +233,7 @@ export default function StandaloneShell() {
       </aside>
 
       {/* Studio Content */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 pt-14 md:pt-0">
         {activeTab === 'image'   && <ImageStudio   apiKey={placeholderKey} onGenerationComplete={refreshUser} />}
         {activeTab === 'video'   && <VideoStudio   apiKey={placeholderKey} />}
         {activeTab === 'lipsync' && <LipSyncStudio apiKey={placeholderKey} />}

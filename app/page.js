@@ -57,7 +57,7 @@ export default function LandingPage() {
             the signup modal — nothing before that is blocked. */}
         <div
           className="relative w-full rounded-3xl overflow-hidden border border-white/10 bg-black"
-          style={{ height: 'min(75vh, 780px)', minHeight: '540px' }}
+          style={{ height: 'min(58vh, 600px)', minHeight: '460px' }}
         >
           {selectedType === 'image' && <ImageStudio apiKey="preview" onAuthRequired={auth.isLoggedIn ? undefined : () => auth.goToStudioOrAuth('signup')} />}
           {selectedType === 'video' && <VideoStudio apiKey="preview" onAuthRequired={auth.isLoggedIn ? undefined : () => auth.goToStudioOrAuth('signup')} />}

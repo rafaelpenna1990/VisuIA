@@ -46,7 +46,7 @@ export default function CriarTypePage({ params }) {
 
           <div
             className="relative w-full rounded-3xl overflow-hidden border border-white/10 bg-black"
-            style={{ height: 'min(75vh, 780px)', minHeight: '540px' }}
+            style={{ height: 'min(58vh, 600px)', minHeight: '460px' }}
           >
             <StudioComponent
               apiKey="preview"
