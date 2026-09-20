@@ -594,189 +594,188 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
     const showCanvas = canvasUrl !== null;
 
     return (
-        <div className="w-full h-full flex flex-col items-center justify-center bg-app-bg relative overflow-hidden">
+        <div className="w-full h-full flex flex-col items-center justify-center bg-app-bg relative p-4 md:p-6 overflow-y-auto custom-scrollbar overflow-x-hidden">
 
-            {/* ── 1. Hero Section (Empty State) ── */}
-            <div
-                className={`flex flex-col items-center justify-center text-center px-4 animate-fade-in-up transition-all duration-700 ${showCanvas ? 'opacity-0 pointer-events-none scale-95' : 'opacity-100 scale-100'}`}
-            >
-                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 shadow-glow mb-5">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-primary">
-                        <path d="M23 7l-7 5 7 5V7z" />
-                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-                    </svg>
-                </div>
-                <div className="mb-3 text-xs font-bold text-white/40 tracking-[0.2em] uppercase">
-                    Estúdio Cinema
-                </div>
-                <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight mb-2 uppercase">
-                    O que você filmaria<br />com orçamento infinito?
-                </h1>
-            </div>
-
-            {/* ── 2. Canvas Area (Result View) ── */}
-            <div
-                className={`absolute inset-0 flex flex-col items-center justify-center p-4 min-[800px]:p-16 z-30 transition-all duration-1000 bg-black/90 backdrop-blur-3xl ${showCanvas ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' : 'opacity-0 translate-y-10 scale-95 pointer-events-none'}`}
-            >
-                <div className="relative group max-w-full max-h-[70vh] flex items-center justify-center">
-                    {canvasUrl && (
-                        <img
-                            ref={resultImgRef}
-                            src={canvasUrl}
-                            alt="Cena de cinema gerada"
-                            className="max-h-[60vh] max-w-[90vw] rounded-2xl shadow-2xl border border-white/10 object-contain"
-                        />
-                    )}
-                </div>
-
-                {/* Canvas Controls */}
-                <div
-                    className={`mt-8 flex gap-3 justify-center transition-opacity duration-500 delay-500 ${showCanvas ? 'opacity-100' : 'opacity-0'}`}
-                >
-                    <button
-                        onClick={() => handleRegenerate()}
-                        className="bg-white/10 hover:bg-white/20 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide transition-all border border-white/5 backdrop-blur-lg text-white hover:border-white/20"
-                    >
-                        ↻ Gerar de novo
-                    </button>
-                    <button
-                        onClick={handleDownload}
-                        className="bg-primary text-black px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wide hover:bg-white transition-colors shadow-glow-sm hover:scale-105 active:scale-95"
-                    >
-                        ↓ Baixar
-                    </button>
-                    <button
-                        onClick={resetToPrompt}
-                        className="bg-white/10 hover:bg-white/20 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide transition-all border border-white/5 backdrop-blur-lg text-white hover:border-white/20"
-                    >
-                        + Nova Cena
-                    </button>
-                </div>
-            </div>
-
-            {/* ── 3. Floating Prompt Bar ── */}
-            <div
-                className={`absolute bottom-8 left-4 right-4 md:left-0 md:right-0 md:mx-auto md:max-w-4xl z-30 transition-all duration-700 ${showCanvas ? 'opacity-0 pointer-events-none translate-y-20' : 'opacity-100 translate-y-0'}`}
-            >
-                <div className="bg-[#150E1C] border border-white/10 rounded-[2rem] p-4 flex justify-between shadow-3xl items-end relative">
-
-                    {/* Left Column */}
-                    <div className="flex-1 flex flex-col gap-3 min-h-[80px] justify-between py-1 px-1">
-                        {/* Input Row */}
-                        <div className="flex items-start gap-3 w-full">
-                            <textarea
-                                ref={textareaRef}
-                                placeholder="Descreva sua cena - use @ para adicionar personagens e objetos"
-                                className="flex-1 bg-transparent border-none text-white text-lg font-medium placeholder:text-white/20 focus:outline-none resize-none h-[28px] leading-relaxed overflow-hidden"
-                                rows={1}
-                                onInput={handleTextareaInput}
-                            />
-                        </div>
-
-                        {/* Settings Toolbar */}
-                        <div className="flex items-center gap-3">
-                            {/* Aspect Ratio Button */}
-                            <div className="relative">
-                                <button
-                                    ref={arBtnRef}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-white/50 hover:text-white transition-colors bg-white/5 hover:bg-white/10 rounded-lg border border-white/5"
-                                    onClick={() => setOpenDropdown(d => d === 'ar' ? null : 'ar')}
-                                >
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <rect x="2" y="7" width="20" height="10" rx="2" ry="2" />
-                                    </svg>
-                                    {settings.aspect_ratio}
-                                </button>
-                                {openDropdown === 'ar' && (
-                                    <Dropdown
-                                        items={ASPECT_RATIOS}
-                                        selected={settings.aspect_ratio}
-                                        onSelect={(val) => setSettings(prev => ({ ...prev, aspect_ratio: val }))}
-                                        triggerRef={arBtnRef}
-                                        onClose={() => setOpenDropdown(null)}
-                                    />
-                                )}
+            {/* ── History Sidebar ── */}
+            {history.length > 0 && (
+                <div className="fixed right-0 top-0 h-full w-20 md:w-24 bg-black/60 backdrop-blur-xl border-l border-white/5 z-50 flex flex-col items-center py-4 gap-3 overflow-y-auto transition-all duration-500">
+                    <div className="text-[9px] font-bold text-muted uppercase tracking-widest mb-2">History</div>
+                    <div className="flex flex-col gap-2 w-full px-2">
+                        {history.map((entry, idx) => (
+                            <div
+                                key={entry.timestamp ?? idx}
+                                className={`relative group/thumb cursor-pointer rounded-xl overflow-hidden border-2 transition-all duration-300 aspect-square ${idx === activeHistoryIndex ? 'border-primary shadow-glow' : 'border-white/10 hover:border-white/30'}`}
+                                onClick={() => loadHistoryItem(entry, idx)}
+                            >
+                                <img src={entry.url} alt={`Item ${idx + 1}`} className="w-full h-full object-cover" />
                             </div>
-
-                            {/* Resolution Button */}
-                            <div className="relative">
-                                <button
-                                    ref={resBtnRef}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-white/50 hover:text-white transition-colors bg-white/5 hover:bg-white/10 rounded-lg border border-white/5"
-                                    onClick={() => setOpenDropdown(d => d === 'res' ? null : 'res')}
-                                >
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                                    </svg>
-                                    {resolution}
-                                </button>
-                                {openDropdown === 'res' && (
-                                    <Dropdown
-                                        items={RESOLUTIONS}
-                                        selected={resolution}
-                                        onSelect={setResolution}
-                                        triggerRef={resBtnRef}
-                                        onClose={() => setOpenDropdown(null)}
-                                    />
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Right Group */}
-                    <div className="flex items-center gap-2 h-full self-end mb-1">
-                        {/* Summary Card (triggers overlay) */}
-                        <button
-                            className="flex flex-col items-start justify-center px-4 py-2 bg-[#2a2a2a] rounded-xl border border-white/5 hover:border-white/20 transition-colors text-left flex-1 min-w-[100px] md:min-w-[140px] max-w-[240px] h-[56px] relative group overflow-hidden"
-                            onClick={() => setIsOverlayOpen(true)}
-                        >
-                            <div className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full shadow-glow-sm" />
-                            <span className="text-[10px] font-bold text-white uppercase truncate w-full tracking-wide">
-                                {settings.camera}
-                            </span>
-                            <span className="text-[10px] font-medium text-white/60 truncate w-full">
-                                {formatSummaryValue()}
-                            </span>
-                        </button>
-
-                        {/* Generate Button */}
-                        <button
-                            className="h-[56px] px-8 bg-primary text-black rounded-xl font-black text-xs uppercase hover:opacity-90 transition-opacity shadow-glow disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={isGenerating || !settings.prompt.trim()}
-                            onClick={handleGenerate}
-                        >
-                            {isGenerating ? 'Gerando...' : 'Gerar ✨'}
-                        </button>
+                        ))}
                     </div>
                 </div>
-            </div>
+            )}
 
-            {/* ── 4. History Sidebar ── */}
-            <div className="fixed right-0 top-0 h-full w-20 md:w-24 bg-black/60 backdrop-blur-xl border-l border-white/5 z-50 flex flex-col items-center py-4 gap-3 overflow-y-auto transition-all duration-500">
-                <div className="text-[9px] font-bold text-white/40 uppercase tracking-widest mb-2">
-                    History
-                </div>
-                <div className="flex flex-col gap-2 w-full px-2">
-                    {history.map((entry, idx) => (
-                        <div
-                            key={entry.timestamp ?? idx}
-                            className={`relative group/thumb cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 aspect-square ${idx === activeHistoryIndex ? 'border-primary shadow-glow-sm' : 'border-white/10 hover:border-white/30'}`}
-                            onClick={() => loadHistoryItem(entry, idx)}
-                        >
+            {/* ── Canvas / Result View ── */}
+            {showCanvas && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-4 min-[800px]:p-16 z-10 transition-all duration-1000">
+                    <div className="relative group">
+                        {canvasUrl && (
                             <img
-                                src={entry.url}
-                                alt={`History item ${idx + 1}`}
-                                className="w-full h-full object-cover opacity-80 group-hover/thumb:opacity-100 transition-opacity"
+                                ref={resultImgRef}
+                                key={canvasUrl}
+                                src={canvasUrl}
+                                alt="Cena de cinema gerada"
+                                className="max-h-[60vh] max-w-[80vw] rounded-3xl shadow-3xl border border-white/10 interactive-glow object-contain"
                             />
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
-                                <span className="text-[8px] font-bold text-white uppercase">Load</span>
+                        )}
+                    </div>
+                    <div className="mt-6 flex gap-3 justify-center">
+                        <button
+                            type="button"
+                            onClick={handleRegenerate}
+                            className="bg-white/10 hover:bg-white/20 px-6 py-2.5 rounded-2xl text-xs font-bold transition-all border border-white/5 backdrop-blur-lg text-white"
+                        >
+                            ↻ Gerar de novo
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleDownload}
+                            className="bg-primary text-black px-6 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-glow active:scale-95"
+                        >
+                            ↓ Baixar
+                        </button>
+                        <button
+                            type="button"
+                            onClick={resetToPrompt}
+                            className="bg-white/10 hover:bg-white/20 px-6 py-2.5 rounded-2xl text-xs font-bold transition-all border border-white/5 backdrop-blur-lg text-white"
+                        >
+                            + Nova Cena
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Hero + Prompt Bar (hidden when canvas is showing) ── */}
+            {!showCanvas && (
+                <>
+                    {/* Hero */}
+                    <div className="flex flex-col items-center mb-10 md:mb-20 animate-fade-in-up transition-all duration-700">
+                        <div className="mb-10 relative group">
+                            <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full opacity-40 group-hover:opacity-70 transition-opacity duration-1000" />
+                            <div className="relative w-24 h-24 md:w-32 md:h-32 bg-teal-900/40 rounded-3xl flex items-center justify-center border border-white/5 overflow-hidden">
+                                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-primary opacity-20 absolute -right-4 -bottom-4">
+                                    <path d="M23 7l-7 5 7 5V7z" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                                </svg>
+                                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 shadow-glow relative z-10">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-primary">
+                                        <path d="M23 7l-7 5 7 5V7z" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                                    </svg>
+                                </div>
+                                <div className="absolute top-4 right-4 text-primary animate-pulse">✨</div>
                             </div>
                         </div>
-                    ))}
-                </div>
-            </div>
+                        <h1 className="text-2xl sm:text-4xl md:text-7xl font-black text-white tracking-widest uppercase mb-4 selection:bg-primary selection:text-black text-center px-4">
+                            Estúdio Cinema
+                        </h1>
+                        <p className="text-secondary text-sm font-medium tracking-wide opacity-60 text-center px-4">
+                            O que você filmaria com orçamento infinito?
+                        </p>
+                    </div>
 
-            {/* ── 5. Camera Controls Overlay ── */}
+                    {/* Prompt Bar */}
+                    <div className="w-full max-w-4xl relative z-40 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                        <div className="w-full bg-[#150E1C]/90 backdrop-blur-xl border border-white/10 rounded-[1.5rem] md:rounded-[2.5rem] p-3 md:p-5 flex flex-col gap-3 md:gap-5 shadow-3xl">
+
+                            {/* Input row */}
+                            <div className="flex items-start gap-5 px-2">
+                                <textarea
+                                    ref={textareaRef}
+                                    placeholder="Descreva sua cena - use @ para adicionar personagens e objetos"
+                                    className="flex-1 bg-transparent border-none text-white text-base md:text-xl placeholder:text-muted focus:outline-none resize-none pt-2.5 leading-relaxed min-h-[40px] max-h-[150px] md:max-h-[250px] overflow-y-auto custom-scrollbar"
+                                    rows={1}
+                                    onInput={handleTextareaInput}
+                                />
+                            </div>
+
+                            {/* Bottom row: controls + generate */}
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 px-2 pt-4 border-t border-white/5">
+                                <div className="flex items-center gap-1.5 md:gap-2.5 relative flex-wrap">
+
+                                    {/* Aspect Ratio */}
+                                    <div className="relative">
+                                        <button
+                                            ref={arBtnRef}
+                                            type="button"
+                                            onClick={() => setOpenDropdown(d => d === 'ar' ? null : 'ar')}
+                                            className="flex items-center gap-1.5 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 bg-white/5 hover:bg-white/10 rounded-xl md:rounded-2xl transition-all border border-white/5 group whitespace-nowrap"
+                                        >
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="opacity-60 text-secondary"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /></svg>
+                                            <span className="text-xs font-bold text-white group-hover:text-primary transition-colors">{settings.aspect_ratio}</span>
+                                        </button>
+                                        {openDropdown === 'ar' && (
+                                            <Dropdown
+                                                items={ASPECT_RATIOS}
+                                                selected={settings.aspect_ratio}
+                                                onSelect={(val) => setSettings(prev => ({ ...prev, aspect_ratio: val }))}
+                                                triggerRef={arBtnRef}
+                                                onClose={() => setOpenDropdown(null)}
+                                            />
+                                        )}
+                                    </div>
+
+                                    {/* Resolution */}
+                                    <div className="relative">
+                                        <button
+                                            ref={resBtnRef}
+                                            type="button"
+                                            onClick={() => setOpenDropdown(d => d === 'res' ? null : 'res')}
+                                            className="flex items-center gap-1.5 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 bg-white/5 hover:bg-white/10 rounded-xl md:rounded-2xl transition-all border border-white/5 group whitespace-nowrap"
+                                        >
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="opacity-60 text-secondary"><path d="M6 2L3 6v15a2 2 0 002 2h14a2 2 0 002-2V6l-3-4H6z" /></svg>
+                                            <span className="text-xs font-bold text-white group-hover:text-primary transition-colors">{resolution}</span>
+                                        </button>
+                                        {openDropdown === 'res' && (
+                                            <Dropdown
+                                                items={RESOLUTIONS}
+                                                selected={resolution}
+                                                onSelect={setResolution}
+                                                triggerRef={resBtnRef}
+                                                onClose={() => setOpenDropdown(null)}
+                                            />
+                                        )}
+                                    </div>
+
+                                    {/* Camera / Lens summary (opens the dial overlay) */}
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsOverlayOpen(true)}
+                                        className="flex items-center gap-1.5 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 bg-white/5 hover:bg-white/10 rounded-xl md:rounded-2xl transition-all border border-white/5 group whitespace-nowrap max-w-[220px]"
+                                    >
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="opacity-60 text-secondary shrink-0"><path d="M23 7l-7 5 7 5V7z" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" /></svg>
+                                        <span className="text-xs font-bold text-white group-hover:text-primary transition-colors truncate">
+                                            {settings.camera} · {formatSummaryValue()}
+                                        </span>
+                                    </button>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={handleGenerate}
+                                    disabled={isGenerating || !settings.prompt.trim()}
+                                    className="bg-primary text-black px-6 md:px-8 py-3 md:py-3.5 rounded-xl md:rounded-[1.5rem] font-black text-sm md:text-base hover:shadow-glow hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2.5 w-full sm:w-auto shadow-lg disabled:opacity-60 disabled:scale-100"
+                                >
+                                    {isGenerating ? (
+                                        <><span className="animate-spin inline-block text-black">◌</span> Gerando...</>
+                                    ) : (
+                                        'Gerar ✨'
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* ── Camera Controls Overlay ── */}
             <CameraControlsOverlay
                 isOpen={isOverlayOpen}
                 onClose={() => setIsOverlayOpen(false)}
