@@ -14,7 +14,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-app-bg text-white">
-      <SiteHeader goToStudioOrAuth={auth.goToStudioOrAuth} />
+      <SiteHeader goToStudioOrAuth={auth.goToStudioOrAuth} isLoggedIn={auth.isLoggedIn} />
 
       {/* Hero */}
       <section className="px-6 md:px-10 pt-6 md:pt-8 pb-20 max-w-6xl mx-auto">

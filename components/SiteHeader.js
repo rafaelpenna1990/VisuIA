@@ -31,7 +31,7 @@ function NavDropdown({ label, isOpen, onToggle, children, panelClassName }) {
 // The nav bar used on every marketing page (home, /criar/*, /modelos/*,
 // /como-funciona). Each dropdown item is a real link to its own page —
 // see lib/landing-data.js for the shared copy.
-export default function SiteHeader({ goToStudioOrAuth }) {
+export default function SiteHeader({ goToStudioOrAuth, isLoggedIn }) {
   const router = useRouter();
   const [openNav, setOpenNav] = useState(null); // null | 'create' | 'models' | 'how'
   const navRef = useRef(null);
@@ -59,7 +59,7 @@ export default function SiteHeader({ goToStudioOrAuth }) {
     <header ref={navRef} className="flex items-center justify-between px-6 md:px-10 py-5 max-w-6xl mx-auto relative">
       <div className="flex items-center gap-8">
         <button onClick={() => router.push('/')} className="flex items-center">
-          <img src="/logo.png" alt="VisuIA" className="h-12 w-auto" />
+          <img src="/logo.png" alt="VisuIA" className="h-20 w-auto" />
         </button>
 
         <nav className="hidden md:flex items-center gap-6">
@@ -129,18 +129,37 @@ export default function SiteHeader({ goToStudioOrAuth }) {
       </div>
 
       <div className="flex items-center gap-3">
-        <button
-          onClick={() => goToStudioOrAuth('login')}
-          className="text-sm font-semibold text-white/70 hover:text-white transition-colors px-2"
-        >
-          Entrar
-        </button>
-        <button
-          onClick={() => goToStudioOrAuth('signup')}
-          className="bg-primary hover:opacity-90 text-black font-bold text-sm px-5 py-2 rounded-full transition-opacity"
-        >
-          Cadastrar
-        </button>
+        {isLoggedIn ? (
+          <>
+            <button
+              onClick={() => router.push('/conta')}
+              className="text-sm font-semibold text-white/70 hover:text-white transition-colors px-2"
+            >
+              Minha Conta
+            </button>
+            <button
+              onClick={() => goToStudioOrAuth('login')}
+              className="bg-primary hover:opacity-90 text-black font-bold text-sm px-5 py-2 rounded-full transition-opacity"
+            >
+              Meu Estúdio
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => goToStudioOrAuth('login')}
+              className="text-sm font-semibold text-white/70 hover:text-white transition-colors px-2"
+            >
+              Entrar
+            </button>
+            <button
+              onClick={() => goToStudioOrAuth('signup')}
+              className="bg-primary hover:opacity-90 text-black font-bold text-sm px-5 py-2 rounded-full transition-opacity"
+            >
+              Cadastrar
+            </button>
+          </>
+        )}
       </div>
     </header>
   );

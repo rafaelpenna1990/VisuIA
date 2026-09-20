@@ -123,7 +123,7 @@ export default function StandaloneShell() {
       {/* Sidebar */}
       <aside className="w-60 shrink-0 bg-[#0F1119] border-r border-white/5 flex flex-col py-6 px-4">
         <div className="mb-8 px-2">
-          <img src="/logo.png" alt="VisuIA" className="h-12 w-auto" />
+          <img src="/logo.png" alt="VisuIA" className="h-20 w-auto" />
           {resuming && (
             <div className="text-[10px] text-white/40 flex items-center gap-1.5 mt-1">
               <span className="animate-spin inline-block">◌</span>

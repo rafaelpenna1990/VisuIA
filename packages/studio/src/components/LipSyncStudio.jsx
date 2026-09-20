@@ -106,29 +106,6 @@ function MediaPickerButton({ accept, label, icon, onUpload, onClear, uploadState
 // ---------------------------------------------------------------------------
 function Dropdown({ isOpen, items, selectedId, onSelect, onClose, anchorRef }) {
     const dropRef = useRef(null);
-    const [style, setStyle] = useState({});
-
-    useEffect(() => {
-        if (!isOpen || !anchorRef?.current || !dropRef.current) return;
-
-        const rect = anchorRef.current.getBoundingClientRect();
-        const ddHeight = dropRef.current.offsetHeight;
-        const spaceBelow = window.innerHeight - rect.bottom - 8;
-        const spaceAbove = rect.top - 8;
-
-        let top, bottom, maxHeight;
-        if (spaceBelow >= ddHeight || spaceBelow >= spaceAbove) {
-            top = rect.bottom + 8;
-            bottom = 'auto';
-            maxHeight = Math.max(150, spaceBelow - 8);
-        } else {
-            top = 'auto';
-            bottom = window.innerHeight - rect.top + 8;
-            maxHeight = Math.max(150, spaceAbove - 8);
-        }
-        const left = Math.min(rect.left, window.innerWidth - 220);
-        setStyle({ top, bottom, left, maxHeight });
-    }, [isOpen, anchorRef]);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -146,8 +123,8 @@ function Dropdown({ isOpen, items, selectedId, onSelect, onClose, anchorRef }) {
     return (
         <div
             ref={dropRef}
-            style={{ position: 'fixed', zIndex: 100, minWidth: 200, overflowY: 'auto', ...style }}
-            className="bg-[#0F1119] border border-white/10 rounded-2xl shadow-3xl p-2 custom-scrollbar"
+            onClick={(e) => e.stopPropagation()}
+            className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0F1119] border border-white/10 rounded-2xl shadow-3xl p-2 max-h-[300px] overflow-y-auto custom-scrollbar w-[calc(100vw-3rem)] max-w-xs"
         >
             {items.map((item) => (
                 <button
