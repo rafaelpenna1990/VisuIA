@@ -4,38 +4,49 @@ import { useState } from 'react';
 import { useAssetsVersion } from '../lib/useAssetsVersion.js';
 
 // A visible row of example cards — like a small gallery strip. Each slot
-// works with EITHER a photo or a video: drop a file named
-// {slug}-1.jpg (or .mp4/.webm) via the admin panel — same for -2 and -3 —
-// and it just shows up, no code changes needed. If a .jpg is missing, it
-// automatically tries a video with the same name instead.
+// works with ANY common photo or video format: drop a file named
+// {slug}-1.(jpg/jpeg/png/webp/mp4/webm) via the admin panel — same for -2
+// and -3 — and it just shows up, no code changes needed. Tries each
+// extension in turn until one actually exists.
+const CANDIDATES = [
+  { ext: 'jpg', type: 'image' },
+  { ext: 'jpeg', type: 'image' },
+  { ext: 'png', type: 'image' },
+  { ext: 'webp', type: 'image' },
+  { ext: 'mp4', type: 'video' },
+  { ext: 'webm', type: 'video' },
+];
+
 function ExampleTile({ slug, index, version }) {
-  const [triedVideo, setTriedVideo] = useState(false);
+  const [candidateIndex, setCandidateIndex] = useState(0);
   const base = `/api/assets/carousel/${slug}-${index}`;
 
-  if (triedVideo) {
+  if (candidateIndex >= CANDIDATES.length) return null; // nothing found in any format
+  const candidate = CANDIDATES[candidateIndex];
+  const advance = () => setCandidateIndex((i) => i + 1);
+
+  if (candidate.type === 'video') {
     return (
       <video
-        src={`${base}.mp4?v=${version}`}
+        key={candidate.ext}
+        src={`${base}.${candidate.ext}?v=${version}`}
         autoPlay
         muted
         loop
         playsInline
         className="w-full h-full object-cover"
-        onError={(e) => {
-          // Neither a jpg nor an mp4 exists for this slot — just show
-          // nothing rather than a broken icon.
-          e.currentTarget.style.display = 'none';
-        }}
+        onError={advance}
       />
     );
   }
 
   return (
     <img
-      src={`${base}.jpg?v=${version}`}
+      key={candidate.ext}
+      src={`${base}.${candidate.ext}?v=${version}`}
       alt=""
       className="w-full h-full object-cover"
-      onError={() => setTriedVideo(true)}
+      onError={advance}
     />
   );
 }

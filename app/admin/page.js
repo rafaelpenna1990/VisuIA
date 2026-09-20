@@ -494,28 +494,44 @@ function AppearanceTab({ adminKey }) {
 
 // Shows whichever of .jpg/.mp4 currently exists for a carousel slot — same
 // try-image-then-video fallback the real site uses.
+const PREVIEW_CANDIDATES = [
+  { ext: 'jpg', type: 'image' },
+  { ext: 'jpeg', type: 'image' },
+  { ext: 'png', type: 'image' },
+  { ext: 'webp', type: 'image' },
+  { ext: 'mp4', type: 'video' },
+  { ext: 'webm', type: 'video' },
+];
+
 function SlotPreview({ slug, index, version }) {
-  const [triedVideo, setTriedVideo] = useState(false);
+  const [candidateIndex, setCandidateIndex] = useState(0);
   const base = `/api/assets/carousel/${slug}-${index}`;
-  if (triedVideo) {
+  if (candidateIndex >= PREVIEW_CANDIDATES.length) {
+    return <span className="text-white/20 text-[10px]">vazio</span>;
+  }
+  const candidate = PREVIEW_CANDIDATES[candidateIndex];
+  const advance = () => setCandidateIndex((i) => i + 1);
+  if (candidate.type === 'video') {
     return (
       <video
-        src={`${base}.mp4?v=${version}`}
+        key={candidate.ext}
+        src={`${base}.${candidate.ext}?v=${version}`}
         muted
         loop
         autoPlay
         playsInline
         className="w-full h-full object-cover"
-        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+        onError={advance}
       />
     );
   }
   return (
     <img
-      src={`${base}.jpg?v=${version}`}
+      key={candidate.ext}
+      src={`${base}.${candidate.ext}?v=${version}`}
       alt=""
       className="w-full h-full object-cover"
-      onError={() => setTriedVideo(true)}
+      onError={advance}
     />
   );
 }
