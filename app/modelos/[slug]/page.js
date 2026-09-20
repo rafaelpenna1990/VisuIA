@@ -3,6 +3,7 @@
 import { notFound } from 'next/navigation';
 import { findFeatureBySlug, MODEL_HIGHLIGHTS } from '../../../lib/landing-data.js';
 import { useAuthFlow } from '../../../lib/useAuthFlow.js';
+import { usePromoText } from '../../../lib/usePromoText.js';
 import SiteHeader from '../../../components/SiteHeader';
 import SiteFooter from '../../../components/SiteFooter';
 import AuthFlowModals from '../../../components/AuthFlowModals';
@@ -10,6 +11,7 @@ import AuthFlowModals from '../../../components/AuthFlowModals';
 export default function ModelosTypePage({ params }) {
   const feature = findFeatureBySlug(params.slug);
   const auth = useAuthFlow(feature?.id);
+  const promoText = usePromoText();
 
   if (!feature) return notFound();
 
@@ -44,7 +46,7 @@ export default function ModelosTypePage({ params }) {
 
         <div className="flex items-center gap-2 mb-4">
           <span className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 text-primary text-xs font-bold px-3 py-1.5 rounded-full">
-            🎁 7 dias grátis + 500 VisuTokens de bônus
+            {promoText}
           </span>
         </div>
         <button

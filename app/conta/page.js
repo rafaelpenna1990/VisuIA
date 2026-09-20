@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { formatTokens } from '../../lib/tokens.js';
+import { usePromoText } from '../../lib/usePromoText.js';
 
 const TABS = [
   { id: 'perfil', label: 'Perfil' },
@@ -28,6 +29,7 @@ function formatDate(iso) {
 
 function ContaContent() {
   const router = useRouter();
+  const promoText = usePromoText();
   const searchParams = useSearchParams();
   const initialTab = TABS.some((t) => t.id === searchParams.get('tab')) ? searchParams.get('tab') : 'perfil';
 
@@ -296,6 +298,11 @@ function ContaContent() {
 
             {subscription === null && (
               <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 text-primary text-xs font-bold px-3 py-1.5 rounded-full">
+                    {promoText}
+                  </span>
+                </div>
                 <p className="text-white/50 text-sm mb-6">
                   Assine um plano mensal e receba VisuTokens todo mês, com bônus quanto maior o plano.
                   Os tokens acumulam se você não usar tudo.

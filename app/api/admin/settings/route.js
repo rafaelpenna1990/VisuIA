@@ -17,7 +17,7 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
   const body = await request.json();
-  const allowedKeys = ['usd_to_brl', 'price_markup', 'trial_bonus_tokens', 'signup_free_credits'];
+  const allowedKeys = ['usd_to_brl', 'price_markup', 'trial_bonus_tokens', 'signup_free_credits', 'promo_text'];
   for (const key of allowedKeys) {
     if (body[key] !== undefined && body[key] !== '') {
       setSetting(key, body[key]);

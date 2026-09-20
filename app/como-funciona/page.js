@@ -2,12 +2,14 @@
 
 import { STEPS } from '../../lib/landing-data.js';
 import { useAuthFlow } from '../../lib/useAuthFlow.js';
+import { usePromoText } from '../../lib/usePromoText.js';
 import SiteHeader from '../../components/SiteHeader';
 import SiteFooter from '../../components/SiteFooter';
 import AuthFlowModals from '../../components/AuthFlowModals';
 
 export default function ComoFuncionaPage() {
   const auth = useAuthFlow('image');
+  const promoText = usePromoText();
 
   return (
     <div className="min-h-screen bg-app-bg text-white">
@@ -39,7 +41,7 @@ export default function ComoFuncionaPage() {
 
         <div className="flex items-center gap-2 mt-12 mb-4">
           <span className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 text-primary text-xs font-bold px-3 py-1.5 rounded-full">
-            🎁 7 dias grátis + 500 VisuTokens de bônus
+            {promoText}
           </span>
         </div>
         <button

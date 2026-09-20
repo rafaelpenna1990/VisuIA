@@ -204,6 +204,14 @@ function ConfigTab({ adminKey }) {
             />
           </div>
         </div>
+        <div className="mb-4">
+          <label className="block text-xs text-white/50 mb-1">Texto da promoção (aparece em destaque em várias páginas do site)</label>
+          <input
+            value={settings.promo_text || ''}
+            onChange={(e) => setSettings({ ...settings, promo_text: e.target.value })}
+            className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
+          />
+        </div>
         <p className="text-white/30 text-xs mb-4">
           Essas mudanças valem na hora, sem precisar reiniciar o site.
         </p>
