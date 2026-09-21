@@ -23,6 +23,40 @@ function trialBonusReais() {
   return Number(getSetting('trial_bonus_tokens', '500')) / 100;
 }
 
+// OpenAI/ChatGPT Ads server-side conversion — fired right when a
+// subscription is confirmed via Stripe's webhook (the reliable source of
+// truth), not on a client-side button click. Never throws: a failure here
+// must never break the actual subscription/credit logic above it.
+async function sendOaiqConversion(eventId, eventCreatedUnix, sourceUrl) {
+  const apiKey = process.env.OAIQ_CONVERSIONS_API_KEY;
+  if (!apiKey) return; // not configured yet — silently skip
+  try {
+    await fetch('https://bzr.openai.com/v1/events?pid=BLB53QxR2uFvCfCJDUeRB2', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        validate_only: false,
+        events: [
+          {
+            id: eventId,
+            type: 'subscription_created',
+            timestamp_ms: eventCreatedUnix * 1000,
+            source_url: sourceUrl,
+            action_source: 'web',
+            data: { type: 'plan_enrollment' },
+          },
+        ],
+      }),
+    });
+  } catch {
+    // Ads tracking failing is not a reason to fail the webhook — Stripe
+    // would just retry it, double-crediting the user.
+  }
+}
+
 // IMPORTANT: never trust a client-side "payment succeeded" callback to
 // unlock credits — that can be faked by anyone who opens dev tools. This
 // webhook, verified with your signing secret, is the only source of truth
@@ -60,6 +94,7 @@ export async function POST(request) {
       if (userId && plan) {
         createSubscription(userId, session.subscription, session.customer, planId);
         addCredits(userId, trialBonusReais(), `Bônus de 7 dias grátis — plano ${plan.name}`, session.id);
+        await sendOaiqConversion(session.id, event.created, `${process.env.APP_URL || 'https://www.visuia.ai'}/conta?tab=assinatura`);
       }
     } else {
       const userId = Number(session.metadata?.user_id);

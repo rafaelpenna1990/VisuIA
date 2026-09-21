@@ -25,6 +25,14 @@ export default function RootLayout({ children }) {
             gtag('config', 'AW-18464360538');
           `}
         </Script>
+
+        {/* OpenAI/ChatGPT Ads pixel — conversion tracking */}
+        <Script id="oaiq-pixel" strategy="afterInteractive">
+          {`
+            !function(w,d,s,u){if(w.oaiq)return;var q=function(){q.q.push(arguments)};q.q=[];w.oaiq=q;var j=d.createElement(s);j.async=1;j.src=u;var f=d.getElementsByTagName(s)[0];f.parentNode.insertBefore(j,f)}(window,document,"script","https://bzrcdn.openai.com/sdk/oaiq.min.js");
+            oaiq("init",{pixelId:"BLB53QxR2uFvCfCJDUeRB2"});
+          `}
+        </Script>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

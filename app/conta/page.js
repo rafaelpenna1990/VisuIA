@@ -43,6 +43,14 @@ function ContaContent() {
   const [plans, setPlans] = useState([]);
   const [subscribing, setSubscribing] = useState(null);
   const [showTopUp, setShowTopUp] = useState(false);
+
+  // OpenAI/ChatGPT Ads conversion — fires once, right when the person
+  // lands back here after a successful Stripe checkout for a subscription.
+  useEffect(() => {
+    if (searchParams.get('sub') === 'success' && typeof window !== 'undefined' && window.oaiq) {
+      window.oaiq('measure', 'subscription_created', { type: 'plan_enrollment' });
+    }
+  }, [searchParams]);
   const [canceling, setCanceling] = useState(false);
   const [endingTrial, setEndingTrial] = useState(false);
 
