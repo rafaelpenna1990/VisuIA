@@ -1,4 +1,5 @@
 import './globals.css';
+import Script from 'next/script';
 import SupportBubble from '../components/SupportBubble';
 
 export const metadata = {
@@ -10,6 +11,20 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
       <head>
+        {/* Google Ads tag — conversion tracking for the Search campaign */}
+        <Script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=AW-18464360538"
+          strategy="afterInteractive"
+        />
+        <Script id="google-ads-gtag" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'AW-18464360538');
+          `}
+        </Script>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
