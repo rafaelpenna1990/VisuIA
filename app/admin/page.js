@@ -324,6 +324,7 @@ function UsersTab({ adminKey }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
+  const [selectedUserId, setSelectedUserId] = useState(null);
 
   const search = useCallback(() => {
     setLoading(true);
@@ -391,6 +392,9 @@ function UsersTab({ adminKey }) {
               </p>
             </div>
             <div className="flex gap-2 shrink-0">
+              <button onClick={() => setSelectedUserId(u.id)} className="px-3 py-1.5 rounded-lg bg-white/10 text-white text-xs font-semibold hover:bg-white/20 transition-colors">
+                Ver histórico
+              </button>
               <button onClick={() => addTokens(u)} className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors">
                 + Tokens
               </button>
@@ -401,6 +405,104 @@ function UsersTab({ adminKey }) {
           </div>
         ))}
         {!loading && users.length === 0 && <p className="text-white/30 text-sm">Nenhum usuário encontrado.</p>}
+      </div>
+
+      {selectedUserId && (
+        <UserDetailModal userId={selectedUserId} adminKey={adminKey} onClose={() => setSelectedUserId(null)} />
+      )}
+    </div>
+  );
+}
+
+const KIND_LABELS = { image: 'Imagem', i2i: 'Editar imagem', video: 'Vídeo', i2v: 'Imagem→Vídeo', lipsync: 'Sincronia Labial' };
+
+function UserDetailModal({ userId, adminKey, onClose }) {
+  const [data, setData] = useState(null);
+  const [tab, setTab] = useState('generations');
+
+  useEffect(() => {
+    fetch(`/api/admin/users/detail?key=${encodeURIComponent(adminKey)}&userId=${userId}`)
+      .then((res) => res.json())
+      .then(setData)
+      .catch(() => setData({ error: 'Falha ao carregar' }));
+  }, [userId, adminKey]);
+
+  return (
+    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-[#0F1119] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto p-6"
+      >
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-white font-black text-lg">{data?.user?.email || 'Carregando…'}</p>
+          <button onClick={onClose} className="text-white/40 hover:text-white" aria-label="Fechar">✕</button>
+        </div>
+
+        {data?.user && (
+          <p className="text-white/40 text-xs mb-4">
+            Saldo: {(data.user.credits_balance * 100).toLocaleString('pt-BR')} VT · Cadastro: {new Date(data.user.created_at).toLocaleDateString('pt-BR')}
+            {data.subscriptions?.[0] && ` · Assinatura: ${data.subscriptions[0].plan} (${data.subscriptions[0].status})`}
+          </p>
+        )}
+
+        {data?.error && <p className="text-red-400 text-sm">{data.error}</p>}
+
+        {data?.user && (
+          <>
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setTab('generations')}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold ${tab === 'generations' ? 'bg-primary text-black' : 'bg-white/5 text-white/60'}`}
+              >
+                Gerações ({data.generations?.length || 0})
+              </button>
+              <button
+                onClick={() => setTab('transactions')}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold ${tab === 'transactions' ? 'bg-primary text-black' : 'bg-white/5 text-white/60'}`}
+              >
+                Créditos ({data.transactions?.length || 0})
+              </button>
+            </div>
+
+            {tab === 'generations' && (
+              <div className="flex flex-col gap-2">
+                {(data.generations || []).map((g) => (
+                  <div key={g.id} className="bg-black/30 border border-white/5 rounded-lg px-3 py-2 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-white text-xs font-semibold truncate">
+                        {KIND_LABELS[g.kind] || g.kind} · {g.model}
+                      </p>
+                      <p className="text-white/40 text-[11px]">
+                        {new Date(g.created_at).toLocaleString('pt-BR')} · {g.status}
+                      </p>
+                    </div>
+                    <span className="text-primary text-xs font-bold shrink-0">
+                      {(g.cost_credits * 100).toLocaleString('pt-BR')} VT
+                    </span>
+                  </div>
+                ))}
+                {data.generations?.length === 0 && <p className="text-white/30 text-sm">Nenhuma geração ainda.</p>}
+              </div>
+            )}
+
+            {tab === 'transactions' && (
+              <div className="flex flex-col gap-2">
+                {(data.transactions || []).map((t) => (
+                  <div key={t.id} className="bg-black/30 border border-white/5 rounded-lg px-3 py-2 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-white text-xs font-semibold truncate">{t.description || t.type}</p>
+                      <p className="text-white/40 text-[11px]">{new Date(t.created_at).toLocaleString('pt-BR')}</p>
+                    </div>
+                    <span className={`text-xs font-bold shrink-0 ${t.amount >= 0 ? 'text-primary' : 'text-white/60'}`}>
+                      {t.amount >= 0 ? '+' : ''}{(t.amount * 100).toLocaleString('pt-BR')} VT
+                    </span>
+                  </div>
+                ))}
+                {data.transactions?.length === 0 && <p className="text-white/30 text-sm">Nenhuma transação ainda.</p>}
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
