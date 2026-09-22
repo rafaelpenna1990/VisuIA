@@ -185,7 +185,7 @@ function ControlBtn({ icon, label, onClick, style }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function VideoStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired }) {
+export default function VideoStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits }) {
     // ── mode state ──
     const [imageMode, setImageMode] = useState(false);   // i2v
     const [v2vMode, setV2vMode] = useState(false);
@@ -585,15 +585,19 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
         } catch (e) {
             hadError = true;
             console.error('[VideoStudio]', e);
-            setGenerateError(e.message?.slice(0, 80) || 'Generation failed');
-            setTimeout(() => setGenerateError(null), 4000);
+            if (e.insufficientCredits && onInsufficientCredits) {
+                onInsufficientCredits();
+            } else {
+                setGenerateError(e.message?.slice(0, 80) || 'Generation failed');
+                setTimeout(() => setGenerateError(null), 4000);
+            }
         } finally {
             setGenerating(false);
         }
     }, [
         apiKey, prompt, v2vMode, imageMode, selectedModel, selectedAr, selectedDuration,
         selectedResolution, selectedQuality, selectedMode, selectedEffectName, showEffectName, uploadedImageUrl, uploadedVideoUrl,
-        lastGenerationId, getCurrentModel, addToLocalHistory, showVideoInCanvas, onGenerationComplete, onAuthRequired,
+        lastGenerationId, getCurrentModel, addToLocalHistory, showVideoInCanvas, onGenerationComplete, onAuthRequired, onInsufficientCredits,
     ]);
 
     // ── reset to prompt bar ───────────────────────────────────────────────────

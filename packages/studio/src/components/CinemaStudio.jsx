@@ -410,7 +410,7 @@ function CameraControlsOverlay({ isOpen, onClose, settings, onSettingsChange }) 
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function CinemaStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired }) {
+export default function CinemaStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits }) {
     // ── Settings state ──
     const [settings, setSettings] = useState({
         prompt: '',
@@ -515,11 +515,15 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
             }
         } catch (e) {
             console.error(e);
-            alert('Falha na geração: ' + e.message);
+            if (e.insufficientCredits && onInsufficientCredits) {
+                onInsufficientCredits();
+            } else {
+                alert('Falha na geração: ' + e.message);
+            }
         } finally {
             setIsGenerating(false);
         }
-    }, [settings, resolution, apiKey, isGenerating, onGenerationComplete, historyItems, onAuthRequired]);
+    }, [settings, resolution, apiKey, isGenerating, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits]);
 
     // ── Regenerate ──
     const handleRegenerate = useCallback(() => {

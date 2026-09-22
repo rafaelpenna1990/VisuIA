@@ -591,7 +591,7 @@ function SimpleDropdown({ title, options, selected, onSelect, onClose }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function ImageStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired }) {
+export default function ImageStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits }) {
   // ── Model / mode state ──────────────────────────────────────────────────
   const [imageMode, setImageMode] = useState(false); // false=t2i, true=i2i
   const [selectedModelId, setSelectedModelId] = useState(t2iModels[0].id);
@@ -810,8 +810,12 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
       }
     } catch (e) {
       console.error("[ImageStudio] Generation failed:", e);
-      setGenerateError(e.message.slice(0, 80));
-      setTimeout(() => setGenerateError(null), 4000);
+      if (e.insufficientCredits && onInsufficientCredits) {
+        onInsufficientCredits();
+      } else {
+        setGenerateError(e.message.slice(0, 80));
+        setTimeout(() => setGenerateError(null), 4000);
+      }
     } finally {
       setGenerating(false);
     }

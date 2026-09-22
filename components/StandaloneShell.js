@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ImageStudio, VideoStudio, LipSyncStudio, CinemaStudio } from 'studio';
 import AuthGate from './AuthGate';
 import TopUpModal from './TopUpModal';
+import SubscriptionModal from './SubscriptionModal';
 import { formatTokens } from '../lib/tokens.js';
 import { useAssetsVersion } from '../lib/useAssetsVersion.js';
 import Logo from './Logo';
@@ -60,6 +61,8 @@ export default function StandaloneShell() {
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState(initialTab);
   const [showTopUp, setShowTopUp] = useState(false);
+  const [showSubscribePrompt, setShowSubscribePrompt] = useState(false);
+  const [hasSubscription, setHasSubscription] = useState(null); // null = not checked yet
   const [hasMounted, setHasMounted] = useState(false);
   const [resuming, setResuming] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -69,6 +72,35 @@ export default function StandaloneShell() {
     const data = await res.json();
     setUser(data.user);
   }, []);
+
+  // Checked lazily, right before we'd actually need it (when a generation
+  // gets blocked for insufficient credits) — no point calling this on
+  // every page load for people who never hit that wall.
+  const checkSubscription = useCallback(async () => {
+    if (hasSubscription !== null) return hasSubscription;
+    try {
+      const res = await fetch('/api/billing/subscription', { credentials: 'include' });
+      const data = await res.json();
+      const active = !!data.subscription;
+      setHasSubscription(active);
+      return active;
+    } catch {
+      return false;
+    }
+  }, [hasSubscription]);
+
+  // The single trigger every studio calls when a generation is blocked for
+  // insufficient credits: someone who already pays gets sent straight to
+  // "buy more tokens"; someone who doesn't yet gets sent to "pick a plan"
+  // instead, since that's almost always the better fit for them.
+  const handleInsufficientCredits = useCallback(async () => {
+    const active = await checkSubscription();
+    if (active) {
+      setShowTopUp(true);
+    } else {
+      setShowSubscribePrompt(true);
+    }
+  }, [checkSubscription]);
 
   useEffect(() => {
     setHasMounted(true);
@@ -234,13 +266,19 @@ export default function StandaloneShell() {
 
       {/* Studio Content */}
       <div className="flex-1 min-w-0 pt-14 md:pt-0">
-        {activeTab === 'image'   && <ImageStudio   apiKey={placeholderKey} onGenerationComplete={refreshUser} />}
-        {activeTab === 'video'   && <VideoStudio   apiKey={placeholderKey} />}
-        {activeTab === 'lipsync' && <LipSyncStudio apiKey={placeholderKey} />}
-        {activeTab === 'cinema'  && <CinemaStudio  apiKey={placeholderKey} />}
+        {activeTab === 'image'   && <ImageStudio   apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} />}
+        {activeTab === 'video'   && <VideoStudio   apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} />}
+        {activeTab === 'lipsync' && <LipSyncStudio apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} />}
+        {activeTab === 'cinema'  && <CinemaStudio  apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} />}
       </div>
 
       {showTopUp && <TopUpModal onClose={() => setShowTopUp(false)} />}
+      {showSubscribePrompt && (
+        <SubscriptionModal
+          onClose={() => setShowSubscribePrompt(false)}
+          onBuyWithoutSubscription={() => { setShowSubscribePrompt(false); setShowTopUp(true); }}
+        />
+      )}
     </div>
   );
 }

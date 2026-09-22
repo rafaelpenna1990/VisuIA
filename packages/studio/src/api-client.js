@@ -59,7 +59,9 @@ async function postJSON(url, body) {
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(data.error || `Erro ${response.status}`);
+    const err = new Error(data.error || `Erro ${response.status}`);
+    if (response.status === 402) err.insufficientCredits = true;
+    throw err;
   }
   return data;
 }

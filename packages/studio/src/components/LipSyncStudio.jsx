@@ -196,7 +196,7 @@ const VideoIcon = ({ className = 'text-muted group-hover:text-primary transition
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
-export default function LipSyncStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired }) {
+export default function LipSyncStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits }) {
     // ── Mode & model state ──────────────────────────────────────────────────
     const [inputMode, setInputMode] = useState('image'); // 'image' | 'video'
 
@@ -424,8 +424,12 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
             }
         } catch (e) {
             console.error('[LipSyncStudio]', e);
-            setGenerateError(e.message?.slice(0, 80) ?? 'Unknown error');
-            setTimeout(() => setGenerateError(null), 4000);
+            if (e.insufficientCredits && onInsufficientCredits) {
+                onInsufficientCredits();
+            } else {
+                setGenerateError(e.message?.slice(0, 80) ?? 'Unknown error');
+                setTimeout(() => setGenerateError(null), 4000);
+            }
         } finally {
             setIsGenerating(false);
         }
