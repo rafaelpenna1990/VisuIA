@@ -243,6 +243,20 @@ function ConfigTab({ adminKey }) {
             className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
           />
         </div>
+        <div className="mb-4">
+          <label className="block text-xs text-white/50 mb-1">
+            Taxa de entrada do trial (R$ — deixe 0 pra manter o trial 100% grátis)
+          </label>
+          <input
+            type="number" step="0.01" min="0"
+            value={settings.trial_entry_fee_cents ? (Number(settings.trial_entry_fee_cents) / 100).toFixed(2) : '0'}
+            onChange={(e) => setSettings({ ...settings, trial_entry_fee_cents: Math.round(Number(e.target.value) * 100) })}
+            className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
+          />
+          <p className="text-white/30 text-[11px] mt-1">
+            Cobrada uma vez, na hora, além da mensalidade normal a partir do 7º dia. O texto do pop-up de assinatura se ajusta sozinho.
+          </p>
+        </div>
         <p className="text-white/30 text-xs mb-4">
           Essas mudanças valem na hora, sem precisar reiniciar o site.
         </p>

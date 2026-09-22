@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getSessionUser } from '../../../../lib/auth.js';
-import { getPlanById } from '../../../../lib/db.js';
+import { getPlanById, getSetting } from '../../../../lib/db.js';
 
 const stripe = new Stripe((process.env.STRIPE_SECRET_KEY || '').trim(), {
   maxNetworkRetries: 2,
@@ -20,6 +20,31 @@ export async function POST(request) {
   if (!chosen) return NextResponse.json({ error: 'Plano inválido' }, { status: 400 });
 
   const origin = request.headers.get('origin') || process.env.APP_URL;
+  const entryFeeCents = Number(getSetting('trial_entry_fee_cents', '0')) || 0;
+
+  const lineItems = [{
+    price_data: {
+      currency: 'brl',
+      product_data: { name: `VisuIA — Plano ${chosen.name}` },
+      unit_amount: chosen.amount_cents,
+      recurring: { interval: 'month' },
+    },
+    quantity: 1,
+  }];
+
+  // Optional one-time entry fee, charged immediately alongside starting
+  // the trial — separate from the recurring subscription price above,
+  // which still only charges for real starting day 7 (trial_period_days).
+  if (entryFeeCents > 0) {
+    lineItems.push({
+      price_data: {
+        currency: 'brl',
+        product_data: { name: 'Taxa de acesso ao teste grátis' },
+        unit_amount: entryFeeCents,
+      },
+      quantity: 1,
+    });
+  }
 
   let session;
   try {
@@ -27,15 +52,7 @@ export async function POST(request) {
       mode: 'subscription',
       locale: 'pt-BR',
       payment_method_types: ['card'],
-      line_items: [{
-        price_data: {
-          currency: 'brl',
-          product_data: { name: `VisuIA — Plano ${chosen.name}` },
-          unit_amount: chosen.amount_cents,
-          recurring: { interval: 'month' },
-        },
-        quantity: 1,
-      }],
+      line_items: lineItems,
       subscription_data: {
         trial_period_days: 7,
       },

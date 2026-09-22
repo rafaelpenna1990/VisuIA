@@ -7,5 +7,6 @@ import { getAllPlans, getSetting } from '../../../lib/db.js';
 export async function GET() {
   const plans = getAllPlans();
   const trialBonusTokens = Number(getSetting('trial_bonus_tokens', '500'));
-  return NextResponse.json({ plans, trialBonusTokens });
+  const trialEntryFeeCents = Number(getSetting('trial_entry_fee_cents', '0'));
+  return NextResponse.json({ plans, trialBonusTokens, trialEntryFeeCents });
 }

@@ -12,6 +12,7 @@ import { useState, useEffect } from 'react';
 export default function SubscriptionModal({ onClose, onBuyWithoutSubscription }) {
   const [plans, setPlans] = useState([]);
   const [trialBonusTokens, setTrialBonusTokens] = useState(500);
+  const [trialEntryFeeCents, setTrialEntryFeeCents] = useState(0);
   const [subscribing, setSubscribing] = useState(null);
   const [error, setError] = useState(null);
 
@@ -21,9 +22,13 @@ export default function SubscriptionModal({ onClose, onBuyWithoutSubscription })
       .then((data) => {
         setPlans(data.plans || []);
         if (data.trialBonusTokens) setTrialBonusTokens(data.trialBonusTokens);
+        setTrialEntryFeeCents(data.trialEntryFeeCents || 0);
       })
       .catch(() => {});
   }, []);
+
+  const hasEntryFee = trialEntryFeeCents > 0;
+  const entryFeeLabel = `R$ ${(trialEntryFeeCents / 100).toFixed(2).replace('.', ',')}`;
 
   const handleSubscribe = async (planId) => {
     setError(null);
@@ -63,8 +68,17 @@ export default function SubscriptionModal({ onClose, onBuyWithoutSubscription })
           Ganhe {trialBonusTokens.toLocaleString('pt-BR')} VisuTokens de graça
         </h1>
         <p className="text-white/50 text-sm mb-6">
-          Escolha um plano agora e comece com <span className="text-primary font-semibold">7 dias grátis</span> —
-          os {trialBonusTokens.toLocaleString('pt-BR')} VisuTokens caem na sua conta na hora, sem cobrar nada do cartão até o 7º dia.
+          {hasEntryFee ? (
+            <>
+              Escolha um plano agora e comece com <span className="text-primary font-semibold">7 dias de acesso por {entryFeeLabel}</span> —
+              os {trialBonusTokens.toLocaleString('pt-BR')} VisuTokens caem na sua conta na hora. Depois do 7º dia, cobramos a mensalidade normal do plano.
+            </>
+          ) : (
+            <>
+              Escolha um plano agora e comece com <span className="text-primary font-semibold">7 dias grátis</span> —
+              os {trialBonusTokens.toLocaleString('pt-BR')} VisuTokens caem na sua conta na hora, sem cobrar nada do cartão até o 7º dia.
+            </>
+          )}
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -89,7 +103,7 @@ export default function SubscriptionModal({ onClose, onBuyWithoutSubscription })
                 disabled={subscribing !== null}
                 className="mt-auto w-full py-2 rounded-xl bg-primary text-black font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
               >
-                {subscribing === plan.id ? 'Redirecionando…' : 'Começar grátis'}
+                {subscribing === plan.id ? 'Redirecionando…' : hasEntryFee ? `Começar por ${entryFeeLabel}` : 'Começar grátis'}
               </button>
             </div>
           ))}
