@@ -339,16 +339,28 @@ function UsersTab({ adminKey }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [selectedUserId, setSelectedUserId] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
-  const search = useCallback(() => {
+  const search = useCallback((targetPage = 1) => {
     setLoading(true);
-    fetch(`/api/admin/users?key=${encodeURIComponent(adminKey)}&q=${encodeURIComponent(query)}`)
+    fetch(`/api/admin/users?key=${encodeURIComponent(adminKey)}&q=${encodeURIComponent(query)}&page=${targetPage}`)
       .then((res) => res.json())
-      .then((data) => setUsers(data.users || []))
+      .then((data) => {
+        setUsers(data.users || []);
+        setPage(data.page || 1);
+        setTotalPages(data.totalPages || 1);
+        setTotal(data.total || 0);
+      })
       .finally(() => setLoading(false));
   }, [adminKey, query]);
 
-  useEffect(() => { search(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { search(1); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const exportExcel = () => {
+    window.open(`/api/admin/users/export?key=${encodeURIComponent(adminKey)}&q=${encodeURIComponent(query)}`, '_blank');
+  };
 
   const addTokens = async (user) => {
     const amount = window.prompt(`Quantos VisuTokens adicionar pra ${user.email}? (negativo pra remover)`);
@@ -361,7 +373,7 @@ function UsersTab({ adminKey }) {
     const data = await res.json();
     if (!res.ok) { setMessage(data.error); return; }
     setMessage(`Saldo de ${user.email} agora: ${(data.newBalance * 100).toLocaleString('pt-BR')} VT`);
-    search();
+    search(page);
   };
 
   const resetPassword = async (user) => {
@@ -383,14 +395,21 @@ function UsersTab({ adminKey }) {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && search()}
+          onKeyDown={(e) => e.key === 'Enter' && search(1)}
           placeholder="Buscar por e-mail…"
           className="flex-1 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
         />
-        <button onClick={search} className="px-4 py-2 rounded-lg bg-primary text-black font-semibold text-sm hover:opacity-90 transition-opacity">
+        <button onClick={() => search(1)} className="px-4 py-2 rounded-lg bg-primary text-black font-semibold text-sm hover:opacity-90 transition-opacity">
           Buscar
         </button>
+        <button onClick={exportExcel} className="px-4 py-2 rounded-lg bg-white/10 text-white font-semibold text-sm hover:bg-white/20 transition-colors whitespace-nowrap">
+          Baixar Excel
+        </button>
       </div>
+
+      {total > 0 && (
+        <p className="text-white/30 text-xs mb-3">{total} usuário{total === 1 ? '' : 's'} encontrado{total === 1 ? '' : 's'}</p>
+      )}
 
       {message && <p className="text-primary text-sm mb-4">{message}</p>}
       {loading && <p className="text-white/40 text-sm">Buscando…</p>}
@@ -420,6 +439,26 @@ function UsersTab({ adminKey }) {
         ))}
         {!loading && users.length === 0 && <p className="text-white/30 text-sm">Nenhum usuário encontrado.</p>}
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 mt-6">
+          <button
+            onClick={() => search(page - 1)}
+            disabled={page <= 1 || loading}
+            className="px-3 py-1.5 rounded-lg bg-white/5 text-white text-sm disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 transition-colors"
+          >
+            ← Anterior
+          </button>
+          <span className="text-white/50 text-sm">Página {page} de {totalPages}</span>
+          <button
+            onClick={() => search(page + 1)}
+            disabled={page >= totalPages || loading}
+            className="px-3 py-1.5 rounded-lg bg-white/5 text-white text-sm disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 transition-colors"
+          >
+            Próxima →
+          </button>
+        </div>
+      )}
 
       {selectedUserId && (
         <UserDetailModal userId={selectedUserId} adminKey={adminKey} onClose={() => setSelectedUserId(null)} />
