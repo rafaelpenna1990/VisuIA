@@ -57,7 +57,10 @@ export function buildI2VRequest(params) {
     const modelInfo = getI2VModelById(params.model);
     const endpoint = modelInfo?.endpoint || params.model;
     const payload = {};
-    if (params.prompt) payload.prompt = params.prompt;
+    // params.prompt !== undefined (not a truthy check) — "effects" family
+    // models require this key present even as an empty string; a plain
+    // `if (params.prompt)` silently drops '' and breaks them.
+    if (params.prompt !== undefined) payload.prompt = params.prompt;
     const imageField = modelInfo?.imageField || 'image_url';
     if (params.image_url) {
         if (imageField === 'images_list') payload.images_list = [params.image_url];
