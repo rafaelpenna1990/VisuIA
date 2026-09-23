@@ -530,6 +530,11 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                 if (showEffectName) {
                     if (!selectedEffectName) throw new Error('Escolha um tipo de efeito primeiro.');
                     i2vParams.name = selectedEffectName;
+                    // "effects" family models (AI Video Effects, VFX, etc.) require
+                    // this field present even when empty — Muapi merges it into a
+                    // predefined template for the chosen effect. Other i2v models
+                    // treat it as genuinely optional, so this only applies here.
+                    i2vParams.prompt = trimmedPrompt || '';
                 }
 
                 res = await generateI2V(apiKey, i2vParams);
