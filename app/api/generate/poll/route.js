@@ -65,6 +65,14 @@ export async function GET(request) {
         });
       }
     }
+    // TEMPORARY DEBUG: log roughly once every ~30s per job (not every 3s
+    // poll) so we can see what Muapi is actually saying while a job sits
+    // in "still working" — e.g. is it really progressing, or repeating
+    // the exact same status forever. Safe to remove once confirmed.
+    const ageSec = Math.round((Date.now() - new Date(job.created_at).getTime()) / 1000);
+    if (ageSec % 30 < 3) {
+      console.log(`[poll] still waiting (job ${job.id}, ~${ageSec}s old):`, JSON.stringify(result.raw));
+    }
     return NextResponse.json({ done: false });
   }
 

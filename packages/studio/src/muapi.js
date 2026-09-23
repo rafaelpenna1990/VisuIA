@@ -151,7 +151,7 @@ export async function checkGeneration(requestId, apiKey) {
     if (status === 'failed' || status === 'error') {
         throw new Error(`Generation failed: ${data.error || 'Unknown error'}`);
     }
-    return { done: false };
+    return { done: false, raw: data };
 }
 
 export function uploadFile(apiKey, file, onProgress) {
