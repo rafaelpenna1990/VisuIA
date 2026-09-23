@@ -103,8 +103,7 @@ export default function StandaloneShell() {
   }, [checkSubscription]);
 
   useEffect(() => {
-    setHasMounted(true);
-    refreshUser();
+    refreshUser().finally(() => setHasMounted(true));
   }, [refreshUser]);
 
   // If a generation was left running when the page was closed/refreshed
