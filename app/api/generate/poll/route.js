@@ -49,6 +49,22 @@ export async function GET(request) {
   }
 
   if (!result.done) {
+    // A 400/404 gets a short grace period (some Muapi tools answer this
+    // way for the first few seconds before the job is fully registered)
+    // — but if it's STILL happening 20+ seconds after the job was created,
+    // it's not transient, it's a real failure, and waiting the full
+    // 30-minute poll budget on it would just leave the person staring at
+    // "Gerando…" for no reason. Settle it now instead.
+    if (result.transientError) {
+      const ageMs = Date.now() - new Date(job.created_at).getTime();
+      if (ageMs > 20_000) {
+        settleGenerationFailure(job.id);
+        return NextResponse.json({
+          done: true,
+          error: `Falha na geração: a Muapi não conseguiu processar esse pedido (${result.transientError.slice(0, 200)})`,
+        });
+      }
+    }
     return NextResponse.json({ done: false });
   }
 

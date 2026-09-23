@@ -106,6 +106,12 @@ export async function submitGeneration(endpoint, payload, apiKey) {
         throw new Error(`API Request Failed: ${response.status} ${response.statusText} - ${errText.slice(0, 800)}`);
     }
     const data = await response.json();
+    // TEMPORARY DEBUG: print Muapi's raw response on SUBMIT to the Railway
+    // logs — helps confirm whether a given tool actually needs polling at
+    // all, or whether it already returns its result synchronously and our
+    // id-detection logic is grabbing the wrong field. Safe to remove once
+    // confirmed.
+    console.log('[submit] raw Muapi response:', JSON.stringify(data));
     const requestId = data.request_id || data.id;
     if (!requestId) {
         const outputUrl = data.outputs?.[0] || data.url || data.output?.url;
