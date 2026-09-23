@@ -739,22 +739,60 @@ function SlotPreview({ slug, index, version }) {
 // ── Marketing ─────────────────────────────────────────────────────────────
 
 function MarketingTab({ adminKey }) {
-  const [preview, setPreview] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [segment, setSegment] = useState('no_subscription');
+  const [segments, setSegments] = useState([]);
+  const [count, setCount] = useState(null);
+  const [countLoading, setCountLoading] = useState(true);
+
+  const [subject, setSubject] = useState('🎁 Seus VisuTokens grátis ainda estão esperando');
+  const [badge, setBadge] = useState('Oferta de boas-vindas');
+  const [headline, setHeadline] = useState('Seus 500 VisuTokens grátis ainda estão esperando');
+  const [body, setBody] = useState(
+    'Você criou sua conta no VisuIA, mas ainda não assinou nenhum plano. Que tal experimentar de verdade?\n' +
+    'Comece agora com 7 dias grátis — os 500 VisuTokens caem na sua conta na hora, sem cobrar nada do cartão até o 7º dia.\n' +
+    'Crie imagens, vídeos, sincronia labial e efeitos de cinema com inteligência artificial — suporte 100% em português, sem enrolação.'
+  );
+  const [buttonText, setButtonText] = useState('Começar meus 7 dias grátis');
+  const [buttonLink, setButtonLink] = useState('https://www.visuia.ai/conta?tab=assinatura');
+
+  const [previewHtml, setPreviewHtml] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState(null);
 
-  useEffect(() => {
-    fetch(`/api/admin/marketing/trial-reminder?key=${encodeURIComponent(adminKey)}`)
+  const contentParams = () => ({
+    segment, subject, badge, headline, body, buttonText, buttonLink,
+  });
+
+  const fetchCountAndSegments = useCallback((seg) => {
+    setCountLoading(true);
+    const qs = new URLSearchParams({ key: adminKey, segment: seg });
+    fetch(`/api/admin/marketing/trial-reminder?${qs.toString()}`)
       .then((res) => res.json())
-      .then(setPreview)
-      .catch(() => setPreview({ error: 'Falha ao carregar' }))
-      .finally(() => setLoading(false));
+      .then((data) => {
+        setCount(data.count ?? 0);
+        setSegments(data.segments || []);
+      })
+      .catch(() => setCount(null))
+      .finally(() => setCountLoading(false));
   }, [adminKey]);
 
+  useEffect(() => { fetchCountAndSegments(segment); }, [segment, fetchCountAndSegments]);
+
+  const refreshPreview = () => {
+    setPreviewLoading(true);
+    const qs = new URLSearchParams({ key: adminKey, ...contentParams() });
+    fetch(`/api/admin/marketing/trial-reminder?${qs.toString()}`)
+      .then((res) => res.json())
+      .then((data) => setPreviewHtml(data.previewHtml))
+      .catch(() => {})
+      .finally(() => setPreviewLoading(false));
+  };
+
   const send = async () => {
-    if (!preview?.count) return;
-    if (!confirm(`Isso vai enviar o e-mail de verdade pra ${preview.count} pessoa${preview.count === 1 ? '' : 's'} que se cadastraram mas nunca assinaram. Confirmar?`)) {
+    if (!count) return;
+    const seg = segments.find((s) => s.id === segment);
+    if (!confirm(`Isso vai enviar de verdade pra ${count} pessoa${count === 1 ? '' : 's'} (${seg?.label || segment}). Confirmar?`)) {
       return;
     }
     setSending(true);
@@ -762,6 +800,8 @@ function MarketingTab({ adminKey }) {
     try {
       const res = await fetch(`/api/admin/marketing/trial-reminder?key=${encodeURIComponent(adminKey)}`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(contentParams()),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Falha ao enviar');
@@ -773,52 +813,107 @@ function MarketingTab({ adminKey }) {
     }
   };
 
+  const inputClass = "w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50";
+  const labelClass = "block text-xs text-white/50 mb-1";
+
   return (
-    <div className="max-w-2xl flex flex-col gap-6">
+    <div className="max-w-3xl flex flex-col gap-6">
       <div className="bg-card-bg border border-white/10 rounded-2xl p-6">
-        <h2 className="font-bold text-base mb-1">Lembrete de assinatura — 7 dias grátis</h2>
-        <p className="text-white/40 text-xs mb-4">
-          Manda o e-mail promocional (7 dias grátis + bônus de boas-vindas) pra todo mundo que criou conta
-          mas nunca assinou nenhum plano. Usa o texto e a promoção configurados hoje.
+        <h2 className="font-bold text-base mb-1">Campanha por e-mail</h2>
+        <p className="text-white/40 text-xs mb-5">
+          Escolhe o público, escreve o texto, confere a prévia, e manda — tudo daqui, sem precisar de código.
         </p>
 
-        {loading && <p className="text-white/40 text-sm">Carregando…</p>}
-
-        {preview?.error && <p className="text-red-400 text-sm">{preview.error}</p>}
-
-        {preview && !preview.error && (
-          <>
-            <div className="bg-black/30 border border-white/10 rounded-xl px-4 py-3 mb-4">
-              <p className="text-white text-sm">
-                <span className="text-primary font-bold text-lg">{preview.count}</span>{' '}
-                {preview.count === 1 ? 'pessoa vai receber' : 'pessoas vão receber'} esse e-mail
-              </p>
-            </div>
-
-            <button
-              onClick={send}
-              disabled={sending || !preview.count}
-              className="px-5 py-2.5 rounded-lg bg-primary text-black font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 mb-4"
-            >
-              {sending ? 'Enviando…' : `Enviar pra ${preview.count} pessoa${preview.count === 1 ? '' : 's'}`}
-            </button>
-
-            {result?.error && <p className="text-red-400 text-sm mb-4">{result.error}</p>}
-            {result?.ok && (
-              <p className="text-primary text-sm mb-4">
-                Enviado! {result.sent} de {result.total} com sucesso.
-                {result.failed?.length > 0 && ` ${result.failed.length} falharam.`}
-              </p>
+        <div className="mb-4">
+          <label className={labelClass}>Público</label>
+          <select
+            value={segment}
+            onChange={(e) => setSegment(e.target.value)}
+            className={inputClass}
+          >
+            {(segments.length ? segments : [{ id: segment, label: 'Carregando…' }]).map((s) => (
+              <option key={s.id} value={s.id}>{s.label}</option>
+            ))}
+          </select>
+          <p className="text-white/30 text-[11px] mt-1">
+            {countLoading ? 'Contando…' : (
+              <>
+                <span className="text-primary font-bold">{count}</span>{' '}
+                {count === 1 ? 'pessoa vai receber' : 'pessoas vão receber'} esse e-mail
+              </>
             )}
+          </p>
+        </div>
 
-            <div>
-              <p className="text-white/40 text-xs mb-2">Prévia do e-mail:</p>
-              <div
-                className="border border-white/10 rounded-xl overflow-hidden max-h-[500px] overflow-y-auto"
-                dangerouslySetInnerHTML={{ __html: preview.previewHtml }}
-              />
-            </div>
-          </>
+        <div className="mb-4">
+          <label className={labelClass}>Assunto do e-mail</label>
+          <input value={subject} onChange={(e) => setSubject(e.target.value)} className={inputClass} />
+        </div>
+
+        <div className="mb-4">
+          <label className={labelClass}>Selo pequeno em cima do título (opcional)</label>
+          <input value={badge} onChange={(e) => setBadge(e.target.value)} className={inputClass} placeholder="ex: Oferta de boas-vindas" />
+        </div>
+
+        <div className="mb-4">
+          <label className={labelClass}>Título grande</label>
+          <input value={headline} onChange={(e) => setHeadline(e.target.value)} className={inputClass} />
+        </div>
+
+        <div className="mb-4">
+          <label className={labelClass}>Texto do corpo (cada linha vira um parágrafo)</label>
+          <textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            rows={6}
+            className={inputClass + " resize-y"}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+          <div>
+            <label className={labelClass}>Texto do botão (opcional)</label>
+            <input value={buttonText} onChange={(e) => setButtonText(e.target.value)} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>Link do botão</label>
+            <input value={buttonLink} onChange={(e) => setButtonLink(e.target.value)} className={inputClass} />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-3 mb-4">
+          <button
+            onClick={refreshPreview}
+            disabled={previewLoading}
+            className="px-4 py-2 rounded-lg bg-white/10 text-white text-sm font-semibold hover:bg-white/20 transition-colors disabled:opacity-50"
+          >
+            {previewLoading ? 'Gerando…' : 'Ver prévia'}
+          </button>
+          <button
+            onClick={send}
+            disabled={sending || !count}
+            className="px-5 py-2 rounded-lg bg-primary text-black font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {sending ? 'Enviando…' : `Enviar pra ${count ?? '…'} pessoa${count === 1 ? '' : 's'}`}
+          </button>
+        </div>
+
+        {result?.error && <p className="text-red-400 text-sm mb-4">{result.error}</p>}
+        {result?.ok && (
+          <p className="text-primary text-sm mb-4">
+            Enviado! {result.sent} de {result.total} com sucesso.
+            {result.failed?.length > 0 && ` ${result.failed.length} falharam.`}
+          </p>
+        )}
+
+        {previewHtml && (
+          <div>
+            <p className="text-white/40 text-xs mb-2">Prévia:</p>
+            <div
+              className="border border-white/10 rounded-xl overflow-hidden max-h-[500px] overflow-y-auto"
+              dangerouslySetInnerHTML={{ __html: previewHtml }}
+            />
+          </div>
         )}
       </div>
     </div>
