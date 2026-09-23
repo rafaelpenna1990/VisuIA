@@ -14,6 +14,7 @@ const TABS = [
   { id: 'config', label: 'Configurações' },
   { id: 'users', label: 'Usuários' },
   { id: 'appearance', label: 'Aparência' },
+  { id: 'marketing', label: 'Marketing' },
 ];
 
 export default function AdminPage() {
@@ -97,6 +98,7 @@ export default function AdminPage() {
         {tab === 'config' && <ConfigTab adminKey={key} />}
         {tab === 'users' && <UsersTab adminKey={key} />}
         {tab === 'appearance' && <AppearanceTab adminKey={key} />}
+        {tab === 'marketing' && <MarketingTab adminKey={key} />}
       </div>
 
       <div className="h-16" />
@@ -731,5 +733,94 @@ function SlotPreview({ slug, index, version }) {
       className="w-full h-full object-cover"
       onError={advance}
     />
+  );
+}
+
+// ── Marketing ─────────────────────────────────────────────────────────────
+
+function MarketingTab({ adminKey }) {
+  const [preview, setPreview] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState(null);
+
+  useEffect(() => {
+    fetch(`/api/admin/marketing/trial-reminder?key=${encodeURIComponent(adminKey)}`)
+      .then((res) => res.json())
+      .then(setPreview)
+      .catch(() => setPreview({ error: 'Falha ao carregar' }))
+      .finally(() => setLoading(false));
+  }, [adminKey]);
+
+  const send = async () => {
+    if (!preview?.count) return;
+    if (!confirm(`Isso vai enviar o e-mail de verdade pra ${preview.count} pessoa${preview.count === 1 ? '' : 's'} que se cadastraram mas nunca assinaram. Confirmar?`)) {
+      return;
+    }
+    setSending(true);
+    setResult(null);
+    try {
+      const res = await fetch(`/api/admin/marketing/trial-reminder?key=${encodeURIComponent(adminKey)}`, {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Falha ao enviar');
+      setResult(data);
+    } catch (err) {
+      setResult({ error: err.message });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="max-w-2xl flex flex-col gap-6">
+      <div className="bg-card-bg border border-white/10 rounded-2xl p-6">
+        <h2 className="font-bold text-base mb-1">Lembrete de assinatura — 7 dias grátis</h2>
+        <p className="text-white/40 text-xs mb-4">
+          Manda o e-mail promocional (7 dias grátis + bônus de boas-vindas) pra todo mundo que criou conta
+          mas nunca assinou nenhum plano. Usa o texto e a promoção configurados hoje.
+        </p>
+
+        {loading && <p className="text-white/40 text-sm">Carregando…</p>}
+
+        {preview?.error && <p className="text-red-400 text-sm">{preview.error}</p>}
+
+        {preview && !preview.error && (
+          <>
+            <div className="bg-black/30 border border-white/10 rounded-xl px-4 py-3 mb-4">
+              <p className="text-white text-sm">
+                <span className="text-primary font-bold text-lg">{preview.count}</span>{' '}
+                {preview.count === 1 ? 'pessoa vai receber' : 'pessoas vão receber'} esse e-mail
+              </p>
+            </div>
+
+            <button
+              onClick={send}
+              disabled={sending || !preview.count}
+              className="px-5 py-2.5 rounded-lg bg-primary text-black font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 mb-4"
+            >
+              {sending ? 'Enviando…' : `Enviar pra ${preview.count} pessoa${preview.count === 1 ? '' : 's'}`}
+            </button>
+
+            {result?.error && <p className="text-red-400 text-sm mb-4">{result.error}</p>}
+            {result?.ok && (
+              <p className="text-primary text-sm mb-4">
+                Enviado! {result.sent} de {result.total} com sucesso.
+                {result.failed?.length > 0 && ` ${result.failed.length} falharam.`}
+              </p>
+            )}
+
+            <div>
+              <p className="text-white/40 text-xs mb-2">Prévia do e-mail:</p>
+              <div
+                className="border border-white/10 rounded-xl overflow-hidden max-h-[500px] overflow-y-auto"
+                dangerouslySetInnerHTML={{ __html: preview.previewHtml }}
+              />
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
