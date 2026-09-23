@@ -472,13 +472,32 @@ const KIND_LABELS = { image: 'Imagem', i2i: 'Editar imagem', video: 'Vídeo', i2
 function UserDetailModal({ userId, adminKey, onClose }) {
   const [data, setData] = useState(null);
   const [tab, setTab] = useState('generations');
+  const [fixing, setFixing] = useState(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     fetch(`/api/admin/users/detail?key=${encodeURIComponent(adminKey)}&userId=${userId}`)
       .then((res) => res.json())
       .then(setData)
       .catch(() => setData({ error: 'Falha ao carregar' }));
   }, [userId, adminKey]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const fixStuckGeneration = async (generationId) => {
+    setFixing(generationId);
+    try {
+      const res = await fetch(`/api/admin/generations/fail?key=${encodeURIComponent(adminKey)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ generationId }),
+      });
+      const result = await res.json();
+      if (!res.ok) { alert(result.error); return; }
+      load(); // refresh both tabs — balance and status both changed
+    } finally {
+      setFixing(null);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -529,9 +548,21 @@ function UserDetailModal({ userId, adminKey, onClose }) {
                         {new Date(g.created_at).toLocaleString('pt-BR')} · {g.status}
                       </p>
                     </div>
-                    <span className="text-primary text-xs font-bold shrink-0">
-                      {(g.cost_credits * 100).toLocaleString('pt-BR')} VT
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {g.status === 'pending' && (
+                        <button
+                          onClick={() => fixStuckGeneration(g.id)}
+                          disabled={fixing === g.id}
+                          title="Job travado — estorna o valor reservado e marca como falha"
+                          className="px-2.5 py-1 rounded-lg bg-red-500/10 text-red-400 text-[11px] font-semibold hover:bg-red-500/20 transition-colors disabled:opacity-50"
+                        >
+                          {fixing === g.id ? 'Corrigindo…' : 'Corrigir'}
+                        </button>
+                      )}
+                      <span className="text-primary text-xs font-bold">
+                        {(g.cost_credits * 100).toLocaleString('pt-BR')} VT
+                      </span>
+                    </div>
                   </div>
                 ))}
                 {data.generations?.length === 0 && <p className="text-white/30 text-sm">Nenhuma geração ainda.</p>}
