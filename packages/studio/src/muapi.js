@@ -124,9 +124,16 @@ export async function checkGeneration(requestId, apiKey) {
     });
     if (!response.ok) {
         const errText = await response.text();
-        // A transient 5xx from Muapi while it's still working — tell the
-        // caller to just try again on the next poll, don't fail the job.
-        if (response.status >= 500) return { done: false };
+        // Some Muapi tools answer with a 400 in the first seconds after
+        // submission — before the job is even registered as "in progress"
+        // on their side — then settle down to normal 200/processing
+        // responses once it's actually running. Treating every non-5xx as
+        // a hard failure gave up on those before they had a chance to
+        // finish. Only a 400/404 that's still happening after several
+        // tries (~30s) is treated as a real, permanent failure.
+        if (response.status >= 500 || response.status === 400 || response.status === 404) {
+            return { done: false, transientError: `${response.status} - ${errText.slice(0, 300)}` };
+        }
         throw new Error(`Poll Failed: ${response.status} - ${errText.slice(0, 800)}`);
     }
     const data = await response.json();
