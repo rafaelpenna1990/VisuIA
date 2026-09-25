@@ -86,7 +86,6 @@ export async function POST(request) {
   // is what stops a redelivered "invoice.paid" from granting tokens twice,
   // or a redelivered top-up from double-crediting.
   if (wasWebhookEventProcessed(event.id)) {
-    console.log(`[webhook] DUPLICATE, skipped: ${event.type} (${event.id})`);
     return NextResponse.json({ received: true, duplicate: true });
   }
 
@@ -119,37 +118,28 @@ export async function POST(request) {
   if (event.type === 'invoice.paid') {
     const invoice = event.data.object;
     const stripeSubscriptionId = getInvoiceSubscriptionId(invoice);
-    // TEMPORARY DEBUG: the "antecipar pagamento" flow reported not
-    // crediting tokens despite the webhook returning 200 — this traces
-    // exactly which lookup came back empty. Safe to remove once confirmed.
-    console.log('[webhook] invoice.paid — stripeSubscriptionId:', stripeSubscriptionId);
-    if (stripeSubscriptionId) {
+    // Stripe fires invoice.paid for the R$0 invoice it creates the moment
+    // a trial subscription starts, not just for real charges — without
+    // this check, that R$0 event was being read as "the trial just ended,
+    // release the rest of the tokens" immediately at signup.
+    const isRealCharge = (invoice.amount_paid || 0) > 0;
+
+    if (stripeSubscriptionId && isRealCharge) {
       const sub = getSubscriptionByStripeId(stripeSubscriptionId);
-      console.log('[webhook] invoice.paid — sub found:', JSON.stringify(sub));
       const plan = sub ? getPlanById(sub.plan) : null;
-      console.log('[webhook] invoice.paid — plan found:', JSON.stringify(plan));
       if (sub && plan) {
-        if (sub.first_charge_done) {
-          // A normal monthly renewal — full plan amount, same as before
-          // the trial system existed.
-          const reais = planTokensToReais(plan);
-          addCredits(sub.user_id, reais, `Assinatura ${plan.name} — renovação mensal`, invoice.id);
-          console.log('[webhook] invoice.paid — credited renewal:', reais);
-        } else {
-          // First real charge (trial just converted to paid, whether that
-          // happened naturally on day 7 or was brought forward early).
-          // They already got the trial bonus up front, so only the
-          // remainder tops them up to the plan's full monthly amount.
-          const remainder = planTokensToReais(plan) - trialBonusReais();
-          addCredits(sub.user_id, remainder, `Assinatura ${plan.name} — fim do período grátis`, invoice.id);
-          markFirstChargeDone(stripeSubscriptionId);
-          console.log('[webhook] invoice.paid — credited first-charge remainder:', remainder);
-        }
-      } else {
-        console.log('[webhook] invoice.paid — SKIPPED, sub or plan missing');
+        // The trial bonus (given free at signup) and the plan's monthly
+        // tokens (given when they actually convert to paying) stack —
+        // the trial bonus is a separate welcome gift, not an advance on
+        // the plan itself. Same full amount whether this is the first
+        // real charge or a later monthly renewal.
+        const reais = planTokensToReais(plan);
+        const description = sub.first_charge_done
+          ? `Assinatura ${plan.name} — renovação mensal`
+          : `Assinatura ${plan.name} — fim do período grátis`;
+        addCredits(sub.user_id, reais, description, invoice.id);
+        if (!sub.first_charge_done) markFirstChargeDone(stripeSubscriptionId);
       }
-    } else {
-      console.log('[webhook] invoice.paid — SKIPPED, no subscription id on invoice');
     }
   }
 
