@@ -1,7 +1,8 @@
 'use client';
 
 import { notFound } from 'next/navigation';
-import { findFeatureBySlug, MODEL_HIGHLIGHTS } from '../../../lib/landing-data.js';
+import { useLocalizedFeature, useLocalizedModelHighlights } from '../../../lib/i18n/useLocalizedContent.js';
+import { useTranslation } from '../../../lib/i18n/useTranslation.js';
 import { useAuthFlow } from '../../../lib/useAuthFlow.js';
 import { usePromoText } from '../../../lib/usePromoText.js';
 import SiteHeader from '../../../components/SiteHeader';
@@ -9,9 +10,11 @@ import SiteFooter from '../../../components/SiteFooter';
 import AuthFlowModals from '../../../components/AuthFlowModals';
 
 export default function ModelosTypePage({ params }) {
-  const feature = findFeatureBySlug(params.slug);
+  const feature = useLocalizedFeature(params.slug);
   const auth = useAuthFlow(feature?.id);
   const promoText = usePromoText();
+  const { t } = useTranslation();
+  const MODEL_HIGHLIGHTS = useLocalizedModelHighlights();
 
   if (!feature) return notFound();
 
@@ -27,11 +30,10 @@ export default function ModelosTypePage({ params }) {
             {feature.icon}
           </div>
           <h1 className="text-3xl sm:text-4xl font-black leading-tight tracking-tight mb-3">
-            Modelos de {feature.title}
+            {t('modelos.titlePrefix')} {feature.title}
           </h1>
           <p className="text-white/60 text-sm md:text-base leading-relaxed max-w-xl">
-            A VisuIA combina os melhores modelos de IA do mercado pra {feature.title.toLowerCase()} —
-            você escolhe o resultado, a gente cuida da tecnologia.
+            {t('modelos.descPrefix')} {feature.title.toLowerCase()} {t('modelos.descSuffix')}
           </p>
         </div>
 
@@ -53,7 +55,7 @@ export default function ModelosTypePage({ params }) {
           onClick={() => auth.goToStudioOrAuth('signup')}
           className="bg-primary hover:opacity-90 text-black font-bold text-sm px-8 py-3.5 rounded-xl transition-opacity shadow-glow"
         >
-          Criar conta grátis e testar
+          {t('modelos.createFreeAccount')}
         </button>
       </section>
 

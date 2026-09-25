@@ -1,6 +1,7 @@
 'use client';
 
-import { STEPS } from '../../lib/landing-data.js';
+import { useLocalizedSteps } from '../../lib/i18n/useLocalizedContent.js';
+import { useTranslation } from '../../lib/i18n/useTranslation.js';
 import { useAuthFlow } from '../../lib/useAuthFlow.js';
 import { usePromoText } from '../../lib/usePromoText.js';
 import SiteHeader from '../../components/SiteHeader';
@@ -10,6 +11,8 @@ import AuthFlowModals from '../../components/AuthFlowModals';
 export default function ComoFuncionaPage() {
   const auth = useAuthFlow('image');
   const promoText = usePromoText();
+  const { t } = useTranslation();
+  const STEPS = useLocalizedSteps();
 
   return (
     <div className="min-h-screen bg-app-bg text-white">
@@ -18,10 +21,10 @@ export default function ComoFuncionaPage() {
       <section className="px-6 md:px-10 pt-6 md:pt-8 pb-16 max-w-6xl mx-auto">
         <div className="max-w-2xl mb-12">
           <h1 className="text-3xl sm:text-4xl font-black leading-tight tracking-tight mb-3">
-            Como funciona
+            {t('comoFunciona.title')}
           </h1>
           <p className="text-white/60 text-sm md:text-base leading-relaxed">
-            Do cadastro ao arquivo pronto, em três passos simples.
+            {t('comoFunciona.subtitle')}
           </p>
         </div>
 
@@ -48,7 +51,7 @@ export default function ComoFuncionaPage() {
           onClick={() => auth.goToStudioOrAuth('signup')}
           className="bg-primary hover:opacity-90 text-black font-bold text-sm px-8 py-3.5 rounded-xl transition-opacity shadow-glow"
         >
-          Criar conta grátis
+          {t('comoFunciona.createFreeAccount')}
         </button>
       </section>
 

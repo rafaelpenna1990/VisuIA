@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from '../lib/i18n/useTranslation.js';
 
 const PACKS = [
   { id: 'small', tokens: '2.000', price: 'R$ 20' },
@@ -9,6 +10,7 @@ const PACKS = [
 ];
 
 export default function TopUpModal({ onClose }) {
+  const { t } = useTranslation();
   const [loadingPack, setLoadingPack] = useState(null);
   const [error, setError] = useState(null);
 
@@ -22,7 +24,7 @@ export default function TopUpModal({ onClose }) {
         body: JSON.stringify({ pack }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Não foi possível iniciar o pagamento');
+      if (!res.ok) throw new Error(data.error || t('topup.genericError'));
       window.location.href = data.checkout_url;
     } catch (err) {
       setError(err.message);
@@ -33,8 +35,8 @@ export default function TopUpModal({ onClose }) {
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
       <div className="bg-[#0F1119] border border-white/10 rounded-2xl p-8 w-full max-w-sm">
-        <h2 className="text-white font-bold text-xl mb-2">Adicionar VisuTokens</h2>
-        <p className="text-white/50 text-sm mb-6">Pagamento seguro via Stripe.</p>
+        <h2 className="text-white font-bold text-xl mb-2">{t('topup.title')}</h2>
+        <p className="text-white/50 text-sm mb-6">{t('topup.subtitle')}</p>
 
         <div className="flex flex-col gap-2 mb-4">
           {PACKS.map((p) => (
@@ -45,7 +47,7 @@ export default function TopUpModal({ onClose }) {
               className="w-full py-3 rounded-lg bg-[#FF9500] text-black font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex flex-col items-center leading-tight"
             >
               {loadingPack === p.id ? (
-                'Redirecionando…'
+                t('topup.redirecting')
               ) : (
                 <>
                   <span>{p.tokens} VisuTokens</span>
@@ -62,7 +64,7 @@ export default function TopUpModal({ onClose }) {
           onClick={onClose}
           className="w-full py-2 rounded-lg bg-white/5 text-white hover:bg-white/10 text-sm transition-colors"
         >
-          Fechar
+          {t('topup.close')}
         </button>
       </div>
     </div>

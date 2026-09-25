@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from '../lib/i18n/useTranslation.js';
 
 // Shown right after a first-time signup (see page.js) — same popup
 // pattern as AuthModal. The person either starts a plan's 7-day free
@@ -15,6 +16,7 @@ export default function SubscriptionModal({ onClose, onBuyWithoutSubscription })
   const [trialEntryFeeCents, setTrialEntryFeeCents] = useState(0);
   const [subscribing, setSubscribing] = useState(null);
   const [error, setError] = useState(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     fetch('/api/plans')
@@ -41,7 +43,7 @@ export default function SubscriptionModal({ onClose, onBuyWithoutSubscription })
         body: JSON.stringify({ plan: planId }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Não foi possível iniciar a assinatura');
+      if (!res.ok) throw new Error(data.error || t('subscription.genericError'));
       window.location.href = data.checkout_url;
     } catch (err) {
       setError(err.message);
@@ -56,27 +58,27 @@ export default function SubscriptionModal({ onClose, onBuyWithoutSubscription })
           type="button"
           onClick={onClose}
           className="absolute top-4 right-4 text-white/30 hover:text-white transition-colors"
-          aria-label="Fechar"
+          aria-label={t('auth.close')}
         >
           ✕
         </button>
 
         <span className="inline-block bg-primary text-black text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full mb-3">
-          Oferta de boas-vindas
+          {t('subscription.welcomeOffer')}
         </span>
         <h1 className="text-white font-black text-2xl mb-1">
-          Ganhe {trialBonusTokens.toLocaleString('pt-BR')} VisuTokens de graça
+          {t('subscription.titlePrefix')} {trialBonusTokens.toLocaleString('pt-BR')} {t('subscription.titleSuffix')}
         </h1>
         <p className="text-white/50 text-sm mb-6">
           {hasEntryFee ? (
             <>
-              Escolha um plano agora e comece com <span className="text-primary font-semibold">7 dias de acesso por {entryFeeLabel}</span> —
-              os {trialBonusTokens.toLocaleString('pt-BR')} VisuTokens caem na sua conta na hora. Depois do 7º dia, cobramos a mensalidade normal do plano.
+              {t('subscription.descEntryFeePrefix')} <span className="text-primary font-semibold">7 {t('subscription.descEntryFeeMiddle')} {entryFeeLabel}</span> —
+              {' '}{trialBonusTokens.toLocaleString('pt-BR')} {t('subscription.descEntryFeeSuffix')}
             </>
           ) : (
             <>
-              Escolha um plano agora e comece com <span className="text-primary font-semibold">7 dias grátis</span> —
-              os {trialBonusTokens.toLocaleString('pt-BR')} VisuTokens caem na sua conta na hora, sem cobrar nada do cartão até o 7º dia.
+              {t('subscription.descFreePrefix')} <span className="text-primary font-semibold">{t('subscription.descFreeDays')}</span> —
+              {' '}{trialBonusTokens.toLocaleString('pt-BR')} {t('subscription.descFreeSuffix')}
             </>
           )}
         </p>
@@ -85,7 +87,7 @@ export default function SubscriptionModal({ onClose, onBuyWithoutSubscription })
           {plans.map((plan) => (
             <div key={plan.id} className="bg-card-bg border border-white/10 rounded-2xl p-5 flex flex-col relative">
               <span className="text-primary text-[10px] font-bold uppercase tracking-wider mb-2">
-                + {trialBonusTokens.toLocaleString('pt-BR')} grátis agora
+                + {trialBonusTokens.toLocaleString('pt-BR')} {t('subscription.freeNowBadge')}
               </span>
               <p className="text-white font-black text-base mb-1">{plan.name}</p>
               {plan.promo_amount_cents != null && plan.promo_amount_cents > plan.amount_cents && (
@@ -95,15 +97,15 @@ export default function SubscriptionModal({ onClose, onBuyWithoutSubscription })
               )}
               <p className="text-primary font-bold text-xl mb-1">
                 R$ {(plan.amount_cents / 100).toFixed(0)}
-                <span className="text-white/40 text-xs font-normal">/mês depois do 7º dia</span>
+                <span className="text-white/40 text-xs font-normal">{t('subscription.perMonthAfterTrial')}</span>
               </p>
-              <p className="text-white/50 text-xs mb-5">{plan.tokens.toLocaleString('pt-BR')} VisuTokens/mês</p>
+              <p className="text-white/50 text-xs mb-5">{plan.tokens.toLocaleString('pt-BR')} {t('subscription.tokensPerMonth')}</p>
               <button
                 onClick={() => handleSubscribe(plan.id)}
                 disabled={subscribing !== null}
                 className="mt-auto w-full py-2 rounded-xl bg-primary text-black font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
               >
-                {subscribing === plan.id ? 'Redirecionando…' : hasEntryFee ? `Começar por ${entryFeeLabel}` : 'Começar grátis'}
+                {subscribing === plan.id ? t('subscription.redirecting') : hasEntryFee ? `${t('subscription.startFor')} ${entryFeeLabel}` : t('subscription.startFree')}
               </button>
             </div>
           ))}
@@ -116,7 +118,7 @@ export default function SubscriptionModal({ onClose, onBuyWithoutSubscription })
           onClick={onBuyWithoutSubscription}
           className="w-full text-white/40 hover:text-white text-sm transition-colors"
         >
-          Prefiro comprar tokens sem assinatura
+          {t('subscription.preferBuyTokens')}
         </button>
       </div>
     </div>

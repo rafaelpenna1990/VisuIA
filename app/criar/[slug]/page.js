@@ -2,7 +2,7 @@
 
 import { notFound } from 'next/navigation';
 import { ImageStudio, VideoStudio, LipSyncStudio, CinemaStudio } from 'studio';
-import { findFeatureBySlug } from '../../../lib/landing-data.js';
+import { useLocalizedFeature } from '../../../lib/i18n/useLocalizedContent.js';
 import { useAuthFlow } from '../../../lib/useAuthFlow.js';
 import { usePromoText } from '../../../lib/usePromoText.js';
 import SiteHeader from '../../../components/SiteHeader';
@@ -18,7 +18,7 @@ const STUDIO_BY_ID = {
 };
 
 export default function CriarTypePage({ params }) {
-  const feature = findFeatureBySlug(params.slug);
+  const feature = useLocalizedFeature(params.slug);
   const auth = useAuthFlow(feature?.id);
   const promoText = usePromoText();
 

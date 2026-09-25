@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { ImageStudio, VideoStudio, LipSyncStudio, CinemaStudio } from 'studio';
-import { FEATURES } from '../lib/landing-data.js';
+import { useLocalizedFeatures } from '../lib/i18n/useLocalizedContent.js';
+import { useTranslation } from '../lib/i18n/useTranslation.js';
 import { useAuthFlow } from '../lib/useAuthFlow.js';
 import { usePromoText } from '../lib/usePromoText.js';
 import { useHeroContent, HighlightedText } from '../lib/useHeroContent.js';
@@ -14,6 +15,8 @@ import ExampleCarousel from '../components/ExampleCarousel';
 export default function LandingPage() {
   const [selectedType, setSelectedType] = useState('image');
   const auth = useAuthFlow(selectedType);
+  const { t } = useTranslation();
+  const FEATURES = useLocalizedFeatures();
   const currentSlug = FEATURES.find((f) => f.id === selectedType)?.slug || 'imagem';
   const promoText = usePromoText();
   const hero = useHeroContent();
@@ -80,17 +83,16 @@ export default function LandingPage() {
             <span className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 text-primary text-xs font-bold px-3 py-1.5 rounded-full mb-3">
               {promoText}
             </span>
-            <h2 className="text-xl md:text-2xl font-black mb-2">Pague só pelo que gerar</h2>
+            <h2 className="text-xl md:text-2xl font-black mb-2">{t('home.payOnlyTitle')}</h2>
             <p className="text-white/50 text-sm md:text-base max-w-md">
-              Sem mensalidade obrigatória. Compra VisuTokens quando precisar, e cada geração
-              debita só o valor exato dela.
+              {t('home.payOnlyDesc')}
             </p>
           </div>
           <button
             onClick={() => auth.goToStudioOrAuth('signup')}
             className="shrink-0 bg-primary hover:opacity-90 text-black font-bold text-sm px-8 py-3.5 rounded-xl transition-opacity shadow-glow"
           >
-            Começar grátis agora
+            {t('home.startFreeNow')}
           </button>
         </div>
       </section>
