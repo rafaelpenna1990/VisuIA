@@ -66,7 +66,7 @@ export default function SiteHeader({ goToStudioOrAuth, isLoggedIn }) {
     <header ref={navRef} className="flex items-center justify-between px-6 md:px-10 py-5 max-w-6xl mx-auto relative">
       <div className="flex items-center gap-8">
         <button onClick={() => router.push('/')} className="flex items-center">
-          <Logo version={assetsVersion} className="h-14 w-auto max-w-full" />
+          <Logo version={assetsVersion} className="h-20 w-auto max-w-full" />
         </button>
 
         <nav className="hidden md:flex items-center gap-6">
