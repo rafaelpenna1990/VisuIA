@@ -16,6 +16,7 @@ const TABS = [
   { id: 'appearance', label: 'Aparência' },
   { id: 'marketing', label: 'Marketing' },
   { id: 'models', label: 'Modelos' },
+  { id: 'errors', label: 'Erros' },
 ];
 
 export default function AdminPage() {
@@ -23,6 +24,15 @@ export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
   const [authError, setAuthError] = useState(null);
   const [tab, setTab] = useState('config');
+  const [failureCount, setFailureCount] = useState(0);
+
+  useEffect(() => {
+    if (!authed) return;
+    fetch(`/api/admin/failures?key=${encodeURIComponent(key)}`)
+      .then((res) => res.json())
+      .then((data) => setFailureCount(data.total || 0))
+      .catch(() => {});
+  }, [authed, key, tab]);
 
   // Try a saved key from sessionStorage so a refresh doesn't log you out.
   useEffect(() => {
@@ -87,11 +97,16 @@ export default function AdminPage() {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors flex items-center gap-1.5 ${
                 tab === t.id ? 'bg-primary text-black' : 'bg-card-bg text-white/50 hover:text-white border border-white/10'
               }`}
             >
               {t.label}
+              {t.id === 'errors' && failureCount > 0 && (
+                <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                  {failureCount}
+                </span>
+              )}
             </button>
           ))}
         </nav>
@@ -101,6 +116,7 @@ export default function AdminPage() {
         {tab === 'appearance' && <AppearanceTab adminKey={key} />}
         {tab === 'marketing' && <MarketingTab adminKey={key} />}
         {tab === 'models' && <ModelsTab adminKey={key} />}
+        {tab === 'errors' && <ErrorsTab adminKey={key} />}
       </div>
 
       <div className="h-16" />
@@ -1119,6 +1135,102 @@ function ModelsTab({ adminKey }) {
             );
           })}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Erros ─────────────────────────────────────────────────────────────────
+
+function ErrorsTab({ adminKey }) {
+  const [data, setData] = useState(null);
+  const [openModel, setOpenModel] = useState(null);
+  const [disabling, setDisabling] = useState(null);
+
+  const load = useCallback(() => {
+    fetch(`/api/admin/failures?key=${encodeURIComponent(adminKey)}`)
+      .then((res) => res.json())
+      .then(setData)
+      .catch(() => setData({ error: 'Falha ao carregar' }));
+  }, [adminKey]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const disableModel = async (model) => {
+    if (!confirm(`Desligar "${model}" agora? Ele some da lista de opções pros clientes até você reativar.`)) return;
+    setDisabling(model);
+    try {
+      await fetch(`/api/admin/models?key=${encodeURIComponent(adminKey)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modelId: model, disabled: true }),
+      });
+      alert('Modelo desligado — já sumiu da lista de opções.');
+    } finally {
+      setDisabling(null);
+    }
+  };
+
+  return (
+    <div className="max-w-3xl flex flex-col gap-4">
+      <div className="bg-card-bg border border-white/10 rounded-2xl p-6">
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="font-bold text-base">Gerações com erro</h2>
+          <button onClick={load} className="text-white/40 hover:text-white text-xs">↻ Atualizar</button>
+        </div>
+        <p className="text-white/40 text-xs mb-4">
+          Últimos 7 dias, agrupado por modelo — assim um problema pontual não se perde no meio de tudo,
+          e um modelo quebrado de verdade fica óbvio pela quantidade.
+        </p>
+
+        {!data && <p className="text-white/40 text-sm">Carregando…</p>}
+        {data?.error && <p className="text-red-400 text-sm">{data.error}</p>}
+
+        {data && !data.error && data.groups.length === 0 && (
+          <p className="text-primary text-sm">Nenhuma falha nos últimos 7 dias. 🎉</p>
+        )}
+
+        {data && !data.error && data.groups.length > 0 && (
+          <div className="flex flex-col gap-2">
+            {data.groups.map((g) => {
+              const isOpen = openModel === g.model;
+              return (
+                <div key={g.model} className="border border-white/10 rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => setOpenModel(isOpen ? null : g.model)}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-black/20 hover:bg-black/30 transition-colors text-left"
+                  >
+                    <span className="text-white text-sm font-semibold">
+                      {g.model} <span className="text-red-400 font-bold">({g.count})</span>
+                    </span>
+                    <span className={`text-white/30 transition-transform ${isOpen ? 'rotate-180' : ''}`}>▾</span>
+                  </button>
+                  {isOpen && (
+                    <div>
+                      <div className="px-4 py-2 border-b border-white/5">
+                        <button
+                          onClick={() => disableModel(g.model)}
+                          disabled={disabling === g.model}
+                          className="px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-xs font-semibold hover:bg-red-500/20 transition-colors disabled:opacity-50"
+                        >
+                          {disabling === g.model ? 'Desligando…' : 'Desligar esse modelo agora'}
+                        </button>
+                      </div>
+                      <div className="divide-y divide-white/5">
+                        {g.items.map((f) => (
+                          <div key={f.id} className="px-4 py-2.5">
+                            <p className="text-white/70 text-xs">{f.user_email} · {new Date(f.created_at).toLocaleString('pt-BR')}</p>
+                            <p className="text-white/40 text-[11px] mt-0.5 break-words">{f.error_message || '(sem detalhe do erro)'}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

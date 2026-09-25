@@ -97,7 +97,7 @@ export async function POST(request) {
     result = await submitGeneration(endpoint, payload, MUAPI_KEY);
   } catch (err) {
     refundCredits(user.id, estimate, `estorno — geração falhou: ${err.message}`);
-    logGeneration(user.id, body.model, kind, 0, 'failed', null);
+    logGeneration(user.id, body.model, kind, 0, 'failed', null, err.message);
     return NextResponse.json({ error: `Falha na geração: ${err.message}` }, { status: 502 });
   }
 

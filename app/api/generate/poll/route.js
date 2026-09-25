@@ -44,7 +44,7 @@ export async function GET(request) {
   try {
     result = await checkGeneration(job.request_id, MUAPI_KEY);
   } catch (err) {
-    settleGenerationFailure(job.id);
+    settleGenerationFailure(job.id, err.message);
     return NextResponse.json({ done: true, error: `Falha na geração: ${err.message}` });
   }
 
@@ -58,7 +58,7 @@ export async function GET(request) {
     if (result.transientError) {
       const ageMs = Date.now() - new Date(job.created_at).getTime();
       if (ageMs > 20_000) {
-        settleGenerationFailure(job.id);
+        settleGenerationFailure(job.id, result.transientError);
         return NextResponse.json({
           done: true,
           error: `Falha na geração: a Muapi não conseguiu processar esse pedido (${result.transientError.slice(0, 200)})`,
