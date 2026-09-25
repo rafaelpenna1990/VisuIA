@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { generateImage } from '../api-client.js';
+import GeneratingHint from './GeneratingHint.jsx';
 
 // ─── Constants (inlined from promptUtils) ───────────────────────────────────
 
@@ -765,9 +766,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                                             'Gerar ✨'
                                         )}
                                     </button>
-                                    {isGenerating && (
-                                        <p className="text-[10px] text-white/40">Aguarde, não feche esta página</p>
-                                    )}
+                                    {isGenerating && <GeneratingHint generating={isGenerating} kind="image" />}
                                 </div>
                             </div>
                         </div>

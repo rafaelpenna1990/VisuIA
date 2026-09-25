@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { processLipSync, uploadFile } from '../api-client.js';
 import { useDisabledModels, filterEnabled } from '../hooks/useDisabledModels.js';
+import GeneratingHint from './GeneratingHint.jsx';
 import {
     lipsyncModels,
     imageLipSyncModels,
@@ -718,9 +719,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
                                             'Gerar ✨'
                                         )}
                                     </button>
-                                    {isGenerating && (
-                                        <p className="text-[10px] text-white/40">Aguarde, não feche esta página</p>
-                                    )}
+                                    {isGenerating && <GeneratingHint generating={isGenerating} kind="lipsync" />}
                                 </div>
                             </div>
                         </div>

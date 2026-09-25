@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { generateVideo, generateI2V, uploadFile } from '../api-client.js';
 import { useDisabledModels, filterEnabled } from '../hooks/useDisabledModels.js';
+import GeneratingHint from './GeneratingHint.jsx';
 import {
     t2vModels,
     i2vModels,
@@ -1062,9 +1063,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                             'Gerar ✨'
                                         )}
                                     </button>
-                                    {generating && (
-                                        <p className="text-[10px] text-white/40">Aguarde, não feche esta página</p>
-                                    )}
+                                    {generating && <GeneratingHint generating={generating} kind="video" />}
                                 </div>
                             </div>
                         </div>
