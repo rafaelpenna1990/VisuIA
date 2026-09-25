@@ -203,7 +203,7 @@ export default function StandaloneShell() {
 
         <div className="mb-8 px-2">
           <button onClick={() => router.push('/')} className="block">
-            <Logo version={assetsVersion} className="h-60 w-auto max-w-full" />
+            <Logo version={assetsVersion} className="h-12 w-auto max-w-full" />
           </button>
           {resuming && (
             <div className="text-[10px] text-white/40 flex items-center gap-1.5 mt-1">

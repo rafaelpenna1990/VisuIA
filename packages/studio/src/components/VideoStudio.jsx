@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { generateVideo, generateI2V, uploadFile } from '../api-client.js';
+import { useDisabledModels, filterEnabled } from '../hooks/useDisabledModels.js';
 import {
     t2vModels,
     i2vModels,
@@ -86,8 +87,9 @@ function DropdownItem({ label, selected, onClick }) {
 
 function ModelDropdown({ imageMode, selectedModel, onSelect, onClose }) {
     const [search, setSearch] = useState('');
+    const disabledModelIds = useDisabledModels();
 
-    const generationModels = imageMode ? i2vModels : t2vModels;
+    const generationModels = filterEnabled(imageMode ? i2vModels : t2vModels, disabledModelIds);
 
     const lf = search.toLowerCase();
     const filteredMain = generationModels.filter(
@@ -189,9 +191,10 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
     // ── mode state ──
     const [imageMode, setImageMode] = useState(false);   // i2v
     const [v2vMode, setV2vMode] = useState(false);
+    const disabledModelIds = useDisabledModels();
 
     // ── model / params ──
-    const defaultModel = t2vModels[0];
+    const defaultModel = filterEnabled(t2vModels, disabledModelIds)[0] || t2vModels[0];
     const [selectedModel, setSelectedModel] = useState(defaultModel.id);
     const [selectedModelName, setSelectedModelName] = useState(defaultModel.name);
     const [selectedAr, setSelectedAr] = useState(defaultModel.inputs?.aspect_ratio?.default || '16:9');
@@ -252,9 +255,9 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
     const history = historyItems ?? localHistory;
 
     const getCurrentModels = useCallback(() => {
-        if (v2vMode) return v2vModels;
-        return imageMode ? i2vModels : t2vModels;
-    }, [imageMode, v2vMode]);
+        if (v2vMode) return filterEnabled(v2vModels, disabledModelIds);
+        return filterEnabled(imageMode ? i2vModels : t2vModels, disabledModelIds);
+    }, [imageMode, v2vMode, disabledModelIds]);
 
     const getCurrentAspectRatios = useCallback((id) =>
         imageMode ? getAspectRatiosForI2VModel(id) : getAspectRatiosForVideoModel(id),
@@ -361,7 +364,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
             setV2vMode(false);
 
             if (!imageMode) {
-                const firstI2V = i2vModels[0];
+                const firstI2V = filterEnabled(i2vModels, disabledModelIds)[0];
                 setImageMode(true);
                 setSelectedModel(firstI2V.id);
                 setSelectedModelName(firstI2V.name);
@@ -381,7 +384,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
     const clearImageUpload = () => {
         setUploadedImageUrl(null);
         setImageMode(false);
-        const first = t2vModels[0];
+        const first = (filterEnabled(t2vModels, disabledModelIds)[0] || t2vModels[0]);
         setSelectedModel(first.id);
         setSelectedModelName(first.name);
         applyControlsForModel(first.id, false, false);
@@ -431,7 +434,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
         setUploadedVideoUrl(null);
         setUploadedVideoName(null);
         setV2vMode(false);
-        const first = t2vModels[0];
+        const first = (filterEnabled(t2vModels, disabledModelIds)[0] || t2vModels[0]);
         setSelectedModel(first.id);
         setSelectedModelName(first.name);
         applyControlsForModel(first.id, false, false);
@@ -619,7 +622,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
         setUploadedVideoUrl(null);
         setUploadedVideoName(null);
         setV2vMode(false);
-        const first = t2vModels[0];
+        const first = (filterEnabled(t2vModels, disabledModelIds)[0] || t2vModels[0]);
         setSelectedModel(first.id);
         setSelectedModelName(first.name);
         applyControlsForModel(first.id, false, false);

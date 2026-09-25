@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAssetsVersion } from '../lib/useAssetsVersion.js';
+import { useTranslation } from '../lib/i18n/useTranslation.js';
 import Logo from './Logo';
 
 // Same login/signup logic as AuthGate.js, but as an overlay instead of a
@@ -9,6 +10,7 @@ import Logo from './Logo';
 // "Entrar") doesn't yank the visitor away to a blank auth screen.
 export default function AuthModal({ initialMode = 'login', onAuthenticated, onClose }) {
   const assetsVersion = useAssetsVersion();
+  const { t } = useTranslation();
   const [mode, setMode] = useState(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,7 +28,7 @@ export default function AuthModal({ initialMode = 'login', onAuthenticated, onCl
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Algo deu errado');
+      if (!res.ok) throw new Error(data.error || t('auth.genericError'));
       onAuthenticated(data.user, mode);
     } catch (err) {
       setError(err.message);
@@ -49,14 +51,14 @@ export default function AuthModal({ initialMode = 'login', onAuthenticated, onCl
           type="button"
           onClick={onClose}
           className="absolute top-4 right-4 text-white/30 hover:text-white transition-colors"
-          aria-label="Fechar"
+          aria-label={t('auth.close')}
         >
           ✕
         </button>
 
-        <Logo version={assetsVersion} className="h-96 w-auto max-w-full mb-2" />
+        <Logo version={assetsVersion} className="h-20 w-auto max-w-full mb-2" />
         <p className="text-white/50 text-sm mb-6">
-          {mode === 'login' ? 'Entre na sua conta.' : 'Crie sua conta para começar.'}
+          {mode === 'login' ? t('auth.loginSubtitle') : t('auth.signupSubtitle')}
         </p>
 
         {/* Continue with Google — full navigation to our OAuth route, not
@@ -71,16 +73,16 @@ export default function AuthModal({ initialMode = 'login', onAuthenticated, onCl
             <path fill="#FBBC05" d="M5.16 14.5c-.25-.72-.39-1.49-.39-2.5s.14-1.78.38-2.5l-.01-.16-3.75-2.83-.12.06C.36 8.44 0 10.17 0 12s.36 3.56 1.27 5.43l3.89-2.93z"/>
             <path fill="#EA4335" d="M12 4.77c2.26 0 3.79.94 4.66 1.73l3.4-3.25C17.95 1.21 15.24 0 12 0 7.31 0 3.25 2.7 1.27 6.57l3.88 2.93C6.12 6.84 8.82 4.77 12 4.77z"/>
           </svg>
-          Continuar com Google
+          {t('auth.continueWithGoogle')}
         </a>
 
         <div className="flex items-center gap-3 mb-4">
           <div className="flex-1 h-px bg-white/10" />
-          <span className="text-white/30 text-[10px] uppercase tracking-wider">ou</span>
+          <span className="text-white/30 text-[10px] uppercase tracking-wider">{t('auth.or')}</span>
           <div className="flex-1 h-px bg-white/10" />
         </div>
 
-        <label className="block text-white/60 text-xs mb-1">E-mail</label>
+        <label className="block text-white/60 text-xs mb-1">{t('auth.email')}</label>
         <input
           type="email"
           required
@@ -90,7 +92,7 @@ export default function AuthModal({ initialMode = 'login', onAuthenticated, onCl
           className="w-full mb-4 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-[#FF9500]/50"
         />
 
-        <label className="block text-white/60 text-xs mb-1">Senha</label>
+        <label className="block text-white/60 text-xs mb-1">{t('auth.password')}</label>
         <input
           type="password"
           required
@@ -107,7 +109,7 @@ export default function AuthModal({ initialMode = 'login', onAuthenticated, onCl
           disabled={loading}
           className="w-full py-2 rounded-lg bg-[#FF9500] text-black font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
         >
-          {loading ? 'Aguarde…' : mode === 'login' ? 'Entrar' : 'Criar conta'}
+          {loading ? t('auth.pleaseWait') : mode === 'login' ? t('auth.login') : t('auth.createAccount')}
         </button>
 
         <button
@@ -115,7 +117,7 @@ export default function AuthModal({ initialMode = 'login', onAuthenticated, onCl
           onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(null); }}
           className="w-full mt-3 text-white/40 hover:text-white text-xs transition-colors"
         >
-          {mode === 'login' ? 'Não tem conta? Criar uma' : 'Já tem conta? Entrar'}
+          {mode === 'login' ? t('auth.noAccountYet') : t('auth.alreadyHaveAccount')}
         </button>
       </form>
     </div>

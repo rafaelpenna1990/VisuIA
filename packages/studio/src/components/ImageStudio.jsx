@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { generateImage, generateI2I, uploadFile } from "../api-client.js";
+import { useDisabledModels, filterEnabled } from "../hooks/useDisabledModels.js";
 import {
   t2iModels,
   i2iModels,
@@ -649,7 +650,8 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
   };
 
   // ── Derived: current model lists & helpers ───────────────────────────────
-  const currentModels = imageMode ? i2iModels : t2iModels;
+  const disabledModelIds = useDisabledModels();
+  const currentModels = filterEnabled(imageMode ? i2iModels : t2iModels, disabledModelIds);
   const currentAspectRatios = imageMode
     ? getAspectRatiosForI2IModel(selectedModelId)
     : getAspectRatiosForModel(selectedModelId);
@@ -668,7 +670,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
       setUploadedImageUrls(newUrls);
 
       if (!imageMode) {
-        const firstI2I = i2iModels[0];
+        const firstI2I = filterEnabled(i2iModels, disabledModelIds)[0];
         const ars = getAspectRatiosForI2IModel(firstI2I.id);
         const resolutions = getResolutionsForI2IModel(firstI2I.id);
         setImageMode(true);

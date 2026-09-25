@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { FEATURES, STEPS } from '../lib/landing-data.js';
 import { useAssetsVersion } from '../lib/useAssetsVersion.js';
+import { useLocalizedFeatures, useLocalizedSteps } from '../lib/i18n/useLocalizedContent.js';
+import { useTranslation } from '../lib/i18n/useTranslation.js';
 import Logo from './Logo';
 
 function NavDropdown({ label, isOpen, onToggle, children, panelClassName }) {
@@ -36,6 +37,9 @@ function NavDropdown({ label, isOpen, onToggle, children, panelClassName }) {
 export default function SiteHeader({ goToStudioOrAuth, isLoggedIn }) {
   const assetsVersion = useAssetsVersion();
   const router = useRouter();
+  const { t } = useTranslation();
+  const FEATURES = useLocalizedFeatures();
+  const STEPS = useLocalizedSteps();
   const [openNav, setOpenNav] = useState(null); // null | 'create' | 'models' | 'how'
   const navRef = useRef(null);
 
@@ -62,11 +66,11 @@ export default function SiteHeader({ goToStudioOrAuth, isLoggedIn }) {
     <header ref={navRef} className="flex items-center justify-between px-6 md:px-10 py-5 max-w-6xl mx-auto relative">
       <div className="flex items-center gap-8">
         <button onClick={() => router.push('/')} className="flex items-center">
-          <Logo version={assetsVersion} className="h-60 w-auto max-w-full" />
+          <Logo version={assetsVersion} className="h-10 w-auto max-w-full" />
         </button>
 
         <nav className="hidden md:flex items-center gap-6">
-          <NavDropdown label="O que você pode criar" isOpen={openNav === 'create'} onToggle={toggleNav('create')}>
+          <NavDropdown label={t('header.navCreate')} isOpen={openNav === 'create'} onToggle={toggleNav('create')}>
             <div className="p-3">
               {FEATURES.map((f) => (
                 <button
@@ -87,7 +91,7 @@ export default function SiteHeader({ goToStudioOrAuth, isLoggedIn }) {
             </div>
           </NavDropdown>
 
-          <NavDropdown label="Os modelos por trás da mágica" isOpen={openNav === 'models'} onToggle={toggleNav('models')}>
+          <NavDropdown label={t('header.navModels')} isOpen={openNav === 'models'} onToggle={toggleNav('models')}>
             <div className="p-3">
               {FEATURES.map((f) => (
                 <button
@@ -101,14 +105,14 @@ export default function SiteHeader({ goToStudioOrAuth, isLoggedIn }) {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-white mb-0.5">{f.title}</p>
-                    <p className="text-xs text-white/50 leading-relaxed">Veja os modelos usados aqui</p>
+                    <p className="text-xs text-white/50 leading-relaxed">{t('header.seeModelsHere')}</p>
                   </div>
                 </button>
               ))}
             </div>
           </NavDropdown>
 
-          <NavDropdown label="Como funciona" isOpen={openNav === 'how'} onToggle={toggleNav('how')} panelClassName="w-72">
+          <NavDropdown label={t('header.navHow')} isOpen={openNav === 'how'} onToggle={toggleNav('how')} panelClassName="w-72">
             <div className="p-3">
               {STEPS.map((s) => (
                 <button
@@ -138,13 +142,13 @@ export default function SiteHeader({ goToStudioOrAuth, isLoggedIn }) {
               onClick={() => router.push('/conta')}
               className="text-sm font-semibold text-white/70 hover:text-white transition-colors px-2"
             >
-              Minha Conta
+              {t('header.myAccount')}
             </button>
             <button
               onClick={() => goToStudioOrAuth('login')}
               className="bg-primary hover:opacity-90 text-black font-bold text-sm px-5 py-2 rounded-full transition-opacity"
             >
-              Meu Estúdio
+              {t('header.myStudio')}
             </button>
           </>
         ) : (
@@ -153,13 +157,13 @@ export default function SiteHeader({ goToStudioOrAuth, isLoggedIn }) {
               onClick={() => goToStudioOrAuth('login')}
               className="text-sm font-semibold text-white/70 hover:text-white transition-colors px-2"
             >
-              Entrar
+              {t('header.login')}
             </button>
             <button
               onClick={() => goToStudioOrAuth('signup')}
               className="bg-primary hover:opacity-90 text-black font-bold text-sm px-5 py-2 rounded-full transition-opacity"
             >
-              Cadastrar
+              {t('header.signup')}
             </button>
           </>
         )}

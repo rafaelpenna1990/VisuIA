@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { processLipSync, uploadFile } from '../api-client.js';
+import { useDisabledModels, filterEnabled } from '../hooks/useDisabledModels.js';
 import {
     lipsyncModels,
     imageLipSyncModels,
@@ -199,8 +200,9 @@ const VideoIcon = ({ className = 'text-muted group-hover:text-primary transition
 export default function LipSyncStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits }) {
     // ── Mode & model state ──────────────────────────────────────────────────
     const [inputMode, setInputMode] = useState('image'); // 'image' | 'video'
+    const disabledModelIds = useDisabledModels();
 
-    const currentModels = inputMode === 'image' ? imageLipSyncModels : videoLipSyncModels;
+    const currentModels = filterEnabled(inputMode === 'image' ? imageLipSyncModels : videoLipSyncModels, disabledModelIds);
     const firstModel = currentModels[0];
 
     const [selectedModelId, setSelectedModelId] = useState(firstModel?.id ?? '');
@@ -257,7 +259,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
 
     // ── Sync model when mode changes ────────────────────────────────────────
     useEffect(() => {
-        const models = inputMode === 'image' ? imageLipSyncModels : videoLipSyncModels;
+        const models = filterEnabled(inputMode === 'image' ? imageLipSyncModels : videoLipSyncModels, disabledModelIds);
         const first = models[0];
         if (!first) return;
         setSelectedModelId(first.id);

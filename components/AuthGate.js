@@ -38,7 +38,7 @@ export default function AuthGate({ onAuthenticated }) {
         onSubmit={submit}
         className="bg-[#0F1119] border border-white/10 rounded-2xl p-8 w-full max-w-sm"
       >
-        <Logo version={assetsVersion} className="h-96 w-auto max-w-full mb-2" />
+        <Logo version={assetsVersion} className="h-20 w-auto max-w-full mb-2" />
         <p className="text-white/50 text-sm mb-6">
           {mode === 'login' ? 'Entre na sua conta.' : 'Crie sua conta para começar.'}
         </p>

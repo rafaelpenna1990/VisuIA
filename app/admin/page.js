@@ -15,6 +15,7 @@ const TABS = [
   { id: 'users', label: 'Usuários' },
   { id: 'appearance', label: 'Aparência' },
   { id: 'marketing', label: 'Marketing' },
+  { id: 'models', label: 'Modelos' },
 ];
 
 export default function AdminPage() {
@@ -99,6 +100,7 @@ export default function AdminPage() {
         {tab === 'users' && <UsersTab adminKey={key} />}
         {tab === 'appearance' && <AppearanceTab adminKey={key} />}
         {tab === 'marketing' && <MarketingTab adminKey={key} />}
+        {tab === 'models' && <ModelsTab adminKey={key} />}
       </div>
 
       <div className="h-16" />
@@ -915,6 +917,122 @@ function MarketingTab({ adminKey }) {
             />
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ── Modelos ───────────────────────────────────────────────────────────────
+
+function ModelsTab({ adminKey }) {
+  const [categories, setCategories] = useState(null);
+  const [query, setQuery] = useState('');
+  const [toggling, setToggling] = useState(null);
+  const [openCategory, setOpenCategory] = useState(null);
+
+  const load = useCallback(() => {
+    fetch(`/api/admin/models?key=${encodeURIComponent(adminKey)}`)
+      .then((res) => res.json())
+      .then((data) => setCategories(data.categories || []))
+      .catch(() => setCategories([]));
+  }, [adminKey]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const toggle = async (modelId, disabled) => {
+    setToggling(modelId);
+    // Atualiza a tela na hora, sem esperar o servidor confirmar.
+    setCategories((prev) =>
+      prev.map((c) => ({ ...c, models: c.models.map((m) => (m.id === modelId ? { ...m, disabled } : m)) }))
+    );
+    try {
+      await fetch(`/api/admin/models?key=${encodeURIComponent(adminKey)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modelId, disabled }),
+      });
+    } finally {
+      setToggling(null);
+    }
+  };
+
+  const q = query.trim().toLowerCase();
+  const filtered = (categories || []).map((c) => ({
+    ...c,
+    models: q ? c.models.filter((m) => m.id.toLowerCase().includes(q) || m.name.toLowerCase().includes(q)) : c.models,
+  })).filter((c) => c.models.length > 0);
+
+  const totalDisabled = (categories || []).reduce((n, c) => n + c.models.filter((m) => m.disabled).length, 0);
+
+  return (
+    <div className="max-w-3xl flex flex-col gap-4">
+      <div className="bg-card-bg border border-white/10 rounded-2xl p-6">
+        <h2 className="font-bold text-base mb-1">Modelos disponíveis</h2>
+        <p className="text-white/40 text-xs mb-4">
+          Desliga um modelo na hora (sem precisar mexer em código nem esperar deploy) — útil quando um modelo
+          específico está com problema na Muapi. Quem estiver com o app aberto já para de ver esse modelo
+          na próxima vez que abrir o estúdio.
+          {totalDisabled > 0 && <span className="text-primary"> {totalDisabled} desligado{totalDisabled === 1 ? '' : 's'} agora.</span>}
+        </p>
+
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Buscar por nome ou id…"
+          className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50 mb-4"
+        />
+
+        {categories === null && <p className="text-white/40 text-sm">Carregando…</p>}
+
+        {categories !== null && filtered.length === 0 && (
+          <p className="text-white/30 text-sm">Nenhum modelo encontrado.</p>
+        )}
+
+        <div className="flex flex-col gap-2">
+          {filtered.map((c) => {
+            const isOpen = openCategory === c.key || q.length > 0;
+            const disabledInCategory = c.models.filter((m) => m.disabled).length;
+            return (
+              <div key={c.key} className="border border-white/10 rounded-xl overflow-hidden">
+                <button
+                  onClick={() => setOpenCategory(isOpen ? null : c.key)}
+                  className="w-full flex items-center justify-between px-4 py-3 bg-black/20 hover:bg-black/30 transition-colors text-left"
+                >
+                  <span className="text-white text-sm font-semibold">
+                    {c.label} <span className="text-white/30 font-normal">({c.models.length})</span>
+                  </span>
+                  <span className="flex items-center gap-2">
+                    {disabledInCategory > 0 && (
+                      <span className="text-[10px] text-red-400 font-semibold">{disabledInCategory} desligado{disabledInCategory === 1 ? '' : 's'}</span>
+                    )}
+                    <span className={`text-white/30 transition-transform ${isOpen ? 'rotate-180' : ''}`}>▾</span>
+                  </span>
+                </button>
+                {isOpen && (
+                  <div className="divide-y divide-white/5">
+                    {c.models.map((m) => (
+                      <div key={m.id} className="flex items-center justify-between px-4 py-2.5">
+                        <div className="min-w-0">
+                          <p className={`text-sm font-medium truncate ${m.disabled ? 'text-white/40 line-through' : 'text-white'}`}>{m.name}</p>
+                          <p className="text-white/30 text-[11px] truncate">{m.id}</p>
+                        </div>
+                        <button
+                          onClick={() => toggle(m.id, !m.disabled)}
+                          disabled={toggling === m.id}
+                          className={`shrink-0 ml-3 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 ${
+                            m.disabled ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
+                          }`}
+                        >
+                          {toggling === m.id ? '…' : m.disabled ? 'Reativar' : 'Desligar'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

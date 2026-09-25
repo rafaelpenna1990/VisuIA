@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSessionUser } from '../../../lib/auth.js';
-import { chargeCredits, refundCredits, logGeneration, createPendingGeneration } from '../../../lib/db.js';
+import { chargeCredits, refundCredits, logGeneration, createPendingGeneration, getDisabledModels } from '../../../lib/db.js';
 import { estimatedChargeBRL, actualChargeBRL } from '../../../lib/pricing.js';
 import {
   buildImageRequest,
@@ -34,6 +34,15 @@ export async function POST(request) {
 
   const body = await request.json();
   const kind = body.kind || 'image'; // 'image' | 'i2i' | 'video' | 'i2v' | 'lipsync'
+
+  // Admin kill-switch — reject even if someone bypasses the UI and calls
+  // this endpoint directly with a disabled model's id.
+  if (getDisabledModels().includes(body.model)) {
+    return NextResponse.json(
+      { error: 'Esse modelo está temporariamente desativado. Escolha outro.' },
+      { status: 503 }
+    );
+  }
 
   // 1) Pre-flight: block obviously-unaffordable requests before we spend anything.
   const estimate = estimatedChargeBRL(kind, body.model);

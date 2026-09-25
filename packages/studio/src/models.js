@@ -4789,7 +4789,7 @@ export const i2iModels = [
       }
     }
   }
-].filter((m) => m.id !== 'ai-image-upscaler') // temporarily disabled (2026-09-23) — Muapi's result endpoint returns 400 for this tool; support has been contacted
+]
   .sort((a, b) => (a.id === 'nano-banana-edit' ? -1 : b.id === 'nano-banana-edit' ? 1 : 0)); // nano-banana-edit as the default — general-purpose editor, keeps the person's face/identity, better first pick than the single-purpose "tools" that used to lead this list
 
 // Auto-generated from schema_data.json — Image to Video models
@@ -7920,7 +7920,7 @@ export const i2vModels = [
       }
     }
   }
-].filter((m) => m.id !== 'ai-video-effects'); // temporarily disabled (2026-09-23) — jobs stuck "pending" with 0 execution on Muapi's side; support has been contacted
+];
 
 export const getI2IModelById = (id) => i2iModels.find(m => m.id === id);
 export const getI2VModelById = (id) => i2vModels.find(m => m.id === id);
