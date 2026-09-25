@@ -23,6 +23,16 @@ function trialBonusReais() {
   return Number(getSetting('trial_bonus_tokens', '500')) / 100;
 }
 
+// Stripe removed the top-level invoice.subscription field (API version
+// 2025-03-31.basil onward) in favor of invoice.parent.subscription_details
+// .subscription — and webhook payloads render at the Stripe ACCOUNT's
+// current API version, not whatever version this codebase pins, so this
+// can start returning undefined with no deploy on our end at all. Reading
+// both shapes means it keeps working whichever one Stripe actually sends.
+function getInvoiceSubscriptionId(invoice) {
+  return invoice.subscription || invoice.parent?.subscription_details?.subscription || null;
+}
+
 // OpenAI/ChatGPT Ads server-side conversion — fired right when a
 // subscription is confirmed via Stripe's webhook (the reliable source of
 // truth), not on a client-side button click. Never throws: a failure here
@@ -76,6 +86,7 @@ export async function POST(request) {
   // is what stops a redelivered "invoice.paid" from granting tokens twice,
   // or a redelivered top-up from double-crediting.
   if (wasWebhookEventProcessed(event.id)) {
+    console.log(`[webhook] DUPLICATE, skipped: ${event.type} (${event.id})`);
     return NextResponse.json({ received: true, duplicate: true });
   }
 
@@ -107,16 +118,23 @@ export async function POST(request) {
 
   if (event.type === 'invoice.paid') {
     const invoice = event.data.object;
-    const stripeSubscriptionId = invoice.subscription;
+    const stripeSubscriptionId = getInvoiceSubscriptionId(invoice);
+    // TEMPORARY DEBUG: the "antecipar pagamento" flow reported not
+    // crediting tokens despite the webhook returning 200 — this traces
+    // exactly which lookup came back empty. Safe to remove once confirmed.
+    console.log('[webhook] invoice.paid — stripeSubscriptionId:', stripeSubscriptionId);
     if (stripeSubscriptionId) {
       const sub = getSubscriptionByStripeId(stripeSubscriptionId);
+      console.log('[webhook] invoice.paid — sub found:', JSON.stringify(sub));
       const plan = sub ? getPlanById(sub.plan) : null;
+      console.log('[webhook] invoice.paid — plan found:', JSON.stringify(plan));
       if (sub && plan) {
         if (sub.first_charge_done) {
           // A normal monthly renewal — full plan amount, same as before
           // the trial system existed.
           const reais = planTokensToReais(plan);
           addCredits(sub.user_id, reais, `Assinatura ${plan.name} — renovação mensal`, invoice.id);
+          console.log('[webhook] invoice.paid — credited renewal:', reais);
         } else {
           // First real charge (trial just converted to paid, whether that
           // happened naturally on day 7 or was brought forward early).
@@ -125,8 +143,13 @@ export async function POST(request) {
           const remainder = planTokensToReais(plan) - trialBonusReais();
           addCredits(sub.user_id, remainder, `Assinatura ${plan.name} — fim do período grátis`, invoice.id);
           markFirstChargeDone(stripeSubscriptionId);
+          console.log('[webhook] invoice.paid — credited first-charge remainder:', remainder);
         }
+      } else {
+        console.log('[webhook] invoice.paid — SKIPPED, sub or plan missing');
       }
+    } else {
+      console.log('[webhook] invoice.paid — SKIPPED, no subscription id on invoice');
     }
   }
 
