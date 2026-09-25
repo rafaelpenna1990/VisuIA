@@ -538,6 +538,12 @@ function UserDetailModal({ userId, adminKey, onClose }) {
               >
                 Créditos ({data.transactions?.length || 0})
               </button>
+              <button
+                onClick={() => setTab('email')}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold ${tab === 'email' ? 'bg-primary text-black' : 'bg-white/5 text-white/60'}`}
+              >
+                E-mail
+              </button>
             </div>
 
             {tab === 'generations' && (
@@ -589,9 +595,89 @@ function UserDetailModal({ userId, adminKey, onClose }) {
                 {data.transactions?.length === 0 && <p className="text-white/30 text-sm">Nenhuma transação ainda.</p>}
               </div>
             )}
+
+            {tab === 'email' && <UserEmailTab user={data.user} adminKey={adminKey} />}
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function UserEmailTab({ user, adminKey }) {
+  const [subject, setSubject] = useState('');
+  const [badge, setBadge] = useState('');
+  const [headline, setHeadline] = useState('');
+  const [body, setBody] = useState('');
+  const [buttonText, setButtonText] = useState('');
+  const [buttonLink, setButtonLink] = useState('https://www.visuia.ai/conta');
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const inputClass = "w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50";
+  const labelClass = "block text-xs text-white/50 mb-1";
+
+  const send = async () => {
+    if (!confirm(`Enviar esse e-mail pra ${user.email}?`)) return;
+    setSending(true);
+    setResult(null);
+    try {
+      const res = await fetch(`/api/admin/users/send-email?key=${encodeURIComponent(adminKey)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, subject, badge, headline, body, buttonText, buttonLink }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Falha ao enviar');
+      setResult({ ok: true });
+    } catch (err) {
+      setResult({ error: err.message });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-white/40 text-xs">Enviando pra: <span className="text-white">{user.email}</span></p>
+
+      <div>
+        <label className={labelClass}>Assunto</label>
+        <input value={subject} onChange={(e) => setSubject(e.target.value)} className={inputClass} />
+      </div>
+      <div>
+        <label className={labelClass}>Selo pequeno (opcional)</label>
+        <input value={badge} onChange={(e) => setBadge(e.target.value)} className={inputClass} placeholder="ex: Aviso importante" />
+      </div>
+      <div>
+        <label className={labelClass}>Título</label>
+        <input value={headline} onChange={(e) => setHeadline(e.target.value)} className={inputClass} />
+      </div>
+      <div>
+        <label className={labelClass}>Corpo (cada linha vira um parágrafo)</label>
+        <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={5} className={inputClass + " resize-y"} />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelClass}>Texto do botão (opcional)</label>
+          <input value={buttonText} onChange={(e) => setButtonText(e.target.value)} className={inputClass} />
+        </div>
+        <div>
+          <label className={labelClass}>Link do botão</label>
+          <input value={buttonLink} onChange={(e) => setButtonLink(e.target.value)} className={inputClass} />
+        </div>
+      </div>
+
+      <button
+        onClick={send}
+        disabled={sending || !subject.trim() || !headline.trim()}
+        className="px-4 py-2 rounded-lg bg-primary text-black font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 self-start"
+      >
+        {sending ? 'Enviando…' : `Enviar pra ${user.email}`}
+      </button>
+
+      {result?.error && <p className="text-red-400 text-xs">{result.error}</p>}
+      {result?.ok && <p className="text-primary text-xs">Enviado!</p>}
     </div>
   );
 }
