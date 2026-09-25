@@ -9,7 +9,8 @@ export async function GET(request) {
   if (!isAdminAuthorized(request)) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
-  const failures = getRecentFailures(7);
+  const date = request.nextUrl.searchParams.get('date') || undefined;
+  const failures = getRecentFailures(date ? { date } : { days: 7 });
 
   const byModel = {};
   for (const f of failures) {

@@ -1146,13 +1146,15 @@ function ErrorsTab({ adminKey }) {
   const [data, setData] = useState(null);
   const [openModel, setOpenModel] = useState(null);
   const [disabling, setDisabling] = useState(null);
+  const [date, setDate] = useState('');
 
   const load = useCallback(() => {
-    fetch(`/api/admin/failures?key=${encodeURIComponent(adminKey)}`)
+    const qs = date ? `&date=${date}` : '';
+    fetch(`/api/admin/failures?key=${encodeURIComponent(adminKey)}${qs}`)
       .then((res) => res.json())
       .then(setData)
       .catch(() => setData({ error: 'Falha ao carregar' }));
-  }, [adminKey]);
+  }, [adminKey, date]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -1178,16 +1180,34 @@ function ErrorsTab({ adminKey }) {
           <h2 className="font-bold text-base">Gerações com erro</h2>
           <button onClick={load} className="text-white/40 hover:text-white text-xs">↻ Atualizar</button>
         </div>
-        <p className="text-white/40 text-xs mb-4">
-          Últimos 7 dias, agrupado por modelo — assim um problema pontual não se perde no meio de tudo,
-          e um modelo quebrado de verdade fica óbvio pela quantidade.
+        <p className="text-white/40 text-xs mb-3">
+          {date
+            ? 'Mostrando só o dia selecionado — agrupado por modelo.'
+            : 'Últimos 7 dias, agrupado por modelo — assim um problema pontual não se perde no meio de tudo, e um modelo quebrado de verdade fica óbvio pela quantidade.'}
         </p>
+
+        <div className="flex items-center gap-2 mb-4">
+          <label className="text-xs text-white/50">Filtrar por dia:</label>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="px-3 py-1.5 rounded-lg bg-black/40 border border-white/10 text-white text-xs outline-none focus:border-primary/50"
+          />
+          {date && (
+            <button onClick={() => setDate('')} className="text-white/40 hover:text-white text-xs underline">
+              Limpar (voltar pros últimos 7 dias)
+            </button>
+          )}
+        </div>
 
         {!data && <p className="text-white/40 text-sm">Carregando…</p>}
         {data?.error && <p className="text-red-400 text-sm">{data.error}</p>}
 
         {data && !data.error && data.groups.length === 0 && (
-          <p className="text-primary text-sm">Nenhuma falha nos últimos 7 dias. 🎉</p>
+          <p className="text-primary text-sm">
+            {date ? 'Nenhuma falha nesse dia. 🎉' : 'Nenhuma falha nos últimos 7 dias. 🎉'}
+          </p>
         )}
 
         {data && !data.error && data.groups.length > 0 && (
