@@ -4,8 +4,10 @@ import { getGenerationById, settleGenerationFailure } from '../../../../../lib/d
 
 // Manually resolves a generation stuck in "pending" — this happens when
 // the person closes the tab/app before the client finishes polling
-// Muapi, and never comes back to trigger the auto-resume. Refunds the
-// pre-charged estimate back to their balance and marks it failed.
+// Muapi (or the client gives up after its ~30min polling budget without
+// ever telling the server why), and never comes back to trigger the
+// auto-resume. Refunds the pre-charged estimate back to their balance
+// and marks it failed.
 export async function POST(request) {
   if (!isAdminAuthorized(request)) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
@@ -20,6 +22,14 @@ export async function POST(request) {
     return NextResponse.json({ error: `Essa geração já está com status "${job.status}", nada a fazer` }, { status: 400 });
   }
 
-  const updated = settleGenerationFailure(job.id);
+  // Ficou "pending" e nunca foi resolvida automaticamente — o cliente
+  // deu por vencido de tentar (ou a pessoa fechou a aba) sem o servidor
+  // nunca saber o motivo real da Muapi. Registramos isso explicitamente
+  // em vez de deixar error_message em branco, pra aparecer certo na
+  // aba Erros do admin.
+  const updated = settleGenerationFailure(
+    job.id,
+    'Corrigido manualmente pelo admin — geração ficou "pending" sem resposta da Muapi (provável timeout ou falha silenciosa)'
+  );
   return NextResponse.json({ ok: true, generation: updated });
 }
