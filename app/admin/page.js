@@ -277,6 +277,37 @@ function ConfigTab({ adminKey }) {
             Cobrada uma vez, na hora, além da mensalidade normal a partir do 7º dia. O texto do pop-up de assinatura se ajusta sozinho.
           </p>
         </div>
+        <div className="mb-4 pt-4 border-t border-white/5">
+          <h3 className="text-sm font-bold mb-3">📧 E-mail de boas-vindas</h3>
+          <p className="text-white/30 text-[11px] mb-3">
+            Enviado automaticamente pra todo mundo que se cadastra (e-mail/senha ou Google).
+          </p>
+          <label className="block text-xs text-white/50 mb-1">Selo (badge)</label>
+          <input
+            value={settings.welcome_email_badge || ''}
+            onChange={(e) => setSettings({ ...settings, welcome_email_badge: e.target.value })}
+            className="w-full mb-3 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
+          />
+          <label className="block text-xs text-white/50 mb-1">Título</label>
+          <input
+            value={settings.welcome_email_headline || ''}
+            onChange={(e) => setSettings({ ...settings, welcome_email_headline: e.target.value })}
+            className="w-full mb-3 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
+          />
+          <label className="block text-xs text-white/50 mb-1">Corpo do texto (uma frase por linha)</label>
+          <textarea
+            value={settings.welcome_email_body || ''}
+            onChange={(e) => setSettings({ ...settings, welcome_email_body: e.target.value })}
+            rows={4}
+            className="w-full mb-3 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
+          />
+          <label className="block text-xs text-white/50 mb-1">Texto do botão</label>
+          <input
+            value={settings.welcome_email_button_text || ''}
+            onChange={(e) => setSettings({ ...settings, welcome_email_button_text: e.target.value })}
+            className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
+          />
+        </div>
         <p className="text-white/30 text-xs mb-4">
           Essas mudanças valem na hora, sem precisar reiniciar o site.
         </p>
