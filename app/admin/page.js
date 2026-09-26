@@ -1142,6 +1142,84 @@ function ModelsTab({ adminKey }) {
 
 // ── Erros ─────────────────────────────────────────────────────────────────
 
+// Toda mensagem de erro que o sistema grava hoje cai em um destes padrões.
+// Isso classifica o texto salvo em error_message e devolve um rótulo curto,
+// o que aquilo significa, e o que fazer a respeito — pra não precisar
+// decorar nem ficar perguntando toda vez que aparecer uma falha nova.
+const ERROR_GUIDE = [
+  {
+    id: 'submit_rejected',
+    match: (msg) => msg.startsWith('API Request Failed:'),
+    label: 'Pedido recusado no envio',
+    color: 'bg-orange-500/15 text-orange-400',
+    meaning: 'A Muapi recusou o pedido antes mesmo de começar a gerar — geralmente um parâmetro inválido, campo obrigatório faltando, imagem/formato não aceito, ou saldo insuficiente do lado da Muapi.',
+    action: 'Veja o texto completo do erro (abaixo do rótulo) — costuma apontar exatamente qual campo ou parâmetro está errado. Se for saldo, é a conta da Muapi, não a sua.',
+  },
+  {
+    id: 'generation_failed',
+    match: (msg) => msg.startsWith('Generation failed:'),
+    label: 'Recusado pela Muapi',
+    color: 'bg-red-500/15 text-red-400',
+    meaning: 'A Muapi processou o pedido e recusou o resultado, dizendo o motivo explicitamente — ex: violação de política de conteúdo, imagem rejeitada, bloqueio de NSFW, ou limitação do próprio modelo.',
+    action: 'É o mais confiável dos erros — o motivo já vem escrito pela própria Muapi. Normalmente não é bug seu; se for algo recorrente com um tipo de imagem/prompt, vale avisar o usuário.',
+  },
+  {
+    id: 'poll_failed',
+    match: (msg) => msg.startsWith('Poll Failed:'),
+    label: 'Erro ao consultar status',
+    color: 'bg-yellow-500/15 text-yellow-400',
+    meaning: 'Erro inesperado ao perguntar pra Muapi "como está esse job?" — um código HTTP fora do normal (ex: 401/403), o que pode indicar problema de autenticação com a chave da API ou uma mudança na API da Muapi.',
+    action: 'Se aparecer em vários modelos ao mesmo tempo, confira a MUAPI_API_KEY no Railway. Se for isolado, pode ser uma instabilidade pontual.',
+  },
+  {
+    id: 'muapi_stuck',
+    match: (msg) => msg.startsWith('A Muapi não conseguiu processar esse pedido'),
+    label: 'Instabilidade da Muapi',
+    color: 'bg-yellow-500/15 text-yellow-400',
+    meaning: 'O job ficou 20+ segundos recebendo erro da Muapi ao consultar o status — sinal de que o modelo está fora do ar ou lento do lado deles (já aconteceu antes com o upscaler e o video effects).',
+    action: 'Normalmente é temporário e some sozinho. Se um modelo específico acumular muitos desses, considere desligá-lo temporariamente (botão abaixo) e avisar o suporte da Muapi.',
+  },
+  {
+    id: 'stuck_no_error',
+    match: (msg) => msg.startsWith('Sem erro explícito'),
+    label: 'Travou sem aviso (corrigido manualmente)',
+    color: 'bg-white/10 text-white/60',
+    meaning: 'O job ficou parado em "pending" e nunca recebeu um erro real — nem o cliente, nem o servidor souberam o motivo. Isso foi resolvido manualmente pelo botão "Corrigir", usando o último status conhecido da Muapi como registro.',
+    action: 'Olhe o "status" e "executionTime" no texto — se executionTime ficou em 0 por muito tempo, é fila/instabilidade da Muapi. Não precisa de ação a menos que se repita muito com o mesmo modelo.',
+  },
+];
+
+function classifyError(message) {
+  if (!message) return null;
+  return ERROR_GUIDE.find((g) => g.match(message)) || null;
+}
+
+function ErrorsGuidePanel() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border border-white/10 rounded-xl overflow-hidden mb-3">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-4 py-2.5 bg-black/20 hover:bg-black/30 transition-colors text-left"
+      >
+        <span className="text-white/70 text-xs font-semibold">📖 Guia: o que cada erro significa e o que fazer</span>
+        <span className={`text-white/30 transition-transform ${open ? 'rotate-180' : ''}`}>▾</span>
+      </button>
+      {open && (
+        <div className="divide-y divide-white/5">
+          {ERROR_GUIDE.map((g) => (
+            <div key={g.id} className="px-4 py-3">
+              <span className={`inline-block px-2 py-0.5 rounded-md text-[11px] font-semibold ${g.color}`}>{g.label}</span>
+              <p className="text-white/50 text-[11px] mt-1.5"><span className="text-white/70 font-semibold">O que é: </span>{g.meaning}</p>
+              <p className="text-white/50 text-[11px] mt-1"><span className="text-white/70 font-semibold">O que fazer: </span>{g.action}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ErrorsTab({ adminKey }) {
   const [data, setData] = useState(null);
   const [openModel, setOpenModel] = useState(null);
@@ -1201,6 +1279,8 @@ function ErrorsTab({ adminKey }) {
           )}
         </div>
 
+        <ErrorsGuidePanel />
+
         {!data && <p className="text-white/40 text-sm">Carregando…</p>}
         {data?.error && <p className="text-red-400 text-sm">{data.error}</p>}
 
@@ -1237,12 +1317,23 @@ function ErrorsTab({ adminKey }) {
                         </button>
                       </div>
                       <div className="divide-y divide-white/5">
-                        {g.items.map((f) => (
-                          <div key={f.id} className="px-4 py-2.5">
-                            <p className="text-white/70 text-xs">{f.user_email} · {new Date(f.created_at).toLocaleString('pt-BR')}</p>
-                            <p className="text-white/40 text-[11px] mt-0.5 break-words">{f.error_message || '(sem detalhe do erro)'}</p>
-                          </div>
-                        ))}
+                        {g.items.map((f) => {
+                          const guide = classifyError(f.error_message);
+                          return (
+                            <div key={f.id} className="px-4 py-2.5">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-white/70 text-xs">{f.user_email} · {new Date(f.created_at).toLocaleString('pt-BR')}</p>
+                                {guide && (
+                                  <span className={`shrink-0 px-2 py-0.5 rounded-md text-[10px] font-semibold ${guide.color}`}>{guide.label}</span>
+                                )}
+                              </div>
+                              <p className="text-white/40 text-[11px] mt-0.5 break-words">{f.error_message || '(sem detalhe do erro)'}</p>
+                              {guide && (
+                                <p className="text-primary/70 text-[11px] mt-1">👉 {guide.action}</p>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
