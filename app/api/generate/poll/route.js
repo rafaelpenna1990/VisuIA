@@ -4,6 +4,7 @@ import {
   getGenerationById,
   settleGenerationSuccess,
   settleGenerationFailure,
+  updateLastStatusRaw,
 } from '../../../../lib/db.js';
 import { actualChargeBRL } from '../../../../lib/pricing.js';
 import { checkGeneration } from '../../../../packages/studio/src/muapi.js';
@@ -58,13 +59,20 @@ export async function GET(request) {
     if (result.transientError) {
       const ageMs = Date.now() - new Date(job.created_at).getTime();
       if (ageMs > 20_000) {
-        settleGenerationFailure(job.id, result.transientError);
+        settleGenerationFailure(job.id, `A Muapi não conseguiu processar esse pedido (${result.transientError.slice(0, 200)})`);
         return NextResponse.json({
           done: true,
           error: `Falha na geração: a Muapi não conseguiu processar esse pedido (${result.transientError.slice(0, 200)})`,
         });
       }
     }
+
+    // Grava o último status bruto que a Muapi respondeu, a cada checagem —
+    // é isso que dá pra settleGenerationFailure um motivo real pra usar se
+    // esse job nunca settle sozinho e alguém tiver que resolvê-lo depois
+    // pelo botão "Corrigir" do admin.
+    updateLastStatusRaw(job.id, result.raw || result.transientError || null);
+
     // TEMPORARY DEBUG: log roughly once every ~30s per job (not every 3s
     // poll) so we can see what Muapi is actually saying while a job sits
     // in "still working" — e.g. is it really progressing, or repeating
