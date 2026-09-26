@@ -9,6 +9,7 @@ import TopUpModal from '../../components/TopUpModal';
 const TABS = [
   { id: 'perfil', label: 'Perfil' },
   { id: 'projetos', label: 'Meus Projetos' },
+  { id: 'historico', label: 'Histórico' },
   { id: 'assinatura', label: 'Assinatura' },
 ];
 
@@ -37,6 +38,7 @@ function ContaContent() {
   const [tab, setTab] = useState(initialTab);
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState(null);
+  const [transactions, setTransactions] = useState(null);
   const [projectsError, setProjectsError] = useState(null);
   const [projectFilter, setProjectFilter] = useState('all');
   const [subscription, setSubscription] = useState(undefined); // undefined = loading, null = none
@@ -73,6 +75,14 @@ function ContaContent() {
       })
       .catch((err) => setProjectsError(err.message));
   }, [tab, projects]);
+
+  useEffect(() => {
+    if (tab !== 'historico' || transactions) return;
+    fetch('/api/transactions', { credentials: 'include' })
+      .then((res) => res.json())
+      .then((data) => setTransactions(data.transactions || []))
+      .catch(() => setTransactions([]));
+  }, [tab, transactions]);
 
   useEffect(() => {
     if (tab !== 'assinatura' || subscription !== undefined) return;
@@ -290,6 +300,49 @@ function ContaContent() {
                       <p className="text-white/40 text-[11px] truncate">{item.model}</p>
                       <p className="text-white/30 text-[10px] mt-1">{formatDate(item.created_at)}</p>
                     </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Histórico de créditos */}
+        {tab === 'historico' && (
+          <div className="max-w-2xl">
+            <div className="bg-card-bg border border-white/10 rounded-2xl p-4 mb-6">
+              <p className="text-white/70 text-sm leading-relaxed">
+                💡 Quando você gera algo, cobramos uma <strong className="text-white">estimativa</strong> antes
+                de começar, só pra garantir que dá pra pagar. Assim que termina, devolvemos essa estimativa
+                e cobramos só o <strong className="text-white">valor real</strong> — que costuma ser bem menor.
+                Se a geração falhar por algum motivo, você recebe de volta tudo que foi reservado.
+              </p>
+            </div>
+
+            {transactions === null && (
+              <div className="flex items-center justify-center py-16">
+                <div className="animate-spin text-primary text-2xl">◌</div>
+              </div>
+            )}
+
+            {transactions?.length === 0 && (
+              <p className="text-white/30 text-sm">Nenhuma movimentação ainda.</p>
+            )}
+
+            {transactions && transactions.length > 0 && (
+              <div className="flex flex-col gap-2">
+                {transactions.map((t) => (
+                  <div
+                    key={t.id}
+                    className="bg-card-bg border border-white/10 rounded-xl px-4 py-3 flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-white text-sm font-medium truncate">{t.description || t.type}</p>
+                      <p className="text-white/40 text-xs mt-0.5">{formatDate(t.created_at)}</p>
+                    </div>
+                    <span className={`text-sm font-bold shrink-0 ${t.amount >= 0 ? 'text-primary' : 'text-white/50'}`}>
+                      {t.amount >= 0 ? '+' : ''}{(t.amount * 100).toLocaleString('pt-BR')} VT
+                    </span>
                   </div>
                 ))}
               </div>
