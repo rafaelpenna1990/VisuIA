@@ -4,9 +4,9 @@ import {
   getUserByGoogleId,
   createUserWithGoogle,
   linkGoogleToUser,
-} from '../../../../../../lib/db.js';
-import { createSessionToken, setSessionCookie } from '../../../../../../lib/auth.js';
-import { sendWelcomeEmail } from '../../../../../../lib/welcomeEmail.js';
+} from '../../../../../lib/db.js';
+import { createSessionToken, setSessionCookie } from '../../../../../lib/auth.js';
+import { sendWelcomeEmail } from '../../../../../lib/welcomeEmail.js';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
