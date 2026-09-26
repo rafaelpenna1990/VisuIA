@@ -4,8 +4,9 @@ import {
   getUserByGoogleId,
   createUserWithGoogle,
   linkGoogleToUser,
-} from '../../../../../lib/db.js';
-import { createSessionToken, setSessionCookie } from '../../../../../lib/auth.js';
+} from '../../../../../../lib/db.js';
+import { createSessionToken, setSessionCookie } from '../../../../../../lib/auth.js';
+import { sendWelcomeEmail } from '../../../../../../lib/welcomeEmail.js';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
@@ -70,6 +71,13 @@ export async function GET(request) {
       user = createUserWithGoogle(email, googleId);
       isNewSignup = true;
     }
+  }
+
+  // Só manda o e-mail de boas-vindas quando é conta NOVA — não quando é
+  // login recorrente com Google, nem quando é uma conta que já existia
+  // (criada por e-mail/senha) só ganhando o Google como opção de login.
+  if (isNewSignup) {
+    sendWelcomeEmail(user);
   }
 
   const token = createSessionToken(user.id);
