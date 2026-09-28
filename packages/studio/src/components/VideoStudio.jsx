@@ -88,12 +88,17 @@ function DropdownItem({ label, selected, onClick }) {
     );
 }
 
-function ModelDropdown({ imageMode, selectedModel, onSelect, onClose }) {
+function ModelDropdown({ imageMode, selectedModel, onSelect, onClose, v2vIntent }) {
     const [search, setSearch] = useState('');
     const disabledModelIds = useDisabledModels();
 
     const generationModels = filterEnabled(imageMode ? i2vModels : t2vModels, disabledModelIds);
-    const currentV2VModels = filterEnabled(v2vModels, disabledModelIds);
+    // Once the person has picked an intent for the uploaded video (remove
+    // watermark vs. edit it with a prompt), only show the tools that match —
+    // no point listing the watermark remover while they're browsing editors.
+    const currentV2VModels = filterEnabled(v2vModels, disabledModelIds).filter(m =>
+        !v2vIntent ? true : (v2vIntent === 'edit' ? m.hasPrompt : !m.hasPrompt)
+    );
 
     const lf = search.toLowerCase();
     const filteredMain = generationModels.filter(
@@ -199,6 +204,10 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
     // ── mode state ──
     const [imageMode, setImageMode] = useState(false);   // i2v
     const [v2vMode, setV2vMode] = useState(false);
+    // 'edit' | 'watermark' — which of the two V2V intents is active once a
+    // video is uploaded; drives both the quick toggle and which tools the
+    // model dropdown shows.
+    const [v2vIntent, setV2vIntent] = useState('edit');
     const disabledModelIds = useDisabledModels();
 
     // ── model / params ──
@@ -435,12 +444,18 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
             // uploading the video), keep it — only fall back to the first
             // V2V tool (watermark remover) when nothing was picked yet.
             const alreadyV2V = v2vModels.find(m => m.id === selectedModel);
-            const targetV2V = alreadyV2V || v2vModels[0];
+            // No model picked yet — default to a real editing tool (one that
+            // takes a prompt) instead of the watermark remover, since that's
+            // what most people uploading a video actually want to do.
+            const enabledV2V = filterEnabled(v2vModels, disabledModelIds);
+            const fallbackV2V = enabledV2V.find(m => m.hasPrompt) || enabledV2V[0] || v2vModels[0];
+            const targetV2V = alreadyV2V || fallbackV2V;
             setSelectedModel(targetV2V.id);
             setSelectedModelName(targetV2V.name);
             applyControlsForModel(targetV2V.id, false, true);
             setPrompt('');
             setPromptDisabled(!targetV2V.hasPrompt);
+            setV2vIntent(targetV2V.hasPrompt ? 'edit' : 'watermark');
         } catch (err) {
             console.error('[VideoStudio] Video upload failed:', err);
             alert(`Falha ao enviar o vídeo: ${err.message}`);
@@ -455,12 +470,33 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
         setUploadedVideoUrl(null);
         setUploadedVideoName(null);
         setV2vMode(false);
+        setV2vIntent('edit');
         const first = (filterEnabled(t2vModels, disabledModelIds)[0] || t2vModels[0]);
         setSelectedModel(first.id);
         setSelectedModelName(first.name);
         applyControlsForModel(first.id, false, false);
         setPromptDisabled(false);
     };
+
+    // ── quick "what do you want to do with this video" toggle ─────────────────
+    // Switches between the watermark remover and the pool of prompt-driven
+    // editors (Runway Aleph, Wan 2.2 Edit Video, Seedance 2.5 Video Edit).
+    // Keeps the currently selected model if it already matches the chosen
+    // intent, otherwise picks the first enabled tool that does.
+    const selectV2VIntent = useCallback((intent) => {
+        const pool = filterEnabled(v2vModels, disabledModelIds);
+        const list = pool.length ? pool : v2vModels;
+        const matchesIntent = (m) => (intent === 'edit' ? m.hasPrompt : !m.hasPrompt);
+        const current = list.find(m => m.id === selectedModel);
+        const target = (current && matchesIntent(current)) ? current : (list.find(matchesIntent) || list[0]);
+        if (!target) return;
+        setSelectedModel(target.id);
+        setSelectedModelName(target.name);
+        applyControlsForModel(target.id, false, true);
+        setPrompt('');
+        setPromptDisabled(!target.hasPrompt);
+        setV2vIntent(intent);
+    }, [selectedModel, disabledModelIds, applyControlsForModel]);
 
     // ── model selection from dropdown ─────────────────────────────────────────
     const handleModelSelect = useCallback((m, isV2V) => {
@@ -476,6 +512,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
             // Seedance 2.5 Video Edit) need a description of the edit —
             // only the no-prompt tools (watermark remover) keep it disabled.
             setPromptDisabled(!m.hasPrompt);
+            setV2vIntent(m.hasPrompt ? 'edit' : 'watermark');
         } else {
             if (v2vMode) {
                 setV2vMode(false);
@@ -937,10 +974,32 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                                     selectedModel={selectedModel}
                                                     onSelect={handleModelSelect}
                                                     onClose={() => setOpenDropdown(null)}
+                                                    v2vIntent={v2vMode ? v2vIntent : null}
                                                 />
                                             </div>
                                         )}
                                     </div>
+
+                                    {/* Watermark vs. Edit quick toggle — only shown once a video is
+                                        uploaded, so the model list above narrows to match the choice */}
+                                    {v2vMode && (
+                                        <div className="flex items-center gap-1 bg-white/5 rounded-xl md:rounded-2xl border border-white/5 p-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => selectV2VIntent('watermark')}
+                                                className={`px-3 py-1.5 rounded-lg md:rounded-xl text-[11px] font-bold transition-all whitespace-nowrap ${v2vIntent === 'watermark' ? 'bg-primary text-black' : 'text-white/60 hover:text-white'}`}
+                                            >
+                                                🧹 Marca d'água
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => selectV2VIntent('edit')}
+                                                className={`px-3 py-1.5 rounded-lg md:rounded-xl text-[11px] font-bold transition-all whitespace-nowrap ${v2vIntent === 'edit' ? 'bg-primary text-black' : 'text-white/60 hover:text-white'}`}
+                                            >
+                                                ✏️ Editar vídeo
+                                            </button>
+                                        </div>
+                                    )}
 
                                     {/* Aspect ratio btn */}
                                     {showAr && (
