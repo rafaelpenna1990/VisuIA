@@ -157,20 +157,41 @@ function ModelDropdown({ imageMode, selectedModel, onSelect, onClose, v2vIntent 
                     />
                 </div>
             </div>
-            <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-3 py-2 shrink-0">
-                Modelos de vídeo
-            </div>
-            <div className="flex flex-col gap-1.5 overflow-y-auto custom-scrollbar pr-1 pb-2">
-                {filteredMain.map(m => renderItem(m, false))}
-                {filteredV2V.length > 0 && (
-                    <>
-                        <div className="text-[10px] font-bold text-orange-400/70 uppercase tracking-widest px-3 py-2 mt-1 border-t border-white/5">
-                            Ferramentas de vídeo
-                        </div>
-                        {filteredV2V.map(m => renderItem(m, true))}
-                    </>
-                )}
-            </div>
+            {v2vIntent ? (
+                // Already working on an uploaded video — the matching V2V
+                // tools are what the person came here for, so they go first.
+                // Text-to-video models still show below in case they want to
+                // start a fresh (non-video) generation instead.
+                <div className="flex flex-col gap-1.5 overflow-y-auto custom-scrollbar pr-1 pb-2">
+                    <div className="text-[10px] font-bold text-orange-400/70 uppercase tracking-widest px-3 py-2 shrink-0">
+                        Ferramentas de vídeo
+                    </div>
+                    {filteredV2V.map(m => renderItem(m, true))}
+                    {filteredMain.length > 0 && (
+                        <>
+                            <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-3 py-2 mt-1 border-t border-white/5">
+                                Ou gerar do zero (texto-para-vídeo)
+                            </div>
+                            {filteredMain.map(m => renderItem(m, false))}
+                        </>
+                    )}
+                </div>
+            ) : (
+                <div className="flex flex-col gap-1.5 overflow-y-auto custom-scrollbar pr-1 pb-2">
+                    <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-3 py-2 shrink-0">
+                        Modelos de vídeo
+                    </div>
+                    {filteredMain.map(m => renderItem(m, false))}
+                    {filteredV2V.length > 0 && (
+                        <>
+                            <div className="text-[10px] font-bold text-orange-400/70 uppercase tracking-widest px-3 py-2 mt-1 border-t border-white/5">
+                                Ferramentas de vídeo
+                            </div>
+                            {filteredV2V.map(m => renderItem(m, true))}
+                        </>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
