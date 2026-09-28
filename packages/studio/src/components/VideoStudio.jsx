@@ -93,12 +93,9 @@ function ModelDropdown({ imageMode, selectedModel, onSelect, onClose, v2vIntent 
     const disabledModelIds = useDisabledModels();
 
     const generationModels = filterEnabled(imageMode ? i2vModels : t2vModels, disabledModelIds);
-    // Once the person has picked an intent for the uploaded video (remove
-    // watermark vs. edit it with a prompt), only show the tools that match —
-    // no point listing the watermark remover while they're browsing editors.
-    const currentV2VModels = filterEnabled(v2vModels, disabledModelIds).filter(m =>
-        !v2vIntent ? true : (v2vIntent === 'edit' ? m.hasPrompt : !m.hasPrompt)
-    );
+    // Always show every V2V tool here (watermark remover + the 3 editors) —
+    // the quick toggle above just pre-selects one, it doesn't hide the rest.
+    const currentV2VModels = filterEnabled(v2vModels, disabledModelIds);
 
     const lf = search.toLowerCase();
     const filteredMain = generationModels.filter(
