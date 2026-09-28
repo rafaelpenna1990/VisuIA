@@ -8021,8 +8021,66 @@ export const v2vModels = [
     "videoField": "video_url",
     "hasPrompt": false,
     "description": "Remove watermarks, logos, captions, and unwanted text from videos."
+  },
+  {
+    "id": "runway-aleph-v2v",
+    "name": "Runway Aleph — Editar Vídeo",
+    "endpoint": "runway-aleph-v2v",
+    "family": "edit",
+    "videoField": "video_url",
+    "hasPrompt": true,
+    "description": "Transforma o estilo ou cenário de um vídeo existente, mantendo o movimento original.",
+    "inputs": {
+      "aspect_ratio": {
+        "enum": ["16:9", "9:16", "1:1", "4:3", "3:4", "21:9"],
+        "default": "16:9"
+      }
+    }
+  },
+  {
+    "id": "wan2.2-edit-video",
+    "name": "Wan 2.2 — Editar Vídeo",
+    "endpoint": "wan2.2-edit-video",
+    "family": "edit",
+    "videoField": "video_url",
+    "hasPrompt": true,
+    "description": "Altera roupas, aparência ou outros atributos visuais de um vídeo existente via comando de texto.",
+    "inputs": {
+      "resolution": {
+        "enum": ["480p", "720p"],
+        "default": "480p"
+      }
+    }
+  },
+  {
+    "id": "seedance-2.5-video-edit",
+    "name": "Seedance 2.5 — Editar Vídeo",
+    "endpoint": "seedance-2.5-video-edit",
+    "family": "edit",
+    "videoField": "video_url",
+    "hasPrompt": true,
+    "description": "Edição mais robusta, mantendo a identidade do sujeito e a composição do vídeo original.",
+    "inputs": {
+      "resolution": {
+        "enum": ["480p", "720p", "1080p", "4k"],
+        "default": "720p"
+      }
+    }
   }
 ];
+
+// Aspect ratios / resolutions a V2V "edit" model accepts — read from its own
+// `inputs`, same idea as the T2V/I2V lookups below. Tools without these keys
+// (like the watermark remover) just return [] and no control is shown.
+export const getAspectRatiosForV2VModel = (id) => {
+  const model = v2vModels.find(m => m.id === id);
+  return model?.inputs?.aspect_ratio?.enum || [];
+};
+
+export const getResolutionsForV2VModel = (id) => {
+  const model = v2vModels.find(m => m.id === id);
+  return model?.inputs?.resolution?.enum || [];
+};
 
 // ─── LipSync / Speech-to-Video models ────────────────────────────────────────
 // Image-based: portrait image + audio → talking video

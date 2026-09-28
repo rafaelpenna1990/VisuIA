@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSessionUser } from '../../../lib/auth.js';
-import { chargeCredits, refundCredits, logGeneration, createPendingGeneration, getDisabledModels } from '../../../lib/db.js';
+import { chargeCredits, refundCredits, forceChargeCredits, logGeneration, createPendingGeneration, getDisabledModels } from '../../../lib/db.js';
 import { estimatedChargeBRL, actualChargeBRL } from '../../../lib/pricing.js';
 import {
   buildImageRequest,
@@ -71,6 +71,12 @@ export async function POST(request) {
       model: body.model, prompt: body.prompt, aspect_ratio: body.aspect_ratio,
       duration: body.duration, resolution: body.resolution, quality: body.quality,
       mode: body.mode, image_url: body.image_url,
+      // V2V "edit an existing video" tools (watermark remover, and the
+      // prompt-driven editors like Runway Aleph / Wan 2.2 Edit Video /
+      // Seedance 2.5 Video Edit) submit through this same 'video' kind —
+      // this was previously missing, so the input video never actually
+      // reached Muapi for any of them.
+      video_url: body.video_url,
     }));
   } else if (kind === 'i2v') {
     ({ endpoint, payload } = buildI2VRequest({
@@ -105,12 +111,12 @@ export async function POST(request) {
   if (result.done) {
     const realCharge = actualChargeBRL(result.raw, kind, body.model);
     refundCredits(user.id, estimate, 'estorno da pré-cobrança estimada');
-    try {
-      chargeCredits(user.id, realCharge, `${body.model} — cobrança real`);
-    } catch {
-      // Balance dropped below the real cost between steps — still deliver
-      // the result the user already paid the estimate for.
-    }
+    // Always charge the real cost, even if it takes the balance negative —
+    // same reasoning as settleGenerationSuccess() in lib/db.js for the
+    // async path: the result has already been generated and delivered at
+    // this point, so silently skipping the charge when balance is tight
+    // was just giving away free generations.
+    forceChargeCredits(user.id, realCharge, `${body.model} — cobrança real`);
     logGeneration(user.id, body.model, kind, realCharge, 'completed', result.url);
     return NextResponse.json({ done: true, url: result.url, charged_brl: realCharge });
   }

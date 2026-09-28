@@ -1,7 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { generateImage } from '../api-client.js';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { generateImage, generateVideo } from '../api-client.js';
+import { useDisabledModels, filterEnabled } from '../hooks/useDisabledModels.js';
+import {
+    t2vModels,
+    getAspectRatiosForVideoModel,
+    getDurationsForModel,
+    getResolutionsForVideoModel,
+} from '../models.js';
 import GeneratingHint from './GeneratingHint.jsx';
 
 // ─── Constants (inlined from promptUtils) ───────────────────────────────────
@@ -74,12 +81,19 @@ const LENSES = Object.keys(LENS_MAP);
 const FOCAL_LENGTHS = Object.keys(FOCAL_PERSPECTIVE).map(k => parseInt(k));
 const APERTURES = Object.keys(APERTURE_EFFECT);
 
-function buildNanoBananaPrompt(basePrompt, camera, lens, focalLength, aperture) {
+// basePrompt + the camera/lens/focal/aperture dial settings become a single
+// enriched prompt. mode picks the quality tags: a still photo wants
+// photography-flavored tags, a video wants cinematography/motion tags —
+// asking Nano Banana Pro for "8K resolution" made sense, asking a video
+// model for it doesn't.
+function buildCinematicPrompt(basePrompt, camera, lens, focalLength, aperture, mode = 'photo') {
     const cameraDesc = CAMERA_MAP[camera] || camera;
     const lensDesc = LENS_MAP[lens] || lens;
     const perspective = FOCAL_PERSPECTIVE[focalLength] || "";
     const depthEffect = APERTURE_EFFECT[aperture] || "";
-    const qualityTags = ["professional photography", "ultra-detailed", "8K resolution"];
+    const qualityTags = mode === 'video'
+        ? ["cinematic film footage", "smooth camera motion", "professional color grading"]
+        : ["professional photography", "ultra-detailed", "8K resolution"];
     const parts = [
         basePrompt,
         `shot on a ${cameraDesc}`,
@@ -92,6 +106,16 @@ function buildNanoBananaPrompt(basePrompt, camera, lens, focalLength, aperture) 
         qualityTags.join(", ")
     ];
     return parts.filter(p => p && p.trim() !== "").join(", ");
+}
+
+// Which payload field ('resolution' or 'quality') a t2v model expects, and
+// its options — mirrors the same idea models.js already has for i2i models,
+// just kept local since not every t2v model uses the same field name.
+function getVideoQualityField(model) {
+    if (!model) return null;
+    if (model.inputs?.resolution) return 'resolution';
+    if (model.inputs?.quality) return 'quality';
+    return null;
 }
 
 // ─── Dropdown ────────────────────────────────────────────────────────────────
@@ -120,12 +144,12 @@ function Dropdown({ items, selected, onSelect, triggerRef, onClose }) {
     return (
         <div
             ref={menuRef}
-            className="custom-dropdown absolute bottom-[calc(100%+8px)] left-0 bg-[#0F1119] border border-white/10 rounded-xl py-1 shadow-2xl z-50 flex flex-col min-w-[100px] animate-fade-in"
+            className="custom-dropdown absolute bottom-[calc(100%+8px)] left-0 bg-[#0F1119] border border-white/10 rounded-xl py-1 shadow-2xl z-50 flex flex-col min-w-[100px] max-h-[280px] overflow-y-auto animate-fade-in"
         >
             {items.map(item => (
                 <button
                     key={item}
-                    className={`px-3 py-2 text-xs font-bold text-left hover:bg-white/10 transition-colors ${item === selected ? 'text-primary' : 'text-white'}`}
+                    className={`px-3 py-2 text-xs font-bold text-left hover:bg-white/10 transition-colors whitespace-nowrap ${item === selected ? 'text-primary' : 'text-white'}`}
                     onClick={(e) => {
                         e.stopPropagation();
                         onSelect(item);
@@ -412,6 +436,12 @@ function CameraControlsOverlay({ isOpen, onClose, settings, onSettingsChange }) 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function CinemaStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits }) {
+    const disabledModelIds = useDisabledModels();
+    const availableVideoModels = useMemo(
+        () => filterEnabled(t2vModels, disabledModelIds),
+        [disabledModelIds]
+    );
+
     // ── Settings state ──
     const [settings, setSettings] = useState({
         prompt: '',
@@ -423,19 +453,68 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
     });
     const [resolution, setResolution] = useState('2K');
 
+    // ── Foto / Vídeo mode ──
+    const [outputMode, setOutputMode] = useState('photo'); // 'photo' | 'video'
+    const [videoModelName, setVideoModelName] = useState(
+        () => (availableVideoModels[0] || t2vModels[0])?.name
+    );
+    const [videoDuration, setVideoDuration] = useState(5);
+    const [videoQuality, setVideoQuality] = useState('');
+
+    const selectedVideoModel = useMemo(
+        () => availableVideoModels.find(m => m.name === videoModelName)
+            || availableVideoModels[0]
+            || t2vModels[0],
+        [availableVideoModels, videoModelName]
+    );
+
+    const videoAspectRatios = useMemo(
+        () => getAspectRatiosForVideoModel(selectedVideoModel?.id),
+        [selectedVideoModel]
+    );
+    const videoDurations = useMemo(
+        () => getDurationsForModel(selectedVideoModel?.id),
+        [selectedVideoModel]
+    );
+    const videoQualityField = getVideoQualityField(selectedVideoModel);
+    const videoQualityOptions = useMemo(() => {
+        if (!videoQualityField) return [];
+        if (videoQualityField === 'resolution') return getResolutionsForVideoModel(selectedVideoModel?.id);
+        return selectedVideoModel?.inputs?.quality?.enum || [];
+    }, [selectedVideoModel, videoQualityField]);
+
+    // Keep AR/duration/quality valid whenever the selected video model changes.
+    useEffect(() => {
+        if (outputMode !== 'video' || !selectedVideoModel) return;
+        if (videoAspectRatios.length && !videoAspectRatios.includes(settings.aspect_ratio)) {
+            setSettings(prev => ({ ...prev, aspect_ratio: videoAspectRatios[0] }));
+        }
+        if (videoDurations.length && !videoDurations.includes(videoDuration)) {
+            setVideoDuration(videoDurations[0]);
+        }
+        if (videoQualityOptions.length && !videoQualityOptions.includes(videoQuality)) {
+            setVideoQuality(videoQualityOptions[0]);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [outputMode, selectedVideoModel]);
+
     // ── UI state ──
     const [isOverlayOpen, setIsOverlayOpen] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
     const [canvasUrl, setCanvasUrl] = useState(null);   // null = prompt view
+    const [canvasType, setCanvasType] = useState('photo'); // 'photo' | 'video' — what canvasUrl actually is
     const [activeHistoryIndex, setActiveHistoryIndex] = useState(null);
 
     // ── Internal history state (used when historyItems prop is not provided) ──
     const [internalHistory, setInternalHistory] = useState([]);
 
     // ── Dropdown state ──
-    const [openDropdown, setOpenDropdown] = useState(null); // 'ar' | 'res' | null
+    const [openDropdown, setOpenDropdown] = useState(null); // 'ar' | 'res' | 'vmodel' | 'vdur' | 'vqual' | null
     const arBtnRef = useRef(null);
     const resBtnRef = useRef(null);
+    const vModelBtnRef = useRef(null);
+    const vDurBtnRef = useRef(null);
+    const vQualBtnRef = useRef(null);
 
     // ── Textarea auto-grow ──
     const textareaRef = useRef(null);
@@ -463,27 +542,41 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
 
         setIsGenerating(true);
 
-        const finalPrompt = buildNanoBananaPrompt(
+        const finalPrompt = buildCinematicPrompt(
             basePrompt,
             settings.camera,
             settings.lens,
             settings.focal,
-            settings.aperture
+            settings.aperture,
+            outputMode
         );
 
         try {
-            const res = await generateImage(apiKey, {
-                model: 'nano-banana-pro',
-                prompt: finalPrompt,
-                aspect_ratio: settings.aspect_ratio,
-                resolution: resolution.toLowerCase(),
-                negative_prompt: 'blurry, low quality, distortion, bad composition'
-            });
+            let res;
+            if (outputMode === 'video') {
+                const videoParams = {
+                    model: selectedVideoModel.id,
+                    prompt: finalPrompt,
+                    aspect_ratio: settings.aspect_ratio,
+                };
+                if (videoDurations.length) videoParams.duration = videoDuration;
+                if (videoQualityField && videoQuality) videoParams[videoQualityField] = videoQuality;
+                res = await generateVideo(apiKey, videoParams);
+            } else {
+                res = await generateImage(apiKey, {
+                    model: 'nano-banana-pro',
+                    prompt: finalPrompt,
+                    aspect_ratio: settings.aspect_ratio,
+                    resolution: resolution.toLowerCase(),
+                    negative_prompt: 'blurry, low quality, distortion, bad composition'
+                });
+            }
 
             if (res && res.url) {
                 const entry = {
                     url: res.url,
                     timestamp: Date.now(),
+                    mediaType: outputMode,
                     settings: {
                         prompt: basePrompt,
                         camera: settings.camera,
@@ -491,7 +584,11 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                         focal: settings.focal,
                         aperture: settings.aperture,
                         aspect_ratio: settings.aspect_ratio,
-                        resolution
+                        resolution,
+                        outputMode,
+                        videoModelName: outputMode === 'video' ? videoModelName : undefined,
+                        videoDuration: outputMode === 'video' ? videoDuration : undefined,
+                        videoQuality: outputMode === 'video' ? videoQuality : undefined,
                     }
                 };
 
@@ -502,13 +599,15 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
 
                 setActiveHistoryIndex(0);
                 setCanvasUrl(res.url);
+                setCanvasType(outputMode);
 
                 if (onGenerationComplete) {
                     onGenerationComplete({
                         url: res.url,
-                        model: 'nano-banana-pro',
+                        model: outputMode === 'video' ? selectedVideoModel.id : 'nano-banana-pro',
                         prompt: basePrompt,
-                        type: 'cinema'
+                        type: 'cinema',
+                        mediaType: outputMode
                     });
                 }
             } else {
@@ -524,7 +623,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
         } finally {
             setIsGenerating(false);
         }
-    }, [settings, resolution, apiKey, isGenerating, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits]);
+    }, [settings, resolution, apiKey, isGenerating, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits, outputMode, selectedVideoModel, videoModelName, videoDuration, videoDurations, videoQuality, videoQualityField]);
 
     // ── Regenerate ──
     const handleRegenerate = useCallback(() => {
@@ -542,7 +641,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
             const blobUrl = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = blobUrl;
-            a.download = `cinema-shot-${Date.now()}.jpg`;
+            a.download = `cinema-shot-${Date.now()}.${canvasType === 'video' ? 'mp4' : 'jpg'}`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -550,7 +649,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
         } catch {
             window.open(canvasUrl, '_blank');
         }
-    }, [canvasUrl]);
+    }, [canvasUrl, canvasType]);
 
     // ── Load history item ──
     const loadHistoryItem = (entry, idx) => {
@@ -565,6 +664,10 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                 prompt: entry.settings.prompt ?? prev.prompt
             }));
             if (entry.settings.resolution) setResolution(entry.settings.resolution);
+            if (entry.settings.outputMode) setOutputMode(entry.settings.outputMode);
+            if (entry.settings.videoModelName) setVideoModelName(entry.settings.videoModelName);
+            if (entry.settings.videoDuration) setVideoDuration(entry.settings.videoDuration);
+            if (entry.settings.videoQuality) setVideoQuality(entry.settings.videoQuality);
 
             // Sync textarea height
             if (textareaRef.current) {
@@ -575,6 +678,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
         }
         setActiveHistoryIndex(idx);
         setCanvasUrl(entry.url);
+        setCanvasType(entry.mediaType || 'photo');
     };
 
     const resetToPrompt = () => {
@@ -603,7 +707,16 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                                 className={`relative group/thumb cursor-pointer rounded-xl overflow-hidden border-2 transition-all duration-300 aspect-square ${idx === activeHistoryIndex ? 'border-primary shadow-glow' : 'border-white/10 hover:border-white/30'}`}
                                 onClick={() => loadHistoryItem(entry, idx)}
                             >
-                                <img src={entry.url} alt={`Item ${idx + 1}`} className="w-full h-full object-cover" />
+                                {entry.mediaType === 'video' ? (
+                                    <video src={entry.url} muted playsInline className="w-full h-full object-cover pointer-events-none" />
+                                ) : (
+                                    <img src={entry.url} alt={`Item ${idx + 1}`} className="w-full h-full object-cover" />
+                                )}
+                                {entry.mediaType === 'video' && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
+                                        <span className="text-white text-xs">▶</span>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -614,7 +727,16 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
             {showCanvas && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-4 min-[800px]:p-16 z-10 transition-all duration-1000">
                     <div className="relative group">
-                        {canvasUrl && (
+                        {canvasUrl && canvasType === 'video' ? (
+                            <video
+                                key={canvasUrl}
+                                src={canvasUrl}
+                                controls
+                                autoPlay
+                                loop
+                                className="max-h-[60vh] max-w-[80vw] rounded-3xl shadow-3xl border border-white/10 interactive-glow object-contain"
+                            />
+                        ) : canvasUrl && (
                             <img
                                 ref={resultImgRef}
                                 key={canvasUrl}
@@ -675,6 +797,24 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                         <p className="text-secondary text-sm font-medium tracking-wide opacity-60 text-center px-4">
                             O que você filmaria com orçamento infinito?
                         </p>
+
+                        {/* Foto / Vídeo toggle */}
+                        <div className="mt-5 inline-flex bg-white/5 border border-white/10 rounded-full p-1 gap-1">
+                            <button
+                                type="button"
+                                onClick={() => setOutputMode('photo')}
+                                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${outputMode === 'photo' ? 'bg-primary text-black' : 'text-white/60 hover:text-white'}`}
+                            >
+                                📷 Foto
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setOutputMode('video')}
+                                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${outputMode === 'video' ? 'bg-primary text-black' : 'text-white/60 hover:text-white'}`}
+                            >
+                                🎬 Vídeo
+                            </button>
+                        </div>
                     </div>
 
                     {/* Prompt Bar */}
@@ -685,7 +825,9 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                             <div className="flex items-start gap-5 px-2">
                                 <textarea
                                     ref={textareaRef}
-                                    placeholder="Descreva sua cena - use @ para adicionar personagens e objetos"
+                                    placeholder={outputMode === 'video'
+                                        ? "Descreva a cena em movimento - use @ para adicionar personagens e objetos"
+                                        : "Descreva sua cena - use @ para adicionar personagens e objetos"}
                                     className="flex-1 bg-transparent border-none text-white text-base md:text-xl placeholder:text-muted focus:outline-none resize-none pt-2.5 leading-relaxed min-h-[40px] max-h-[150px] md:max-h-[250px] overflow-y-auto custom-scrollbar"
                                     rows={1}
                                     onInput={handleTextareaInput}
@@ -709,7 +851,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                                         </button>
                                         {openDropdown === 'ar' && (
                                             <Dropdown
-                                                items={ASPECT_RATIOS}
+                                                items={outputMode === 'video' ? videoAspectRatios : ASPECT_RATIOS}
                                                 selected={settings.aspect_ratio}
                                                 onSelect={(val) => setSettings(prev => ({ ...prev, aspect_ratio: val }))}
                                                 triggerRef={arBtnRef}
@@ -718,29 +860,102 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                                         )}
                                     </div>
 
-                                    {/* Resolution */}
-                                    <div className="relative">
-                                        <button
-                                            ref={resBtnRef}
-                                            type="button"
-                                            onClick={() => setOpenDropdown(d => d === 'res' ? null : 'res')}
-                                            className="flex items-center gap-1.5 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 bg-white/5 hover:bg-white/10 rounded-xl md:rounded-2xl transition-all border border-white/5 group whitespace-nowrap"
-                                        >
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="opacity-60 text-secondary"><path d="M6 2L3 6v15a2 2 0 002 2h14a2 2 0 002-2V6l-3-4H6z" /></svg>
-                                            <span className="text-xs font-bold text-white group-hover:text-primary transition-colors">{resolution}</span>
-                                        </button>
-                                        {openDropdown === 'res' && (
-                                            <Dropdown
-                                                items={RESOLUTIONS}
-                                                selected={resolution}
-                                                onSelect={setResolution}
-                                                triggerRef={resBtnRef}
-                                                onClose={() => setOpenDropdown(null)}
-                                            />
-                                        )}
-                                    </div>
+                                    {outputMode === 'photo' ? (
+                                        /* Resolution (photo) */
+                                        <div className="relative">
+                                            <button
+                                                ref={resBtnRef}
+                                                type="button"
+                                                onClick={() => setOpenDropdown(d => d === 'res' ? null : 'res')}
+                                                className="flex items-center gap-1.5 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 bg-white/5 hover:bg-white/10 rounded-xl md:rounded-2xl transition-all border border-white/5 group whitespace-nowrap"
+                                            >
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="opacity-60 text-secondary"><path d="M6 2L3 6v15a2 2 0 002 2h14a2 2 0 002-2V6l-3-4H6z" /></svg>
+                                                <span className="text-xs font-bold text-white group-hover:text-primary transition-colors">{resolution}</span>
+                                            </button>
+                                            {openDropdown === 'res' && (
+                                                <Dropdown
+                                                    items={RESOLUTIONS}
+                                                    selected={resolution}
+                                                    onSelect={setResolution}
+                                                    triggerRef={resBtnRef}
+                                                    onClose={() => setOpenDropdown(null)}
+                                                />
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {/* Video model */}
+                                            <div className="relative">
+                                                <button
+                                                    ref={vModelBtnRef}
+                                                    type="button"
+                                                    onClick={() => setOpenDropdown(d => d === 'vmodel' ? null : 'vmodel')}
+                                                    className="flex items-center gap-1.5 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 bg-white/5 hover:bg-white/10 rounded-xl md:rounded-2xl transition-all border border-white/5 group whitespace-nowrap max-w-[180px]"
+                                                >
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="opacity-60 text-secondary shrink-0"><path d="M23 7l-7 5 7 5V7z" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" /></svg>
+                                                    <span className="text-xs font-bold text-white group-hover:text-primary transition-colors truncate">{videoModelName}</span>
+                                                </button>
+                                                {openDropdown === 'vmodel' && (
+                                                    <Dropdown
+                                                        items={availableVideoModels.map(m => m.name)}
+                                                        selected={videoModelName}
+                                                        onSelect={setVideoModelName}
+                                                        triggerRef={vModelBtnRef}
+                                                        onClose={() => setOpenDropdown(null)}
+                                                    />
+                                                )}
+                                            </div>
 
-                                    {/* Camera / Lens summary (opens the dial overlay) */}
+                                            {/* Duration */}
+                                            {videoDurations.length > 1 && (
+                                                <div className="relative">
+                                                    <button
+                                                        ref={vDurBtnRef}
+                                                        type="button"
+                                                        onClick={() => setOpenDropdown(d => d === 'vdur' ? null : 'vdur')}
+                                                        className="flex items-center gap-1.5 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 bg-white/5 hover:bg-white/10 rounded-xl md:rounded-2xl transition-all border border-white/5 group whitespace-nowrap"
+                                                    >
+                                                        <span className="text-xs font-bold text-white group-hover:text-primary transition-colors">{videoDuration}s</span>
+                                                    </button>
+                                                    {openDropdown === 'vdur' && (
+                                                        <Dropdown
+                                                            items={videoDurations.map(String)}
+                                                            selected={String(videoDuration)}
+                                                            onSelect={(val) => setVideoDuration(parseInt(val, 10))}
+                                                            triggerRef={vDurBtnRef}
+                                                            onClose={() => setOpenDropdown(null)}
+                                                        />
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* Resolution / Quality */}
+                                            {videoQualityOptions.length > 0 && (
+                                                <div className="relative">
+                                                    <button
+                                                        ref={vQualBtnRef}
+                                                        type="button"
+                                                        onClick={() => setOpenDropdown(d => d === 'vqual' ? null : 'vqual')}
+                                                        className="flex items-center gap-1.5 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 bg-white/5 hover:bg-white/10 rounded-xl md:rounded-2xl transition-all border border-white/5 group whitespace-nowrap"
+                                                    >
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="opacity-60 text-secondary"><path d="M6 2L3 6v15a2 2 0 002 2h14a2 2 0 002-2V6l-3-4H6z" /></svg>
+                                                        <span className="text-xs font-bold text-white group-hover:text-primary transition-colors">{videoQuality}</span>
+                                                    </button>
+                                                    {openDropdown === 'vqual' && (
+                                                        <Dropdown
+                                                            items={videoQualityOptions}
+                                                            selected={videoQuality}
+                                                            onSelect={setVideoQuality}
+                                                            triggerRef={vQualBtnRef}
+                                                            onClose={() => setOpenDropdown(null)}
+                                                        />
+                                                    )}
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+
+                                    {/* Camera / Lens summary (opens the dial overlay) — applies to both modes */}
                                     <button
                                         type="button"
                                         onClick={() => setIsOverlayOpen(true)}
@@ -766,7 +981,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                                             'Gerar ✨'
                                         )}
                                     </button>
-                                    {isGenerating && <GeneratingHint generating={isGenerating} kind="image" />}
+                                    {isGenerating && <GeneratingHint generating={isGenerating} kind={outputMode === 'video' ? 'video' : 'image'} />}
                                 </div>
                             </div>
                         </div>

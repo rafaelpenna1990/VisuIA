@@ -14,6 +14,8 @@ import {
     getAspectRatiosForI2VModel,
     getDurationsForI2VModel,
     getResolutionsForI2VModel,
+    getAspectRatiosForV2VModel,
+    getResolutionsForV2VModel,
     getModesForModel,
 } from '../models.js';
 
@@ -91,12 +93,13 @@ function ModelDropdown({ imageMode, selectedModel, onSelect, onClose }) {
     const disabledModelIds = useDisabledModels();
 
     const generationModels = filterEnabled(imageMode ? i2vModels : t2vModels, disabledModelIds);
+    const currentV2VModels = filterEnabled(v2vModels, disabledModelIds);
 
     const lf = search.toLowerCase();
     const filteredMain = generationModels.filter(
         m => m.name.toLowerCase().includes(lf) || m.id.toLowerCase().includes(lf)
     );
-    const filteredV2V = v2vModels.filter(
+    const filteredV2V = currentV2VModels.filter(
         m => m.name.toLowerCase().includes(lf) || m.id.toLowerCase().includes(lf)
     );
 
@@ -120,7 +123,11 @@ function ModelDropdown({ imageMode, selectedModel, onSelect, onClose }) {
                 </div>
                 <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-bold text-white tracking-tight">{m.name}</span>
-                    {isV2V && <span className="text-[9px] text-orange-400/70">Envie um vídeo pra usar</span>}
+                    {isV2V && (
+                        <span className="text-[9px] text-orange-400/70">
+                            {m.hasPrompt ? 'Envie um vídeo e descreva a edição' : 'Envie um vídeo pra usar'}
+                        </span>
+                    )}
                 </div>
             </div>
             {selectedModel === m.id && <CheckSvg />}
@@ -261,16 +268,16 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
     }, [imageMode, v2vMode, disabledModelIds]);
 
     const getCurrentAspectRatios = useCallback((id) =>
-        imageMode ? getAspectRatiosForI2VModel(id) : getAspectRatiosForVideoModel(id),
-        [imageMode]);
+        v2vMode ? getAspectRatiosForV2VModel(id) : (imageMode ? getAspectRatiosForI2VModel(id) : getAspectRatiosForVideoModel(id)),
+        [imageMode, v2vMode]);
 
     const getCurrentDurations = useCallback((id) =>
-        imageMode ? getDurationsForI2VModel(id) : getDurationsForModel(id),
-        [imageMode]);
+        v2vMode ? [] : (imageMode ? getDurationsForI2VModel(id) : getDurationsForModel(id)),
+        [imageMode, v2vMode]);
 
     const getCurrentResolutions = useCallback((id) =>
-        imageMode ? getResolutionsForI2VModel(id) : getResolutionsForVideoModel(id),
-        [imageMode]);
+        v2vMode ? getResolutionsForV2VModel(id) : (imageMode ? getResolutionsForI2VModel(id) : getResolutionsForVideoModel(id)),
+        [imageMode, v2vMode]);
 
     const getCurrentModel = useCallback(() =>
         getCurrentModels().find(m => m.id === selectedModel),
@@ -279,8 +286,16 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
     // ── update controls when model/mode changes ──────────────────────────────
     const applyControlsForModel = useCallback((modelId, isImageMode, isV2vMode) => {
         if (isV2vMode) {
-            setShowAr(false); setShowDuration(false); setShowResolution(false);
-            setShowQuality(false); setShowMode(false); setShowEffectName(false);
+            setShowDuration(false); setShowQuality(false); setShowMode(false); setShowEffectName(false);
+
+            const model = v2vModels.find(m => m.id === modelId);
+
+            const ars = getAspectRatiosForV2VModel(modelId);
+            if (ars.length > 0) { setSelectedAr(model?.inputs?.aspect_ratio?.default || ars[0]); setShowAr(true); } else { setShowAr(false); }
+
+            const resolutions = getResolutionsForV2VModel(modelId);
+            if (resolutions.length > 0) { setSelectedResolution(model?.inputs?.resolution?.default || resolutions[0]); setShowResolution(true); } else { setShowResolution(false); }
+
             return;
         }
 
@@ -352,7 +367,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
         }
         setImageUploading(true);
         setImageProgress(0);
-        
+
         try {
             const url = await uploadFile(apiKey, file, (pct) => {
                 setImageProgress(pct);
@@ -415,12 +430,17 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                 setImageMode(false);
             }
             setV2vMode(true);
-            const firstV2V = v2vModels[0];
-            setSelectedModel(firstV2V.id);
-            setSelectedModelName(firstV2V.name);
-            applyControlsForModel(firstV2V.id, false, true);
+            // If a V2V tool was already selected (e.g. the person picked one
+            // of the prompt-driven editors from the model dropdown before
+            // uploading the video), keep it — only fall back to the first
+            // V2V tool (watermark remover) when nothing was picked yet.
+            const alreadyV2V = v2vModels.find(m => m.id === selectedModel);
+            const targetV2V = alreadyV2V || v2vModels[0];
+            setSelectedModel(targetV2V.id);
+            setSelectedModelName(targetV2V.name);
+            applyControlsForModel(targetV2V.id, false, true);
             setPrompt('');
-            setPromptDisabled(true);
+            setPromptDisabled(!targetV2V.hasPrompt);
         } catch (err) {
             console.error('[VideoStudio] Video upload failed:', err);
             alert(`Falha ao enviar o vídeo: ${err.message}`);
@@ -448,12 +468,14 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
             setV2vMode(true);
             setImageMode(false);
             setUploadedImageUrl(null);
-            setUploadedImagePreview(null);
             setSelectedModel(m.id);
             setSelectedModelName(m.name);
             applyControlsForModel(m.id, false, true);
             setPrompt('');
-            setPromptDisabled(true);
+            // Prompt-driven V2V tools (Runway Aleph, Wan 2.2 Edit Video,
+            // Seedance 2.5 Video Edit) need a description of the edit —
+            // only the no-prompt tools (watermark remover) keep it disabled.
+            setPromptDisabled(!m.hasPrompt);
         } else {
             if (v2vMode) {
                 setV2vMode(false);
@@ -489,6 +511,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
 
         if (v2vMode) {
             if (!uploadedVideoUrl) { alert('Envie um vídeo primeiro.'); return; }
+            if (currentModel?.hasPrompt && !trimmedPrompt) { alert('Descreva a edição que você quer aplicar no vídeo.'); return; }
         } else if (isExtendMode) {
             if (!lastGenerationId) { alert('Nenhuma geração do Seedance 2.0 encontrada pra continuar. Gere um vídeo primeiro.'); return; }
         } else if (imageMode) {
@@ -506,20 +529,30 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
             let res;
 
             if (v2vMode) {
-                // V2V: use generateVideo with video_url (the v2v models use the video endpoint)
-                res = await generateVideo(apiKey, {
-                    model: selectedModel,
-                    video_url: uploadedVideoUrl,
-                });
+                // V2V: video_url is always sent; prompt/aspect_ratio/resolution
+                // are only sent when this specific tool's own `inputs` say it
+                // accepts them (see models.js) — the watermark remover takes
+                // none of those, the edit tools take prompt (+ resolution or
+                // aspect_ratio depending on the model).
+                const v2vParams = { model: selectedModel, video_url: uploadedVideoUrl };
+                if (currentModel?.hasPrompt) v2vParams.prompt = trimmedPrompt;
+                if (getAspectRatiosForV2VModel(selectedModel).length > 0) v2vParams.aspect_ratio = selectedAr;
+                if (getResolutionsForV2VModel(selectedModel).length > 0) v2vParams.resolution = selectedResolution;
+
+                res = await generateVideo(apiKey, v2vParams);
                 if (!res?.url) throw new Error('A API não retornou a URL do vídeo');
 
                 const genId = res.id || Date.now().toString();
                 setLastGenerationId(null);
                 setLastGenerationModel(null);
-                const entry = { id: genId, url: res.url, prompt: '', model: selectedModel, timestamp: new Date().toISOString() };
+                const entry = {
+                    id: genId, url: res.url,
+                    prompt: currentModel?.hasPrompt ? trimmedPrompt : '',
+                    model: selectedModel, timestamp: new Date().toISOString(),
+                };
                 addToLocalHistory(entry);
                 showVideoInCanvas(res.url, selectedModel);
-                if (onGenerationComplete) onGenerationComplete({ url: res.url, model: selectedModel, prompt: '', type: 'video' });
+                if (onGenerationComplete) onGenerationComplete({ url: res.url, model: selectedModel, prompt: entry.prompt, type: 'video' });
 
             } else if (imageMode) {
                 const i2vParams = { model: selectedModel, image_url: uploadedImageUrl };
@@ -618,7 +651,6 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
         resetToPromptBar();
         setPrompt('');
         setUploadedImageUrl(null);
-        setUploadedImagePreview(null);
         setImageMode(false);
         setUploadedVideoUrl(null);
         setUploadedVideoName(null);
@@ -636,7 +668,6 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
         resetToPromptBar();
         setPrompt('');
         setUploadedImageUrl(null);
-        setUploadedImagePreview(null);
         setImageMode(false);
         setSelectedModel('seedance-v2.0-extend');
         setSelectedModelName('Seedance 2.0 Extend');
@@ -651,7 +682,9 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
     const isExtendMode = currentModelObj?.requiresRequestId;
 
     const promptPlaceholder = v2vMode
-        ? 'Vídeo pronto, clique em Gerar pra remover a marca d\u2019água'
+        ? (currentModelObj?.hasPrompt
+            ? 'Descreva a edição que você quer aplicar no vídeo (ex: troque o cenário para uma praia ao pôr do sol)'
+            : 'Vídeo pronto, clique em Gerar pra remover a marca d’água')
         : imageMode
             ? 'Descreva o movimento ou efeito (opcional)'
             : isExtendMode
@@ -819,7 +852,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                                 <span className="text-[8px] font-black text-primary">{imageProgress}%</span>
                                             </div>
                                         ) : null}
-                                        
+
                                         {uploadedImageUrl ? (
                                             <img src={uploadedImageUrl} alt="" className={`w-full h-full object-cover rounded-xl ${imageUploading ? 'opacity-40 blur-[2px]' : 'opacity-100'}`} />
                                         ) : !imageUploading && (
@@ -843,7 +876,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                     />
                                     <button
                                         type="button"
-                                        title={uploadedVideoUrl ? `${uploadedVideoName}, clique para remover` : 'Enviar vídeo para remover a marca d\u2019água'}
+                                        title={uploadedVideoUrl ? `${uploadedVideoName}, clique para remover` : 'Enviar vídeo para editar (remover marca d’água, trocar cenário, etc.)'}
                                         onClick={() => uploadedVideoUrl ? clearVideoUpload() : videoFileInputRef.current?.click()}
                                         className={`w-10 h-10 shrink-0 rounded-xl border transition-all flex items-center justify-center relative overflow-hidden ${uploadedVideoUrl ? 'border-primary/60 bg-white/5' : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-primary/40'} group`}
                                     >

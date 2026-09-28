@@ -39,6 +39,11 @@ export function buildI2IRequest(params) {
     return { endpoint, payload };
 }
 
+// Handles both T2V (no video_url) and V2V "edit an existing video" requests
+// (video_url present) — the Muapi endpoint for a V2V model (e.g.
+// runway-aleph-v2v, wan2.2-edit-video, seedance-2.5-video-edit, and the
+// watermark remover) is resolved via getVideoModelById, same as any other
+// video model, and just needs video_url forwarded into the payload.
 export function buildVideoRequest(params) {
     const modelInfo = getVideoModelById(params.model);
     const endpoint = modelInfo?.endpoint || params.model;
@@ -50,6 +55,7 @@ export function buildVideoRequest(params) {
     if (params.quality) payload.quality = params.quality;
     if (params.mode) payload.mode = params.mode;
     if (params.image_url) payload.image_url = params.image_url;
+    if (params.video_url) payload.video_url = params.video_url;
     return { endpoint, payload };
 }
 
