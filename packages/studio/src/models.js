@@ -4795,6 +4795,47 @@ export const i2iModels = [
 // Auto-generated from schema_data.json — Image to Video models
 export const i2vModels = [
   {
+    "id": "kling-v2.1-standard-i2v",
+    "name": "Kling v2.1 Standard I2V",
+    "endpoint": "kling-v2.1-standard-i2v",
+    "family": "kling-v2.1",
+    "imageField": "image_url",
+    "hasPrompt": true,
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "Text prompt describing the video.",
+        "examples": [
+          "A female explorer stands at the edge of a cliff overlooking a dense jungle, her hair and cape rustling gently in the wind as the dramatic sunset casts warm, golden hues across the sky and landscape, capturing a moment of awe and adventure."
+        ]
+      },
+      "aspect_ratio": {
+        "type": "string",
+        "title": "Aspect Ratio",
+        "name": "aspect_ratio",
+        "description": "Aspect ratio of the output video.",
+        "enum": [
+          "16:9",
+          "9:16",
+          "1:1"
+        ],
+        "default": "16:9"
+      },
+      "duration": {
+        "type": "int",
+        "title": "Duration",
+        "name": "duration",
+        "description": "The duration of the generated video in seconds",
+        "default": 5,
+        "minValue": 5,
+        "maxValue": 10,
+        "step": 5
+      }
+    }
+  },
+  {
     "id": "ai-video-effects",
     "name": "AI Video Effects",
     "endpoint": "generate_wan_ai_effects",
@@ -5448,47 +5489,6 @@ export const i2vModels = [
         "description": "Text prompt describing the video.",
         "examples": [
           "Animates wind effects, camera panning, and subtle movements like blinking or background motion, transforming the image into a compelling cinematic shot."
-        ]
-      },
-      "aspect_ratio": {
-        "type": "string",
-        "title": "Aspect Ratio",
-        "name": "aspect_ratio",
-        "description": "Aspect ratio of the output video.",
-        "enum": [
-          "16:9",
-          "9:16",
-          "1:1"
-        ],
-        "default": "16:9"
-      },
-      "duration": {
-        "type": "int",
-        "title": "Duration",
-        "name": "duration",
-        "description": "The duration of the generated video in seconds",
-        "default": 5,
-        "minValue": 5,
-        "maxValue": 10,
-        "step": 5
-      }
-    }
-  },
-  {
-    "id": "kling-v2.1-standard-i2v",
-    "name": "Kling v2.1 Standard I2V",
-    "endpoint": "kling-v2.1-standard-i2v",
-    "family": "kling-v2.1",
-    "imageField": "image_url",
-    "hasPrompt": true,
-    "inputs": {
-      "prompt": {
-        "type": "string",
-        "title": "Prompt",
-        "name": "prompt",
-        "description": "Text prompt describing the video.",
-        "examples": [
-          "A female explorer stands at the edge of a cliff overlooking a dense jungle, her hair and cape rustling gently in the wind as the dramatic sunset casts warm, golden hues across the sky and landscape, capturing a moment of awe and adventure."
         ]
       },
       "aspect_ratio": {
