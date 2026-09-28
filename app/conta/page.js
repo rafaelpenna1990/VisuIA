@@ -208,6 +208,9 @@ function ContaContent() {
               <p className="text-white/40 text-xs mb-1">Saldo</p>
               <p className="text-primary font-bold text-xl">{formatTokens(user.credits_balance)}</p>
             </div>
+
+            <ChangePasswordCard hasPassword={user.has_password} />
+
             <button
               onClick={handleLogout}
               className="w-full py-2.5 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm font-semibold transition-colors"
@@ -463,5 +466,123 @@ export default function ContaPage() {
     <Suspense fallback={null}>
       <ContaContent />
     </Suspense>
+  );
+}
+
+// Formulário de trocar senha, dentro da aba Perfil. Contas Google-only
+// (hasPassword === false) não têm "senha atual" pra conferir — nesse
+// caso o formulário já nasce definindo a primeira senha da conta.
+function ChangePasswordCard({ hasPassword }) {
+  const [open, setOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(false);
+
+    if (newPassword !== confirm) {
+      setError('As senhas novas não são iguais');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Algo deu errado');
+      setSuccess(true);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirm('');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="w-full mb-4 py-2.5 rounded-xl bg-card-bg border border-white/10 text-white/70 hover:text-white text-sm font-semibold transition-colors"
+      >
+        {hasPassword ? 'Alterar senha' : 'Criar uma senha'}
+      </button>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={submit}
+      className="bg-card-bg border border-white/10 rounded-2xl p-6 mb-4"
+    >
+      <p className="text-white text-sm font-semibold mb-4">
+        {hasPassword ? 'Alterar senha' : 'Criar uma senha'}
+      </p>
+
+      {hasPassword && (
+        <>
+          <label className="block text-white/60 text-xs mb-1">Senha atual</label>
+          <input
+            type="password"
+            required
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            className="w-full mb-3 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
+          />
+        </>
+      )}
+
+      <label className="block text-white/60 text-xs mb-1">Nova senha</label>
+      <input
+        type="password"
+        required
+        minLength={8}
+        value={newPassword}
+        onChange={(e) => setNewPassword(e.target.value)}
+        className="w-full mb-3 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
+      />
+
+      <label className="block text-white/60 text-xs mb-1">Confirmar nova senha</label>
+      <input
+        type="password"
+        required
+        minLength={8}
+        value={confirm}
+        onChange={(e) => setConfirm(e.target.value)}
+        className="w-full mb-3 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
+      />
+
+      {error && <p className="text-red-400 text-xs mb-3">{error}</p>}
+      {success && <p className="text-primary text-xs mb-3">Senha atualizada!</p>}
+
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={loading}
+          className="flex-1 py-2 rounded-lg bg-primary text-black font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          {loading ? 'Salvando…' : 'Salvar'}
+        </button>
+        <button
+          type="button"
+          onClick={() => { setOpen(false); setError(null); setSuccess(false); }}
+          className="px-4 py-2 rounded-lg text-white/40 hover:text-white text-sm transition-colors"
+        >
+          Cancelar
+        </button>
+      </div>
+    </form>
   );
 }
