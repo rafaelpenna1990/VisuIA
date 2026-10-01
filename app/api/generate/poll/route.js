@@ -5,11 +5,26 @@ import {
   settleGenerationSuccess,
   settleGenerationFailure,
   updateLastStatusRaw,
+  sweepStaleGenerations,
 } from '../../../../lib/db.js';
 import { actualChargeBRL } from '../../../../lib/pricing.js';
 import { checkGeneration } from '../../../../packages/studio/src/muapi.js';
 
 const MUAPI_KEY = process.env.MUAPI_API_KEY;
+
+// Opportunistic cleanup for jobs the BROWSER abandoned — tab closed, phone
+// locked, connection dropped — before it ever told the server why. Those
+// jobs used to sit in 'pending' (holding the user's credit) until someone
+// found them in the admin "Erros" panel and clicked "Corrigir" by hand.
+//
+// Piggybacking this on normal poll traffic (instead of standing up a
+// separate cron job) means it only ever runs while the site is actually
+// being used, and the throttle below keeps it to at most once every 5
+// minutes regardless of how many people are polling — a few-row SQLite
+// query is cheap, but there's no reason to run it on every single poll.
+let lastSweepAt = 0;
+const SWEEP_INTERVAL_MS = 5 * 60 * 1000;
+const STALE_AFTER_MINUTES = 30;
 
 // The client calls this every few seconds after /api/generate returns
 // { done: false, job_id }. Each call does at most ONE check against
@@ -18,6 +33,18 @@ export async function GET(request) {
   const user = await getSessionUser();
   if (!user) {
     return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+  }
+
+  // Wrapped so a problem here can NEVER break the actual poll response
+  // below — this is a best-effort cleanup, not part of the critical path.
+  if (Date.now() - lastSweepAt > SWEEP_INTERVAL_MS) {
+    lastSweepAt = Date.now();
+    try {
+      const n = sweepStaleGenerations(STALE_AFTER_MINUTES);
+      if (n > 0) console.log(`[poll] auto-settled ${n} stale pending generation(s) (>${STALE_AFTER_MINUTES}min, abandoned by client)`);
+    } catch (err) {
+      console.error('[poll] sweep failed (non-fatal):', err.message);
+    }
   }
 
   const jobId = Number(request.nextUrl.searchParams.get('job_id'));
@@ -32,7 +59,8 @@ export async function GET(request) {
 
   // Already settled (e.g. the browser polled again after finishing, or a
   // second tab is open) — just hand back the stored result, don't touch
-  // Muapi or the balance again.
+  // Muapi or the balance again. This also now covers the case where the
+  // sweep above just settled THIS job as failed a moment ago.
   if (job.status === 'completed') {
     return NextResponse.json({ done: true, url: job.output_url, charged_brl: job.cost_credits });
   }
@@ -70,7 +98,7 @@ export async function GET(request) {
     // Grava o último status bruto que a Muapi respondeu, a cada checagem —
     // é isso que dá pra settleGenerationFailure um motivo real pra usar se
     // esse job nunca settle sozinho e alguém tiver que resolvê-lo depois
-    // pelo botão "Corrigir" do admin.
+    // pelo botão "Corrigir" do admin (ou pela varredura automática acima).
     updateLastStatusRaw(job.id, result.raw || result.transientError || null);
 
     // TEMPORARY DEBUG: log roughly once every ~30s per job (not every 3s
