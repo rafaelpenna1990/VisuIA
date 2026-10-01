@@ -49,6 +49,22 @@ function buildShareUrl(mediaUrl, kind, promptText) {
   return `${origin}/share?${params.toString()}`;
 }
 
+// Reads an image's real pixel size in the browser (no CORS needed — just
+// naturalWidth/naturalHeight, not canvas pixel access). Used to head off
+// "ai-image-upscaler" calls Muapi will reject outright: that model errors
+// with IMAGE_DIMENSIONS_TOO_LARGE on any input over 2048px on either side
+// (confirmed from a live error, 2026-10-01) — common once an image has
+// already been upscaled once, or came from a model whose native output is
+// already close to that size.
+function getImageDimensions(url) {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    img.onerror = () => reject(new Error("Não foi possível carregar a imagem"));
+    img.src = url;
+  });
+}
+
 // ─── UploadButton (inline picker) ───────────────────────────────────────────
 
 function UploadButton({ apiKey, maxImages, onSelect, onClear }) {
@@ -801,6 +817,17 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
   const handleUpscale = async () => {
     if (!currentImageUrl || upscaling || generating) return;
     if (onAuthRequired) { onAuthRequired(); return; }
+
+    try {
+      const { width, height } = await getImageDimensions(currentImageUrl);
+      if (width > 2048 || height > 2048) {
+        setGenerateError("Essa imagem já é grande demais pra melhorar (limite do modelo é 2048px)");
+        setTimeout(() => setGenerateError(null), 4000);
+        return;
+      }
+    } catch {
+      // não deu pra medir (ex.: CORS) — segue e deixa a API decidir
+    }
 
     setUpscaling(true);
     setGenerateError(null);

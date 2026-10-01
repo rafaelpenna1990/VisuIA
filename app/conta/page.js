@@ -41,6 +41,22 @@ function buildShareUrl(mediaUrl, kind, promptText) {
   return `${origin}/share?${params.toString()}`;
 }
 
+// Lê o tamanho real da imagem no navegador (não precisa de CORS — só
+// naturalWidth/naturalHeight, não acessa pixels). Evita mandar pro
+// "ai-image-upscaler" uma imagem que o Muapi já recusa de cara: esse
+// modelo dá IMAGE_DIMENSIONS_TOO_LARGE pra qualquer lado acima de 2048px
+// (confirmado num erro real, 2026-10-01) — comum quando a imagem já foi
+// melhorada uma vez antes, ou veio de um modelo cujo tamanho nativo já é
+// grande.
+function getImageDimensions(url) {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    img.onerror = () => reject(new Error('Não foi possível carregar a imagem'));
+    img.src = url;
+  });
+}
+
 function ContaContent() {
   const router = useRouter();
   const promoText = usePromoText();
@@ -199,6 +215,17 @@ function ContaContent() {
   // vez de tentar montar a entrada na mão.
   const handleUpscaleProject = async (item) => {
     if (upscalingId) return;
+
+    try {
+      const { width, height } = await getImageDimensions(item.output_url);
+      if (width > 2048 || height > 2048) {
+        alert('Essa imagem já é grande demais para melhorar — o modelo de upscale aceita até 2048px de largura/altura, e essa imagem já passa disso.');
+        return;
+      }
+    } catch {
+      // não deu pra medir (ex.: CORS) — segue e deixa a API decidir
+    }
+
     setUpscalingId(item.id);
     try {
       await generateI2I(null, {
