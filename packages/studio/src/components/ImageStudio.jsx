@@ -1321,7 +1321,6 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
                   title={tpl.prompt}
                   className="flex flex-col items-start gap-1.5 p-3.5 bg-[#0F1119]/90 hover:bg-white/5 border border-white/10 hover:border-primary/40 rounded-2xl text-left transition-all group"
                 >
-                  <span className="text-xl">{tpl.icon}</span>
                   <span className="text-[9px] font-bold text-primary/70 uppercase tracking-widest">
                     {tpl.category}
                   </span>
