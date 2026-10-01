@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { generateImage, generateVideo } from '../api-client.js';
+import { generateImage, generateVideo, generateI2I } from '../api-client.js';
 import { useDisabledModels, filterEnabled } from '../hooks/useDisabledModels.js';
 import {
     t2vModels,
@@ -116,6 +116,30 @@ function getVideoQualityField(model) {
     if (model.inputs?.resolution) return 'resolution';
     if (model.inputs?.quality) return 'quality';
     return null;
+}
+
+// Builds a public /share link for a result — see app/share/page.js. No
+// backend call, no database row: the media URL is already public on
+// Muapi's CDN (the same URL already used directly in <img>/<video> tags), so
+// the link just carries it (+ type + a short prompt snippet) as query params.
+function buildShareUrl(mediaUrl, kind, promptText) {
+    const params = new URLSearchParams({ u: mediaUrl, t: kind });
+    if (promptText) params.set('p', promptText.slice(0, 200));
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    return `${origin}/share?${params.toString()}`;
+}
+
+// Loads a URL via an <img> element just to read its natural dimensions —
+// doesn't need CORS (unlike canvas pixel access), so it works on opaque
+// cross-origin images too. Used to block an upscale call client-side before
+// wasting a round-trip on Muapi's ai-image-upscaler 2048px limit.
+function getImageDimensions(url) {
+    return new Promise((resolve, reject) => {
+        const img = new window.Image();
+        img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+        img.onerror = () => reject(new Error('Não foi possível carregar a imagem'));
+        img.src = url;
+    });
 }
 
 // ─── Dropdown ────────────────────────────────────────────────────────────────
@@ -505,6 +529,10 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
     const [canvasType, setCanvasType] = useState('photo'); // 'photo' | 'video' — what canvasUrl actually is
     const [activeHistoryIndex, setActiveHistoryIndex] = useState(null);
 
+    // ── share / upscale ──
+    const [shareCopied, setShareCopied] = useState(false);
+    const [upscaling, setUpscaling] = useState(false);
+
     // ── Internal history state (used when historyItems prop is not provided) ──
     const [internalHistory, setInternalHistory] = useState([]);
 
@@ -651,6 +679,90 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
         }
     }, [canvasUrl, canvasType]);
 
+    // ── Share ──
+    const handleShare = async () => {
+        if (!canvasUrl) return;
+        const shareUrl = buildShareUrl(canvasUrl, canvasType === 'video' ? 'video' : 'image', settings.prompt);
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+        } catch {
+            window.prompt('Copie o link do compartilhamento:', shareUrl);
+            return;
+        }
+        setShareCopied(true);
+        setTimeout(() => setShareCopied(false), 2000);
+    };
+
+    // ── Upscale (Melhorar) — only applies to photo results; ai-image-upscaler
+    // is image-only, so this is never offered when canvasType === 'video' ──
+    const handleUpscale = async () => {
+        if (!canvasUrl || canvasType !== 'photo' || upscaling || isGenerating) return;
+        if (onAuthRequired) { onAuthRequired(); return; }
+
+        try {
+            const { width, height } = await getImageDimensions(canvasUrl);
+            if (width > 2048 || height > 2048) {
+                alert('Essa imagem já é grande demais pra melhorar — o modelo de upscale aceita até 2048px de largura/altura, e essa imagem já passa disso.');
+                return;
+            }
+        } catch {
+            // não deu pra medir (ex.: CORS) — segue e deixa a API decidir
+        }
+
+        setUpscaling(true);
+        try {
+            const res = await generateI2I(apiKey, {
+                model: 'ai-image-upscaler',
+                image_url: canvasUrl,
+                images_list: [canvasUrl],
+            });
+            if (!res?.url) throw new Error('A API não retornou a URL da imagem');
+
+            const entry = {
+                url: res.url,
+                timestamp: Date.now(),
+                mediaType: 'photo',
+                settings: {
+                    prompt: settings.prompt,
+                    camera: settings.camera,
+                    lens: settings.lens,
+                    focal: settings.focal,
+                    aperture: settings.aperture,
+                    aspect_ratio: settings.aspect_ratio,
+                    resolution,
+                    outputMode: 'photo',
+                }
+            };
+
+            if (historyItems == null) {
+                setInternalHistory(prev => [entry, ...prev].slice(0, 50));
+            }
+
+            setActiveHistoryIndex(0);
+            setCanvasUrl(res.url);
+            setCanvasType('photo');
+
+            if (onGenerationComplete) {
+                onGenerationComplete({
+                    url: res.url,
+                    model: 'ai-image-upscaler',
+                    prompt: settings.prompt,
+                    type: 'cinema',
+                    mediaType: 'photo'
+                });
+            }
+        } catch (e) {
+            console.error(e);
+            if (e.insufficientCredits && onInsufficientCredits) {
+                onInsufficientCredits();
+            } else {
+                alert('Falha ao melhorar: ' + e.message);
+            }
+        } finally {
+            setUpscaling(false);
+        }
+    };
+
     // ── Load history item ──
     const loadHistoryItem = (entry, idx) => {
         if (entry.settings) {
@@ -761,6 +873,23 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                         >
                             ↓ Baixar
                         </button>
+                        <button
+                            type="button"
+                            onClick={handleShare}
+                            className="bg-white/10 hover:bg-white/20 px-6 py-2.5 rounded-2xl text-xs font-bold transition-all border border-white/5 backdrop-blur-lg text-white"
+                        >
+                            {shareCopied ? '✓ Link copiado!' : '↗ Compartilhar'}
+                        </button>
+                        {canvasType === 'photo' && (
+                            <button
+                                type="button"
+                                onClick={handleUpscale}
+                                disabled={upscaling}
+                                className="bg-white/10 hover:bg-white/20 px-6 py-2.5 rounded-2xl text-xs font-bold transition-all border border-white/5 backdrop-blur-lg text-white disabled:opacity-60"
+                            >
+                                {upscaling ? <span className="animate-spin inline-block">◌</span> : '✨ Melhorar'}
+                            </button>
+                        )}
                         <button
                             type="button"
                             onClick={resetToPrompt}

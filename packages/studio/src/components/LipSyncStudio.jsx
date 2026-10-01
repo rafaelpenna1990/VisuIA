@@ -12,6 +12,17 @@ import {
     getResolutionsForLipSyncModel,
 } from '../models.js';
 
+// Builds a public /share link for a result — see app/share/page.js. No
+// backend call, no database row: the media URL is already public on
+// Muapi's CDN (the same URL already used directly in <video> tags), so the
+// link just carries it (+ type + a short prompt snippet) as query params.
+function buildShareUrl(mediaUrl, kind, promptText) {
+    const params = new URLSearchParams({ u: mediaUrl, t: kind });
+    if (promptText) params.set('p', promptText.slice(0, 200));
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    return `${origin}/share?${params.toString()}`;
+}
+
 // ---------------------------------------------------------------------------
 // Upload button states
 // ---------------------------------------------------------------------------
@@ -238,6 +249,9 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
     const [view, setView] = useState('input'); // 'input' | 'result'
     const [activeResultUrl, setActiveResultUrl] = useState(null);
 
+    // ── Share ───────────────────────────────────────────────────────────────
+    const [shareCopied, setShareCopied] = useState(false);
+
     // ── History ─────────────────────────────────────────────────────────────
     // If historyItems prop is provided, use it; otherwise use internal state.
     const [internalHistory, setInternalHistory] = useState([]);
@@ -380,6 +394,21 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
         } catch {
             window.open(url, '_blank');
         }
+    };
+
+    // ── Share ───────────────────────────────────────────────────────────────
+    const handleShare = async () => {
+        if (!activeResultUrl) return;
+        const entry = history.find((e) => e.url === activeResultUrl);
+        const shareUrl = buildShareUrl(activeResultUrl, 'video', entry?.prompt);
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+        } catch {
+            window.prompt('Copie o link do compartilhamento:', shareUrl);
+            return;
+        }
+        setShareCopied(true);
+        setTimeout(() => setShareCopied(false), 2000);
     };
 
     // ── Generation ──────────────────────────────────────────────────────────
@@ -569,10 +598,10 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
                                             </svg>
                                         }
                                         onUpload={handleImageUpload}
-                                        onClear={() => { 
-                                            setImageUrl(null); 
-                                            setImageState(UPLOAD_STATE.IDLE); 
-                                            setImageName(''); 
+                                        onClear={() => {
+                                            setImageUrl(null);
+                                            setImageState(UPLOAD_STATE.IDLE);
+                                            setImageName('');
                                         }}
                                         uploadState={imageState}
                                         progress={imageProgress}
@@ -590,10 +619,10 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
                                         label="Vídeo"
                                         icon={<VideoIcon />}
                                         onUpload={handleVideoPick}
-                                        onClear={() => { 
-                                            setVideoUrl(null); 
-                                            setVideoState(UPLOAD_STATE.IDLE); 
-                                            setVideoName(''); 
+                                        onClear={() => {
+                                            setVideoUrl(null);
+                                            setVideoState(UPLOAD_STATE.IDLE);
+                                            setVideoName('');
                                         }}
                                         uploadState={videoState}
                                         progress={videoProgress}
@@ -759,6 +788,13 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
                             className="bg-primary text-black px-6 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-glow active:scale-95"
                         >
                             ↓ Baixar
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleShare}
+                            className="bg-white/10 hover:bg-white/20 px-6 py-2.5 rounded-2xl text-xs font-bold transition-all border border-white/5 backdrop-blur-lg text-white"
+                        >
+                            {shareCopied ? '✓ Link copiado!' : '↗ Compartilhar'}
                         </button>
                         <button
                             type="button"
