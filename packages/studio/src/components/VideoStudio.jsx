@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { generateVideo, generateI2V, uploadFile } from '../api-client.js';
 import { useDisabledModels, filterEnabled } from '../hooks/useDisabledModels.js';
+import { useDialog } from '../hooks/useDialog.jsx';
 import GeneratingHint from './GeneratingHint.jsx';
 import {
     t2vModels,
@@ -230,6 +231,8 @@ function ControlBtn({ icon, label, onClick, style }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function VideoStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits }) {
+    const { alert, confirm, prompt: promptDialog, dialog } = useDialog();
+
     // ── mode state ──
     const [imageMode, setImageMode] = useState(false);   // i2v
     const [v2vMode, setV2vMode] = useState(false);
@@ -403,7 +406,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
         const file = e.target.files[0];
         if (!file) return;
         if (file.size > 10 * 1024 * 1024) {
-          alert("A imagem ultrapassa o limite de 10MB.");
+          await alert("A imagem ultrapassa o limite de 10MB.");
           return;
         }
         setImageUploading(true);
@@ -430,7 +433,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
             setPromptDisabled(false);
         } catch (err) {
             console.error('[VideoStudio] Image upload failed:', err);
-            alert(`Falha ao enviar a imagem: ${err.message}`);
+            await alert(`Falha ao enviar a imagem: ${err.message}`);
         } finally {
             setImageUploading(false);
             setImageProgress(0);
@@ -453,7 +456,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
         const file = e.target.files[0];
         if (!file) return;
         if (file.size > 50 * 1024 * 1024) {
-          alert("O vídeo ultrapassa o limite de 50MB.");
+          await alert("O vídeo ultrapassa o limite de 50MB.");
           return;
         }
         setVideoUploading(true);
@@ -490,7 +493,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
             setV2vIntent(targetV2V.hasPrompt ? 'edit' : 'watermark');
         } catch (err) {
             console.error('[VideoStudio] Video upload failed:', err);
-            alert(`Falha ao enviar o vídeo: ${err.message}`);
+            await alert(`Falha ao enviar o vídeo: ${err.message}`);
         } finally {
             setVideoUploading(false);
             setVideoProgress(0);
@@ -579,7 +582,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
         try {
             await navigator.clipboard.writeText(shareUrl);
         } catch {
-            window.prompt('Copie o link do compartilhamento:', shareUrl);
+            await promptDialog('Copie o link do compartilhamento:', shareUrl);
             return;
         }
         setShareCopied(true);
@@ -594,14 +597,14 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
         const trimmedPrompt = prompt.trim();
 
         if (v2vMode) {
-            if (!uploadedVideoUrl) { alert('Envie um vídeo primeiro.'); return; }
-            if (currentModel?.hasPrompt && !trimmedPrompt) { alert('Descreva a edição que você quer aplicar no vídeo.'); return; }
+            if (!uploadedVideoUrl) { await alert('Envie um vídeo primeiro.'); return; }
+            if (currentModel?.hasPrompt && !trimmedPrompt) { await alert('Descreva a edição que você quer aplicar no vídeo.'); return; }
         } else if (isExtendMode) {
-            if (!lastGenerationId) { alert('Nenhuma geração do Seedance 2.0 encontrada pra continuar. Gere um vídeo primeiro.'); return; }
+            if (!lastGenerationId) { await alert('Nenhuma geração do Seedance 2.0 encontrada pra continuar. Gere um vídeo primeiro.'); return; }
         } else if (imageMode) {
-            if (!uploadedImageUrl) { alert('Envie uma imagem inicial primeiro.'); return; }
+            if (!uploadedImageUrl) { await alert('Envie uma imagem inicial primeiro.'); return; }
         } else {
-            if (!trimmedPrompt) { alert('Digite um prompt para gerar um vídeo.'); return; }
+            if (!trimmedPrompt) { await alert('Digite um prompt para gerar um vídeo.'); return; }
         }
 
         setGenerating(true);
@@ -786,6 +789,8 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
             ref={containerRef}
             className="w-full h-full flex flex-col items-center justify-center bg-app-bg relative p-4 md:p-6 overflow-y-auto custom-scrollbar overflow-x-hidden"
         >
+            {dialog}
+
             {/* ── History Sidebar ── */}
             {history.length > 0 && (
                 <div className="fixed right-0 top-0 h-full w-20 md:w-24 bg-black/60 backdrop-blur-xl border-l border-white/5 z-50 flex flex-col items-center py-4 gap-3 overflow-y-auto transition-all duration-500">

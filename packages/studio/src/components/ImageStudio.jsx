@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { generateImage, generateI2I, uploadFile } from "../api-client.js";
 import { useDisabledModels, filterEnabled } from "../hooks/useDisabledModels.js";
+import { useDialog } from "../hooks/useDialog.jsx";
 import GeneratingHint from "./GeneratingHint.jsx";
 import { promptTemplates } from "../templates.js";
 import {
@@ -123,7 +124,7 @@ function UploadButton({ apiKey, maxImages, onSelect, onClear }) {
     const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
     const tooLarge = files.filter(f => f.size > MAX_IMAGE_SIZE);
     if (tooLarge.length > 0) {
-      alert(`The following images are too large (max 10MB): ${tooLarge.map(f => f.name).join(', ')}`);
+      await alert(`The following images are too large (max 10MB): ${tooLarge.map(f => f.name).join(', ')}`);
       return;
     }
 
@@ -176,7 +177,7 @@ function UploadButton({ apiKey, maxImages, onSelect, onClear }) {
         })
       );
     } catch (err) {
-      alert(`Image upload failed: ${err.message}`);
+      await alert(`Image upload failed: ${err.message}`);
     } finally {
       setUploading(false);
       setLastUploadProgress(0);
@@ -623,6 +624,8 @@ function SimpleDropdown({ title, options, selected, onSelect, onClose }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function ImageStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits }) {
+  const { alert, confirm, prompt: promptDialog, dialog } = useDialog();
+
   // ── Model / mode state ──────────────────────────────────────────────────
   const [imageMode, setImageMode] = useState(false); // false=t2i, true=i2i
   const [selectedModelId, setSelectedModelId] = useState(t2iModels[0].id);
@@ -805,7 +808,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
     try {
       await navigator.clipboard.writeText(shareUrl);
     } catch {
-      window.prompt("Copie o link do compartilhamento:", shareUrl);
+      await promptDialog("Copie o link do compartilhamento:", shareUrl);
       return;
     }
     setShareCopied(true);
@@ -879,12 +882,12 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
 
     if (imageMode) {
       if (uploadedImageUrls.length === 0) {
-        alert("Envie uma imagem de referência primeiro.");
+        await alert("Envie uma imagem de referência primeiro.");
         return;
       }
     } else {
       if (!prompt.trim()) {
-        alert("Digite um prompt para gerar uma imagem.");
+        await alert("Digite um prompt para gerar uma imagem.");
         return;
       }
     }
@@ -960,6 +963,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="w-full h-full flex flex-col items-center justify-center bg-app-bg relative p-4 md:p-6 overflow-y-auto custom-scrollbar overflow-x-hidden">
+      {dialog}
 
       {/* ── CANVAS VIEW ─────────────────────────────────────────────────── */}
       {showCanvas && (

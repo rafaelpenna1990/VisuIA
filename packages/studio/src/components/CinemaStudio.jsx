@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { generateImage, generateVideo, generateI2I } from '../api-client.js';
 import { useDisabledModels, filterEnabled } from '../hooks/useDisabledModels.js';
+import { useDialog } from '../hooks/useDialog.jsx';
 import {
     t2vModels,
     getAspectRatiosForVideoModel,
@@ -460,6 +461,7 @@ function CameraControlsOverlay({ isOpen, onClose, settings, onSettingsChange }) 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function CinemaStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits }) {
+    const { alert, confirm, prompt, dialog } = useDialog();
     const disabledModelIds = useDisabledModels();
     const availableVideoModels = useMemo(
         () => filterEnabled(t2vModels, disabledModelIds),
@@ -646,7 +648,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
             if (e.insufficientCredits && onInsufficientCredits) {
                 onInsufficientCredits();
             } else {
-                alert('Falha na geração: ' + e.message);
+                await alert('Falha na geração: ' + e.message);
             }
         } finally {
             setIsGenerating(false);
@@ -686,7 +688,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
         try {
             await navigator.clipboard.writeText(shareUrl);
         } catch {
-            window.prompt('Copie o link do compartilhamento:', shareUrl);
+            await prompt('Copie o link do compartilhamento:', shareUrl);
             return;
         }
         setShareCopied(true);
@@ -702,7 +704,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
         try {
             const { width, height } = await getImageDimensions(canvasUrl);
             if (width > 2048 || height > 2048) {
-                alert('Essa imagem já é grande demais pra melhorar — o modelo de upscale aceita até 2048px de largura/altura, e essa imagem já passa disso.');
+                await alert('Essa imagem já é grande demais pra melhorar — o modelo de upscale aceita até 2048px de largura/altura, e essa imagem já passa disso.');
                 return;
             }
         } catch {
@@ -756,7 +758,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
             if (e.insufficientCredits && onInsufficientCredits) {
                 onInsufficientCredits();
             } else {
-                alert('Falha ao melhorar: ' + e.message);
+                await alert('Falha ao melhorar: ' + e.message);
             }
         } finally {
             setUpscaling(false);
@@ -807,6 +809,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
 
     return (
         <div className="w-full h-full flex flex-col items-center justify-center bg-app-bg relative p-4 md:p-6 overflow-y-auto custom-scrollbar overflow-x-hidden">
+            {dialog}
 
             {/* ── History Sidebar ── */}
             {history.length > 0 && (

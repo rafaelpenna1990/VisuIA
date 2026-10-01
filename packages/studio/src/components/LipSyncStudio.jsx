@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { processLipSync, uploadFile } from '../api-client.js';
 import { useDisabledModels, filterEnabled } from '../hooks/useDisabledModels.js';
+import { useDialog } from '../hooks/useDialog.jsx';
 import GeneratingHint from './GeneratingHint.jsx';
 import {
     lipsyncModels,
@@ -210,6 +211,8 @@ const VideoIcon = ({ className = 'text-muted group-hover:text-primary transition
 // Main component
 // ---------------------------------------------------------------------------
 export default function LipSyncStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits }) {
+    const { alert, confirm, prompt: promptDialog, dialog } = useDialog();
+
     // ── Mode & model state ──────────────────────────────────────────────────
     const [inputMode, setInputMode] = useState('image'); // 'image' | 'video'
     const disabledModelIds = useDisabledModels();
@@ -284,7 +287,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
     // ── Upload handlers ─────────────────────────────────────────────────────
     const handleImageUpload = useCallback(async (file) => {
         if (file.size > 10 * 1024 * 1024) {
-            alert("A imagem ultrapassa o limite de 10MB.");
+            await alert("A imagem ultrapassa o limite de 10MB.");
             return;
         }
         setImageState(UPLOAD_STATE.UPLOADING);
@@ -298,7 +301,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
             setImageState(UPLOAD_STATE.READY);
         } catch (err) {
             setImageState(UPLOAD_STATE.IDLE);
-            alert(`Falha ao enviar a imagem: ${err.message}`);
+            await alert(`Falha ao enviar a imagem: ${err.message}`);
         } finally {
             setImageProgress(0);
         }
@@ -306,7 +309,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
 
     const handleVideoPick = useCallback(async (file) => {
         if (file.size > 50 * 1024 * 1024) {
-            alert("O vídeo ultrapassa o limite de 50MB.");
+            await alert("O vídeo ultrapassa o limite de 50MB.");
             return;
         }
         setVideoState(UPLOAD_STATE.UPLOADING);
@@ -320,7 +323,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
             setVideoState(UPLOAD_STATE.READY);
         } catch (err) {
             setVideoState(UPLOAD_STATE.IDLE);
-            alert(`Falha ao enviar o vídeo: ${err.message}`);
+            await alert(`Falha ao enviar o vídeo: ${err.message}`);
         } finally {
             setVideoProgress(0);
         }
@@ -328,7 +331,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
 
     const handleAudioPick = useCallback(async (file) => {
         if (file.size > 10 * 1024 * 1024) {
-            alert("O arquivo de áudio ultrapassa o limite de 10MB.");
+            await alert("O arquivo de áudio ultrapassa o limite de 10MB.");
             return;
         }
         setAudioState(UPLOAD_STATE.UPLOADING);
@@ -342,7 +345,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
             setAudioState(UPLOAD_STATE.READY);
         } catch (err) {
             setAudioState(UPLOAD_STATE.IDLE);
-            alert(`Falha ao enviar o áudio: ${err.message}`);
+            await alert(`Falha ao enviar o áudio: ${err.message}`);
         } finally {
             setAudioProgress(0);
         }
@@ -404,7 +407,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
         try {
             await navigator.clipboard.writeText(shareUrl);
         } catch {
-            window.prompt('Copie o link do compartilhamento:', shareUrl);
+            await promptDialog('Copie o link do compartilhamento:', shareUrl);
             return;
         }
         setShareCopied(true);
@@ -414,9 +417,9 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
     // ── Generation ──────────────────────────────────────────────────────────
     const handleGenerate = async () => {
         if (onAuthRequired) { onAuthRequired(); return; }
-        if (!audioUrl) { alert('Envie um arquivo de áudio primeiro.'); return; }
-        if (inputMode === 'image' && !imageUrl) { alert('Envie uma imagem de retrato primeiro.'); return; }
-        if (inputMode === 'video' && !videoUrl) { alert('Envie um vídeo de origem primeiro.'); return; }
+        if (!audioUrl) { await alert('Envie um arquivo de áudio primeiro.'); return; }
+        if (inputMode === 'image' && !imageUrl) { await alert('Envie uma imagem de retrato primeiro.'); return; }
+        if (inputMode === 'video' && !videoUrl) { await alert('Envie um vídeo de origem primeiro.'); return; }
 
         setIsGenerating(true);
         setGenerateError(null);
@@ -496,6 +499,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
     // ── Render ──────────────────────────────────────────────────────────────
     return (
         <div className="w-full h-full flex flex-col items-center justify-center bg-app-bg relative p-4 md:p-6 overflow-y-auto custom-scrollbar overflow-x-hidden">
+            {dialog}
 
             {/* ── History sidebar ── */}
             {hasHistory && (

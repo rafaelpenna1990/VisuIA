@@ -6,6 +6,7 @@ import { formatTokens } from '../../lib/tokens.js';
 import { usePromoText } from '../../lib/usePromoText.js';
 import TopUpModal from '../../components/TopUpModal';
 import { generateI2I } from '../../packages/studio/src/api-client.js';
+import { useDialog } from '../../packages/studio/src/hooks/useDialog.jsx';
 
 const TABS = [
   { id: 'perfil', label: 'Perfil' },
@@ -62,6 +63,13 @@ function ContaContent() {
   const promoText = usePromoText();
   const searchParams = useSearchParams();
   const initialTab = TABS.some((t) => t.id === searchParams.get('tab')) ? searchParams.get('tab') : 'perfil';
+
+  // Pop-ups com a cara da VisuIA, no lugar de alert/confirm/prompt nativos
+  // do navegador. alert/confirm/prompt abaixo são os locais (sombreiam os
+  // globais do window) — não precisa trocar window.alert(...)/confirm(...)
+  // por nome, só window.prompt(...) vira prompt(...) e todo call-site passa
+  // a usar await.
+  const { alert, confirm, prompt, dialog } = useDialog();
 
   const [tab, setTab] = useState(initialTab);
   const [user, setUser] = useState(null);
@@ -173,13 +181,13 @@ function ContaContent() {
       if (!res.ok) throw new Error(data.error || 'Não foi possível iniciar a assinatura');
       window.location.href = data.checkout_url;
     } catch (err) {
-      alert(err.message);
+      await alert(err.message);
       setSubscribing(null);
     }
   };
 
   const handleCancelSubscription = async () => {
-    if (!confirm('Cancelar sua assinatura? Você continua com acesso até o fim do período já pago.')) return;
+    if (!(await confirm('Cancelar sua assinatura? Você continua com acesso até o fim do período já pago.'))) return;
     setCanceling(true);
     try {
       const res = await fetch('/api/billing/cancel-subscription', { method: 'POST', credentials: 'include' });
@@ -187,26 +195,26 @@ function ContaContent() {
       if (!res.ok) throw new Error(data.error || 'Não foi possível cancelar');
       setSubscription((prev) => (prev ? { ...prev, status: 'canceling' } : prev));
     } catch (err) {
-      alert(err.message);
+      await alert(err.message);
     } finally {
       setCanceling(false);
     }
   };
 
   const handleEndTrial = async () => {
-    if (!confirm('Isso cobra seu cartão agora (em vez de esperar o fim dos 7 dias grátis) e libera o restante dos VisuTokens do plano na hora. Continuar?')) return;
+    if (!(await confirm('Isso cobra seu cartão agora (em vez de esperar o fim dos 7 dias grátis) e libera o restante dos VisuTokens do plano na hora. Continuar?'))) return;
     setEndingTrial(true);
     try {
       const res = await fetch('/api/billing/end-trial', { method: 'POST', credentials: 'include' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Não foi possível antecipar a cobrança');
-      alert('Cobrança feita! Seu saldo já foi atualizado.');
+      await alert('Cobrança feita! Seu saldo já foi atualizado.');
       setSubscription((prev) => (prev ? { ...prev, status: 'active' } : prev));
       fetch('/api/auth/me', { credentials: 'include' })
         .then((r) => r.json())
         .then((d) => setUser(d.user));
     } catch (err) {
-      alert(err.message);
+      await alert(err.message);
     } finally {
       setEndingTrial(false);
     }
@@ -229,7 +237,7 @@ function ContaContent() {
     try {
       await navigator.clipboard.writeText(shareUrl);
     } catch {
-      window.prompt('Copie o link do compartilhamento:', shareUrl);
+      await prompt('Copie o link do compartilhamento:', shareUrl);
       return;
     }
     setSharedId(item.id);
@@ -246,7 +254,7 @@ function ContaContent() {
     try {
       const { width, height } = await getImageDimensions(item.output_url);
       if (width > 2048 || height > 2048) {
-        alert('Essa imagem já é grande demais para melhorar — o modelo de upscale aceita até 2048px de largura/altura, e essa imagem já passa disso.');
+        await alert('Essa imagem já é grande demais para melhorar — o modelo de upscale aceita até 2048px de largura/altura, e essa imagem já passa disso.');
         return;
       }
     } catch {
@@ -264,7 +272,7 @@ function ContaContent() {
       const data = await res.json();
       if (!data.error) setProjects(data.generations);
     } catch (err) {
-      alert(err.insufficientCredits ? 'Você não tem VisuTokens suficientes para melhorar essa imagem.' : err.message);
+      await alert(err.insufficientCredits ? 'Você não tem VisuTokens suficientes para melhorar essa imagem.' : err.message);
     } finally {
       setUpscalingId(null);
     }
@@ -273,7 +281,7 @@ function ContaContent() {
   // Cria uma nova coleção (pede o nome com um prompt simples). Devolve a
   // coleção criada, ou null se a pessoa cancelou/deixou em branco.
   const handleCreateCollection = async () => {
-    const name = window.prompt('Nome da nova coleção:');
+    const name = await prompt('Nome da nova coleção:');
     if (!name || !name.trim()) return null;
     try {
       const res = await fetch('/api/collections', {
@@ -287,13 +295,13 @@ function ContaContent() {
       setCollections((prev) => [...(prev || []), data.collection]);
       return data.collection;
     } catch (err) {
-      alert(err.message);
+      await alert(err.message);
       return null;
     }
   };
 
   const handleRenameCollection = async (collection) => {
-    const name = window.prompt('Novo nome da coleção:', collection.name);
+    const name = await prompt('Novo nome da coleção:', collection.name);
     if (!name || !name.trim() || name.trim() === collection.name) return;
     try {
       const res = await fetch(`/api/collections/${collection.id}`, {
@@ -306,14 +314,14 @@ function ContaContent() {
       if (!res.ok) throw new Error(data.error || 'Não foi possível renomear');
       setCollections((prev) => prev.map((c) => (c.id === collection.id ? { ...c, name: name.trim() } : c)));
     } catch (err) {
-      alert(err.message);
+      await alert(err.message);
     }
   };
 
   // Exclui a coleção — as gerações que estavam nela não são excluídas, só
   // ficam sem coleção.
   const handleDeleteCollection = async (collection) => {
-    if (!confirm(`Excluir a coleção "${collection.name}"? As gerações dentro dela não são excluídas, só ficam sem coleção.`)) return;
+    if (!(await confirm(`Excluir a coleção "${collection.name}"? As gerações dentro dela não são excluídas, só ficam sem coleção.`))) return;
     try {
       const res = await fetch(`/api/collections/${collection.id}`, { method: 'DELETE', credentials: 'include' });
       const data = await res.json();
@@ -322,7 +330,7 @@ function ContaContent() {
       setProjects((prev) => (prev ? prev.map((p) => (p.collection_id === collection.id ? { ...p, collection_id: null } : p)) : prev));
       setCollectionFilter((prev) => (prev === collection.id ? 'all' : prev));
     } catch (err) {
-      alert(err.message);
+      await alert(err.message);
     }
   };
 
@@ -347,7 +355,7 @@ function ContaContent() {
         return c;
       }));
     } catch (err) {
-      alert(err.message);
+      await alert(err.message);
     }
   };
 
@@ -366,6 +374,7 @@ function ContaContent() {
 
   return (
     <div className="min-h-screen bg-app-bg px-4 sm:px-6 py-8">
+      {dialog}
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
