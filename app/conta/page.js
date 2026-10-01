@@ -79,6 +79,11 @@ function ContaContent() {
   const [sharedId, setSharedId] = useState(null);
   const [upscalingId, setUpscalingId] = useState(null);
 
+  // Coleções (pastas manuais pra organizar os projetos salvos).
+  const [collections, setCollections] = useState(null); // null = ainda não carregou
+  const [collectionFilter, setCollectionFilter] = useState('all'); // 'all' | 'none' | <id>
+  const [moveMenuId, setMoveMenuId] = useState(null); // id do projeto com o menu "mover" aberto
+
   // OpenAI/ChatGPT Ads conversion — fires once, right when the person
   // lands back here after a successful Stripe checkout for a subscription.
   useEffect(() => {
@@ -108,6 +113,28 @@ function ContaContent() {
       })
       .catch((err) => setProjectsError(err.message));
   }, [tab, projects]);
+
+  useEffect(() => {
+    if (tab !== 'projetos' || collections) return;
+    fetch('/api/collections', { credentials: 'include' })
+      .then((res) => res.json())
+      .then((data) => setCollections(data.collections || []))
+      .catch(() => setCollections([]));
+  }, [tab, collections]);
+
+  // Fecha o menu "mover pra coleção" ao clicar fora dele — mesmo padrão
+  // usado nos dropdowns dos Estúdios (VideoStudio/CinemaStudio): o listener
+  // só é ligado no próximo tick, pra o próprio clique que abriu o menu não
+  // fechar ele na hora.
+  useEffect(() => {
+    if (!moveMenuId) return;
+    const handler = () => setMoveMenuId(null);
+    const timer = setTimeout(() => window.addEventListener('click', handler), 0);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('click', handler);
+    };
+  }, [moveMenuId]);
 
   useEffect(() => {
     if (tab !== 'historico' || transactions) return;
@@ -243,10 +270,98 @@ function ContaContent() {
     }
   };
 
+  // Cria uma nova coleção (pede o nome com um prompt simples). Devolve a
+  // coleção criada, ou null se a pessoa cancelou/deixou em branco.
+  const handleCreateCollection = async () => {
+    const name = window.prompt('Nome da nova coleção:');
+    if (!name || !name.trim()) return null;
+    try {
+      const res = await fetch('/api/collections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name: name.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Não foi possível criar a coleção');
+      setCollections((prev) => [...(prev || []), data.collection]);
+      return data.collection;
+    } catch (err) {
+      alert(err.message);
+      return null;
+    }
+  };
+
+  const handleRenameCollection = async (collection) => {
+    const name = window.prompt('Novo nome da coleção:', collection.name);
+    if (!name || !name.trim() || name.trim() === collection.name) return;
+    try {
+      const res = await fetch(`/api/collections/${collection.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name: name.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Não foi possível renomear');
+      setCollections((prev) => prev.map((c) => (c.id === collection.id ? { ...c, name: name.trim() } : c)));
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  // Exclui a coleção — as gerações que estavam nela não são excluídas, só
+  // ficam sem coleção.
+  const handleDeleteCollection = async (collection) => {
+    if (!confirm(`Excluir a coleção "${collection.name}"? As gerações dentro dela não são excluídas, só ficam sem coleção.`)) return;
+    try {
+      const res = await fetch(`/api/collections/${collection.id}`, { method: 'DELETE', credentials: 'include' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Não foi possível excluir');
+      setCollections((prev) => prev.filter((c) => c.id !== collection.id));
+      setProjects((prev) => (prev ? prev.map((p) => (p.collection_id === collection.id ? { ...p, collection_id: null } : p)) : prev));
+      setCollectionFilter((prev) => (prev === collection.id ? 'all' : prev));
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  // Move um projeto pra dentro de uma coleção (ou de volta pra "sem
+  // coleção" quando collectionId é null).
+  const handleMoveToCollection = async (item, collectionId) => {
+    setMoveMenuId(null);
+    try {
+      const res = await fetch(`/api/generations/${item.id}/move`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ collection_id: collectionId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Não foi possível mover');
+      const previousCollectionId = item.collection_id;
+      setProjects((prev) => prev.map((p) => (p.id === item.id ? { ...p, collection_id: collectionId } : p)));
+      setCollections((prev) => prev.map((c) => {
+        if (c.id === collectionId) return { ...c, count: c.count + 1 };
+        if (c.id === previousCollectionId) return { ...c, count: Math.max(0, c.count - 1) };
+        return c;
+      }));
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleMoveToNewCollection = async (item) => {
+    const collection = await handleCreateCollection();
+    if (collection) await handleMoveToCollection(item, collection.id);
+  };
+
   const filteredProjects = projects?.filter((item) => {
-    if (projectFilter === 'all') return true;
-    if (projectFilter === 'image') return !isVideoKind(item.kind);
-    return isVideoKind(item.kind);
+    const typeMatch = projectFilter === 'all' ? true : projectFilter === 'image' ? !isVideoKind(item.kind) : isVideoKind(item.kind);
+    if (!typeMatch) return false;
+    if (collectionFilter === 'all') return true;
+    if (collectionFilter === 'none') return !item.collection_id;
+    return item.collection_id === collectionFilter;
   });
 
   return (
@@ -304,6 +419,66 @@ function ContaContent() {
         {/* Projetos */}
         {tab === 'projetos' && (
           <div>
+            {/* Coleções (pastas manuais) */}
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
+              <button
+                onClick={() => setCollectionFilter('all')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  collectionFilter === 'all'
+                    ? 'bg-primary text-black'
+                    : 'bg-card-bg text-white/60 hover:text-white border border-white/10'
+                }`}
+              >
+                📁 Todas
+              </button>
+              <button
+                onClick={() => setCollectionFilter('none')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  collectionFilter === 'none'
+                    ? 'bg-primary text-black'
+                    : 'bg-card-bg text-white/60 hover:text-white border border-white/10'
+                }`}
+              >
+                Sem coleção
+              </button>
+              {(collections || []).map((c) => (
+                <div key={c.id} className="group/pill relative">
+                  <button
+                    onClick={() => setCollectionFilter(c.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                      collectionFilter === c.id
+                        ? 'bg-primary text-black'
+                        : 'bg-card-bg text-white/60 hover:text-white border border-white/10'
+                    }`}
+                  >
+                    {c.name} <span className="opacity-60">({c.count})</span>
+                  </button>
+                  <div className="absolute -top-1.5 -right-1.5 hidden group-hover/pill:flex gap-0.5">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleRenameCollection(c); }}
+                      className="w-4 h-4 rounded-full bg-black/80 text-white/70 hover:text-white text-[9px] flex items-center justify-center"
+                      title="Renomear"
+                    >
+                      ✎
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteCollection(c); }}
+                      className="w-4 h-4 rounded-full bg-black/80 text-red-400 hover:text-red-300 text-[9px] flex items-center justify-center"
+                      title="Excluir"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <button
+                onClick={() => handleCreateCollection()}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-card-bg text-white/40 hover:text-white border border-dashed border-white/10 transition-colors"
+              >
+                + Nova coleção
+              </button>
+            </div>
+
             <div className="flex items-center gap-2 mb-6">
               {[
                 { id: 'all', label: 'Todos' },
@@ -405,6 +580,49 @@ function ContaContent() {
                           </button>
                         )}
 
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setMoveMenuId((prev) => (prev === item.id ? null : item.id)); }}
+                            className="w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-primary hover:text-black transition-colors"
+                            title="Mover para coleção"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+                            </svg>
+                          </button>
+                          {moveMenuId === item.id && (
+                            <div
+                              onClick={(e) => e.stopPropagation()}
+                              className="absolute top-9 right-0 z-20 bg-[#17181f] border border-white/10 rounded-xl py-1.5 min-w-[160px] shadow-2xl"
+                            >
+                              <button
+                                onClick={() => handleMoveToCollection(item, null)}
+                                className={`w-full text-left px-3 py-2 text-xs font-semibold hover:bg-white/10 transition-colors ${!item.collection_id ? 'text-primary' : 'text-white'}`}
+                              >
+                                Sem coleção
+                              </button>
+                              {(collections || []).map((c) => (
+                                <button
+                                  key={c.id}
+                                  onClick={() => handleMoveToCollection(item, c.id)}
+                                  className={`w-full text-left px-3 py-2 text-xs font-semibold hover:bg-white/10 transition-colors truncate ${item.collection_id === c.id ? 'text-primary' : 'text-white'}`}
+                                >
+                                  {c.name}
+                                </button>
+                              ))}
+                              <div className="border-t border-white/5 mt-1 pt-1">
+                                <button
+                                  onClick={() => handleMoveToNewCollection(item)}
+                                  className="w-full text-left px-3 py-2 text-xs font-semibold text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                                >
+                                  + Nova coleção
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
                         <a
                           href={item.output_url}
                           download
@@ -425,6 +643,11 @@ function ContaContent() {
                       </span>
                       <p className="text-white/40 text-[11px] truncate">{item.model}</p>
                       <p className="text-white/30 text-[10px] mt-1">{formatDate(item.created_at)}</p>
+                      {item.collection_id && collections && (
+                        <p className="text-white/30 text-[10px] mt-0.5 truncate">
+                          📁 {collections.find((c) => c.id === item.collection_id)?.name || ''}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))}
