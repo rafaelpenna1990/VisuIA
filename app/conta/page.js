@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { formatTokens } from '../../lib/tokens.js';
 import { usePromoText } from '../../lib/usePromoText.js';
 import TopUpModal from '../../components/TopUpModal';
+import { generateI2I } from '../../packages/studio/src/api-client.js';
 
 const TABS = [
   { id: 'perfil', label: 'Perfil' },
@@ -29,6 +30,17 @@ function formatDate(iso) {
   return new Date(iso + 'Z').toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 }
 
+// Builds a public /share link for a result — mesma lógica do ImageStudio.jsx
+// (ver app/share/page.js). Sem chamada de backend, sem linha de banco: a
+// URL da mídia já é pública no CDN do Muapi, então o link só carrega ela
+// (+ tipo + um trecho curto do prompt, se tiver) como query params.
+function buildShareUrl(mediaUrl, kind, promptText) {
+  const params = new URLSearchParams({ u: mediaUrl, t: kind });
+  if (promptText) params.set('p', promptText.slice(0, 200));
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  return `${origin}/share?${params.toString()}`;
+}
+
 function ContaContent() {
   const router = useRouter();
   const promoText = usePromoText();
@@ -45,6 +57,11 @@ function ContaContent() {
   const [plans, setPlans] = useState([]);
   const [subscribing, setSubscribing] = useState(null);
   const [showTopUp, setShowTopUp] = useState(false);
+
+  // Compartilhar / Melhorar na galeria de projetos — mesmo par de ações que
+  // já existe na tela de resultado do Estúdio, agora também disponível aqui.
+  const [sharedId, setSharedId] = useState(null);
+  const [upscalingId, setUpscalingId] = useState(null);
 
   // OpenAI/ChatGPT Ads conversion — fires once, right when the person
   // lands back here after a successful Stripe checkout for a subscription.
@@ -160,6 +177,43 @@ function ContaContent() {
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
     router.push('/studio');
+  };
+
+  // Compartilhar um item da galeria — copia o link público pra área de
+  // transferência, sem chamar API nem cobrar nada.
+  const handleShareProject = async (item) => {
+    const shareUrl = buildShareUrl(item.output_url, isVideoKind(item.kind) ? 'video' : 'image', item.prompt);
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+    } catch {
+      window.prompt('Copie o link do compartilhamento:', shareUrl);
+      return;
+    }
+    setSharedId(item.id);
+    setTimeout(() => setSharedId((prev) => (prev === item.id ? null : prev)), 2000);
+  };
+
+  // Melhorar um item da galeria — reusa o mesmo pipeline generateI2I do
+  // Estúdio (cobra 1 geração extra, mesma regra de sempre). O resultado
+  // entra como uma geração nova no banco, então recarregamos a lista em
+  // vez de tentar montar a entrada na mão.
+  const handleUpscaleProject = async (item) => {
+    if (upscalingId) return;
+    setUpscalingId(item.id);
+    try {
+      await generateI2I(null, {
+        model: 'ai-image-upscaler',
+        image_url: item.output_url,
+        images_list: [item.output_url],
+      });
+      const res = await fetch('/api/generations', { credentials: 'include' });
+      const data = await res.json();
+      if (!data.error) setProjects(data.generations);
+    } catch (err) {
+      alert(err.insufficientCredits ? 'Você não tem VisuTokens suficientes para melhorar essa imagem.' : err.message);
+    } finally {
+      setUpscalingId(null);
+    }
   };
 
   const filteredProjects = projects?.filter((item) => {
@@ -283,18 +337,60 @@ function ContaContent() {
                       ) : (
                         <img src={item.output_url} alt={item.model} className="w-full h-full object-cover" />
                       )}
-                      <a
-                        href={item.output_url}
-                        download
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="absolute top-2 right-2 w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white hover:bg-primary hover:text-black"
-                        title="Baixar"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
-                        </svg>
-                      </a>
+
+                      <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          type="button"
+                          onClick={() => handleShareProject(item)}
+                          className="w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-primary hover:text-black transition-colors"
+                          title={sharedId === item.id ? 'Link copiado!' : 'Compartilhar'}
+                        >
+                          {sharedId === item.id ? (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <path d="M20 6L9 17l-5-5" />
+                            </svg>
+                          ) : (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <circle cx="18" cy="5" r="3" />
+                              <circle cx="6" cy="12" r="3" />
+                              <circle cx="18" cy="19" r="3" />
+                              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                            </svg>
+                          )}
+                        </button>
+
+                        {!isVideoKind(item.kind) && (
+                          <button
+                            type="button"
+                            onClick={() => handleUpscaleProject(item)}
+                            disabled={upscalingId !== null}
+                            className="w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-primary hover:text-black transition-colors disabled:opacity-50"
+                            title="Melhorar (cobra 1 geração extra)"
+                          >
+                            {upscalingId === item.id ? (
+                              <span className="animate-spin text-[11px] leading-none">◌</span>
+                            ) : (
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <path d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5L12 2z" />
+                              </svg>
+                            )}
+                          </button>
+                        )}
+
+                        <a
+                          href={item.output_url}
+                          download
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-primary hover:text-black transition-colors"
+                          title="Baixar"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                          </svg>
+                        </a>
+                      </div>
                     </div>
                     <div className="p-3">
                       <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
