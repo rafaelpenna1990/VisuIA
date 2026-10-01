@@ -628,6 +628,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState(null);
   const [shareCopied, setShareCopied] = useState(false);
+  const [upscaling, setUpscaling] = useState(false);
 
   // ── Canvas / history state ──────────────────────────────────────────────
   const [currentImageUrl, setCurrentImageUrl] = useState(null);
@@ -774,6 +775,52 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
     }
     setShareCopied(true);
     setTimeout(() => setShareCopied(false), 2000);
+  };
+
+  // ── Upscale ──────────────────────────────────────────────────────────────
+  // Reuses the exact same generateI2I pipeline as a normal i2i generation
+  // (same billing, same estimate/true-up charge) — "ai-image-upscaler" is
+  // already a regular model in i2iModels, so this is just a one-click
+  // shortcut that pre-fills it with the current result instead of making
+  // the person re-upload it and pick the model by hand. hasPrompt is false
+  // for this model, so no prompt is sent.
+  const handleUpscale = async () => {
+    if (!currentImageUrl || upscaling || generating) return;
+    if (onAuthRequired) { onAuthRequired(); return; }
+
+    setUpscaling(true);
+    setGenerateError(null);
+    try {
+      const res = await generateI2I(apiKey, {
+        model: "ai-image-upscaler",
+        image_url: currentImageUrl,
+        images_list: [currentImageUrl],
+      });
+      if (res && res.url) {
+        const entry = {
+          id: res.id || Date.now().toString(),
+          url: res.url,
+          prompt: history[activeHistoryIdx]?.prompt || "",
+          model: "ai-image-upscaler",
+          aspect_ratio: selectedAr,
+          timestamp: new Date().toISOString(),
+        };
+        addToHistory(entry);
+        onGenerationComplete?.({ url: res.url, model: "ai-image-upscaler", prompt: "", type: "image" });
+      } else {
+        throw new Error("A API não retornou a URL da imagem melhorada");
+      }
+    } catch (e) {
+      console.error("[ImageStudio] Upscale failed:", e);
+      if (e.insufficientCredits && onInsufficientCredits) {
+        onInsufficientCredits();
+      } else {
+        setGenerateError(e.message.slice(0, 80));
+        setTimeout(() => setGenerateError(null), 4000);
+      }
+    } finally {
+      setUpscaling(false);
+    }
   };
 
   // ── Generation ───────────────────────────────────────────────────────────
@@ -935,6 +982,22 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
               className="bg-white/10 hover:bg-white/20 px-6 py-2.5 rounded-2xl text-xs font-bold transition-all border border-white/5 backdrop-blur-lg text-white disabled:opacity-50"
             >
               ↻ Gerar de novo
+            </button>
+            <button
+              type="button"
+              onClick={handleUpscale}
+              disabled={upscaling || generating}
+              title="Melhora a resolução e nitidez do resultado atual (cobra 1 geração extra)"
+              className="bg-white/10 hover:bg-white/20 px-6 py-2.5 rounded-2xl text-xs font-bold transition-all border border-white/5 backdrop-blur-lg text-white disabled:opacity-50"
+            >
+              {upscaling ? (
+                <>
+                  <span className="animate-spin inline-block mr-1.5">◌</span>
+                  Melhorando...
+                </>
+              ) : (
+                "✨ Melhorar"
+              )}
             </button>
             <button
               type="button"
