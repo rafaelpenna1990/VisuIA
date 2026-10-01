@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { generateImage, generateI2I, uploadFile } from "../api-client.js";
 import { useDisabledModels, filterEnabled } from "../hooks/useDisabledModels.js";
 import GeneratingHint from "./GeneratingHint.jsx";
+import { promptTemplates } from "../templates.js";
 import {
   t2iModels,
   i2iModels,
@@ -732,6 +733,19 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
     if (imageMode) setMaxImages(getMaxImagesForI2IModel(m.id));
   };
 
+  // ── Templates ────────────────────────────────────────────────────────────
+  // Fase 1 of the template gallery from the roadmap: clicking a card just
+  // fills the prompt (and the suggested aspect ratio, only if the current
+  // model actually offers it) — no API call, no credit charge, nothing
+  // touching generation or billing.
+  const handleTemplateSelect = (tpl) => {
+    setPrompt(tpl.prompt);
+    if (tpl.aspectRatio && currentAspectRatios.includes(tpl.aspectRatio)) {
+      setSelectedAr(tpl.aspectRatio);
+    }
+    textareaRef.current?.focus();
+  };
+
   // ── History helpers ──────────────────────────────────────────────────────
   const addToHistory = useCallback(
     (entry) => {
@@ -1286,6 +1300,36 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
                   {generating && <GeneratingHint generating={generating} kind="image" />}
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Template gallery — Fase 1 (roadmap item #3): a fixed grid of
+              ready-made prompts grouped by category. Clicking one only
+              fills the prompt + suggested aspect ratio, nothing else. */}
+          <div className="w-full max-w-4xl mt-8 md:mt-10 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
+            <div className="flex items-center justify-between px-2 mb-3">
+              <span className="text-xs font-bold text-secondary uppercase tracking-widest opacity-70">
+                Comece com um template
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 md:gap-3">
+              {promptTemplates.map((tpl) => (
+                <button
+                  key={tpl.id}
+                  type="button"
+                  onClick={() => handleTemplateSelect(tpl)}
+                  title={tpl.prompt}
+                  className="flex flex-col items-start gap-1.5 p-3.5 bg-[#0F1119]/90 hover:bg-white/5 border border-white/10 hover:border-primary/40 rounded-2xl text-left transition-all group"
+                >
+                  <span className="text-xl">{tpl.icon}</span>
+                  <span className="text-[9px] font-bold text-primary/70 uppercase tracking-widest">
+                    {tpl.category}
+                  </span>
+                  <span className="text-xs font-bold text-white group-hover:text-primary transition-colors leading-snug">
+                    {tpl.title}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
         </>
