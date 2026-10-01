@@ -1,16 +1,32 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { generateImage, generateVideo, generateI2I } from '../api-client.js';
+import { generateImage, generateVideo, generateI2I, generateI2V } from '../api-client.js';
 import { useDisabledModels, filterEnabled } from '../hooks/useDisabledModels.js';
 import { useDialog } from '../hooks/useDialog.jsx';
 import {
     t2vModels,
+    i2iModels,
+    i2vModels,
     getAspectRatiosForVideoModel,
     getDurationsForModel,
     getResolutionsForVideoModel,
 } from '../models.js';
 import GeneratingHint from './GeneratingHint.jsx';
+
+// ─── Personagem consistente ─────────────────────────────────────────────────
+// Modelos da Muapi que mantêm o rosto/identidade de uma pessoa numa cena
+// nova (1 foto de referência + prompt) — mesmo mecanismo já usado em
+// ImageStudio/VideoStudio, só reaproveitando os fluxos de I2I/I2V que já
+// existem aqui (handleUpscale já usa generateI2I, por exemplo).
+const CHARACTER_IMAGE_MODEL_ID = 'minimax-image-01-subject-reference';
+const CHARACTER_VIDEO_MODEL_ID = 'vidu-q2-reference';
+// Proporções que cada modelo de personagem realmente aceita — a lista de
+// proporções da Cinema Studio (ASPECT_RATIOS, abaixo) tem opções (21:9, 4:5)
+// que esses modelos específicos não suportam, então caímos pra '1:1' se a
+// escolhida não estiver na lista.
+const CHARACTER_IMAGE_SUPPORTED_ARS = ['16:9', '9:16', '1:1', '4:3', '3:4', '3:2', '2:3', '21:9'];
+const CHARACTER_VIDEO_SUPPORTED_ARS = ['16:9', '9:16', '4:3', '3:4', '1:1'];
 
 // ─── Constants (inlined from promptUtils) ───────────────────────────────────
 
@@ -487,6 +503,19 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
     const [videoDuration, setVideoDuration] = useState(5);
     const [videoQuality, setVideoQuality] = useState('');
 
+    // ── Personagens (fotos de referência salvas) ──
+    const [characters, setCharacters] = useState([]);
+    const [selectedCharacterId, setSelectedCharacterId] = useState(null);
+
+    useEffect(() => {
+        fetch('/api/characters', { credentials: 'include' })
+            .then(r => (r.ok ? r.json() : { characters: [] }))
+            .then(data => setCharacters(data.characters || []))
+            .catch(() => {});
+    }, []);
+
+    const selectedCharacter = characters.find(c => c.id === selectedCharacterId) || null;
+
     const selectedVideoModel = useMemo(
         () => availableVideoModels.find(m => m.name === videoModelName)
             || availableVideoModels[0]
@@ -539,12 +568,31 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
     const [internalHistory, setInternalHistory] = useState([]);
 
     // ── Dropdown state ──
-    const [openDropdown, setOpenDropdown] = useState(null); // 'ar' | 'res' | 'vmodel' | 'vdur' | 'vqual' | null
+    const [openDropdown, setOpenDropdown] = useState(null); // 'ar' | 'res' | 'vmodel' | 'vdur' | 'vqual' | 'personagem' | null
     const arBtnRef = useRef(null);
     const resBtnRef = useRef(null);
     const vModelBtnRef = useRef(null);
     const vDurBtnRef = useRef(null);
     const vQualBtnRef = useRef(null);
+    const personagemBtnRef = useRef(null);
+    const personagemMenuRef = useRef(null);
+
+    useEffect(() => {
+        if (openDropdown !== 'personagem') return;
+        const handler = (e) => {
+            if (
+                personagemMenuRef.current && !personagemMenuRef.current.contains(e.target) &&
+                personagemBtnRef.current && !personagemBtnRef.current.contains(e.target)
+            ) {
+                setOpenDropdown(null);
+            }
+        };
+        const timer = setTimeout(() => document.addEventListener('click', handler), 0);
+        return () => {
+            clearTimeout(timer);
+            document.removeEventListener('click', handler);
+        };
+    }, [openDropdown]);
 
     // ── Textarea auto-grow ──
     const textareaRef = useRef(null);
@@ -564,6 +612,66 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
         setSettings(prev => ({ ...prev, prompt: el.value }));
     };
 
+    // ── Personagens ──
+    // Escolher um personagem apenas marca ele como ativo — handleGenerate
+    // (abaixo) é quem decide, na hora de gerar, trocar pro modelo de
+    // referência certo (foto ou vídeo, conforme outputMode) e usar essa
+    // foto como entrada. Câmera/lente/proporção continuam normais.
+    const handleSelectCharacter = useCallback((character) => {
+        setSelectedCharacterId(character.id);
+        setOpenDropdown(null);
+    }, []);
+
+    const handleClearCharacter = useCallback(() => {
+        setSelectedCharacterId(null);
+        setOpenDropdown(null);
+    }, []);
+
+    // Salva o resultado atual (foto) como um personagem com nome — assim o
+    // rosto gerado agora pode ser reaproveitado em cenas futuras.
+    const handleSaveCurrentAsCharacter = useCallback(async () => {
+        if (!canvasUrl || canvasType !== 'photo') {
+            await alert('Gere ou abra uma foto antes de salvar como personagem.');
+            return;
+        }
+        const name = await prompt('Nome do personagem:');
+        if (!name) return;
+        try {
+            const res = await fetch('/api/characters', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ name, reference_image_url: canvasUrl }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || 'Falha ao salvar personagem');
+            setCharacters(prev => [...prev, data.character]);
+            setSelectedCharacterId(data.character.id);
+            setOpenDropdown(null);
+        } catch (err) {
+            await alert(`Falha ao salvar personagem: ${err.message}`);
+        }
+    }, [canvasUrl, canvasType, prompt, alert]);
+
+    const handleDeleteCharacter = useCallback(async (character) => {
+        const ok = await confirm(`Excluir o personagem "${character.name}"?`);
+        if (!ok) return;
+        try {
+            const res = await fetch(`/api/characters/${character.id}`, {
+                method: 'DELETE',
+                credentials: 'include',
+            });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || 'Falha ao excluir personagem');
+            }
+            setCharacters(prev => prev.filter(c => c.id !== character.id));
+            if (selectedCharacterId === character.id) setSelectedCharacterId(null);
+        } catch (err) {
+            await alert(`Falha ao excluir personagem: ${err.message}`);
+        }
+    }, [confirm, alert, selectedCharacterId]);
+
     // ── Generate ──
     const handleGenerate = useCallback(async () => {
         if (onAuthRequired) { onAuthRequired(); return; }
@@ -581,17 +689,60 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
             outputMode
         );
 
+        // Personagem ativo: troca pro modelo de referência da Muapi certo
+        // (mantém o rosto da foto salva) em vez do modelo normal de
+        // foto/vídeo — câmera/lente/proporção continuam vindo do prompt e
+        // dos controles de sempre, só a chamada de geração muda. Checa o
+        // kill-switch do admin antes — mesma regra que os outros modelos.
+        if (selectedCharacter) {
+            const pool = outputMode === 'video' ? i2vModels : i2iModels;
+            const wantedId = outputMode === 'video' ? CHARACTER_VIDEO_MODEL_ID : CHARACTER_IMAGE_MODEL_ID;
+            const stillEnabled = filterEnabled(pool, disabledModelIds).some(m => m.id === wantedId);
+            if (!stillEnabled) {
+                await alert('O modelo de personagem consistente está desativado agora. Tente de novo mais tarde ou sem personagem.');
+                setIsGenerating(false);
+                return;
+            }
+        }
+
+        const activeModelId = selectedCharacter
+            ? (outputMode === 'video' ? CHARACTER_VIDEO_MODEL_ID : CHARACTER_IMAGE_MODEL_ID)
+            : (outputMode === 'video' ? selectedVideoModel.id : 'nano-banana-pro');
+
         try {
             let res;
             if (outputMode === 'video') {
-                const videoParams = {
-                    model: selectedVideoModel.id,
+                if (selectedCharacter) {
+                    const safeAr = CHARACTER_VIDEO_SUPPORTED_ARS.includes(settings.aspect_ratio)
+                        ? settings.aspect_ratio
+                        : '1:1';
+                    res = await generateI2V(apiKey, {
+                        model: CHARACTER_VIDEO_MODEL_ID,
+                        prompt: finalPrompt,
+                        image_url: selectedCharacter.reference_image_url,
+                        aspect_ratio: safeAr,
+                        duration: Math.min(8, Math.max(2, videoDuration || 5)),
+                    });
+                } else {
+                    const videoParams = {
+                        model: selectedVideoModel.id,
+                        prompt: finalPrompt,
+                        aspect_ratio: settings.aspect_ratio,
+                    };
+                    if (videoDurations.length) videoParams.duration = videoDuration;
+                    if (videoQualityField && videoQuality) videoParams[videoQualityField] = videoQuality;
+                    res = await generateVideo(apiKey, videoParams);
+                }
+            } else if (selectedCharacter) {
+                const safeAr = CHARACTER_IMAGE_SUPPORTED_ARS.includes(settings.aspect_ratio)
+                    ? settings.aspect_ratio
+                    : '1:1';
+                res = await generateI2I(apiKey, {
+                    model: CHARACTER_IMAGE_MODEL_ID,
                     prompt: finalPrompt,
-                    aspect_ratio: settings.aspect_ratio,
-                };
-                if (videoDurations.length) videoParams.duration = videoDuration;
-                if (videoQualityField && videoQuality) videoParams[videoQualityField] = videoQuality;
-                res = await generateVideo(apiKey, videoParams);
+                    image_url: selectedCharacter.reference_image_url,
+                    aspect_ratio: safeAr,
+                });
             } else {
                 res = await generateImage(apiKey, {
                     model: 'nano-banana-pro',
@@ -634,7 +785,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                 if (onGenerationComplete) {
                     onGenerationComplete({
                         url: res.url,
-                        model: outputMode === 'video' ? selectedVideoModel.id : 'nano-banana-pro',
+                        model: activeModelId,
                         prompt: basePrompt,
                         type: 'cinema',
                         mediaType: outputMode
@@ -653,7 +804,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
         } finally {
             setIsGenerating(false);
         }
-    }, [settings, resolution, apiKey, isGenerating, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits, outputMode, selectedVideoModel, videoModelName, videoDuration, videoDurations, videoQuality, videoQualityField]);
+    }, [settings, resolution, apiKey, isGenerating, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits, outputMode, selectedVideoModel, videoModelName, videoDuration, videoDurations, videoQuality, videoQualityField, selectedCharacter, disabledModelIds]);
 
     // ── Regenerate ──
     const handleRegenerate = useCallback(() => {
@@ -1086,6 +1237,62 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                                             )}
                                         </>
                                     )}
+
+                                    {/* Personagem — mantém o rosto de uma foto salva na cena nova;
+                                        substitui o modelo normal de foto/vídeo quando ativo. */}
+                                    <div className="relative">
+                                        <button
+                                            ref={personagemBtnRef}
+                                            type="button"
+                                            onClick={() => setOpenDropdown(d => d === 'personagem' ? null : 'personagem')}
+                                            className="flex items-center gap-1.5 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 bg-white/5 hover:bg-white/10 rounded-xl md:rounded-2xl transition-all border border-white/5 group whitespace-nowrap"
+                                        >
+                                            <span className="text-sm">👤</span>
+                                            <span className="text-xs font-bold text-white group-hover:text-primary transition-colors">
+                                                {selectedCharacter?.name || 'Personagem'}
+                                            </span>
+                                        </button>
+                                        {openDropdown === 'personagem' && (
+                                            <div
+                                                ref={personagemMenuRef}
+                                                className="custom-dropdown absolute bottom-[calc(100%+8px)] left-0 bg-[#0F1119] border border-white/10 rounded-xl p-3 shadow-2xl z-50 flex flex-col w-64 max-w-[280px] max-h-80 overflow-y-auto animate-fade-in"
+                                            >
+                                                <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-1 pb-2 border-b border-white/5 mb-2">Meus personagens</div>
+                                                {selectedCharacter && (
+                                                    <button type="button" onClick={handleClearCharacter} className="text-left text-xs font-bold text-white/60 hover:text-white px-2 py-1.5 rounded-xl hover:bg-white/5 mb-1">
+                                                        × Não usar personagem
+                                                    </button>
+                                                )}
+                                                {characters.length === 0 && (
+                                                    <div className="text-xs text-secondary px-2 py-2">Nenhum personagem salvo ainda.</div>
+                                                )}
+                                                <div className="flex flex-col gap-1">
+                                                    {characters.map(c => (
+                                                        <div key={c.id} className="flex items-center gap-2 p-2 rounded-xl hover:bg-white/5 group/char">
+                                                            <button type="button" onClick={() => handleSelectCharacter(c)} className="flex items-center gap-2 flex-1 text-left min-w-0">
+                                                                <img src={c.reference_image_url} alt={c.name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+                                                                <span className={`text-xs font-bold truncate ${c.id === selectedCharacterId ? 'text-primary' : 'text-white opacity-80'}`}>{c.name}</span>
+                                                            </button>
+                                                            <button type="button" onClick={() => handleDeleteCharacter(c)} className="opacity-0 group-hover/char:opacity-100 text-muted hover:text-red-400 text-sm px-1 transition-opacity" title="Excluir personagem">×</button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="border-t border-white/5 mt-2 pt-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleSaveCurrentAsCharacter}
+                                                        disabled={!canvasUrl || canvasType !== 'photo'}
+                                                        className="w-full text-left text-xs font-bold text-primary px-2 py-2 rounded-xl hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                                                    >
+                                                        + Salvar resultado atual como personagem
+                                                    </button>
+                                                    {(!canvasUrl || canvasType !== 'photo') && (
+                                                        <div className="text-[11px] text-muted px-2 pb-1">Gere uma foto primeiro pra poder salvar.</div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
 
                                     {/* Camera / Lens summary (opens the dial overlay) — applies to both modes */}
                                     <button

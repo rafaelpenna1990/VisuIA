@@ -20,6 +20,12 @@ import {
     getModesForModel,
 } from '../models.js';
 
+// Modelo da Muapi que gera um vídeo novo mantendo o rosto/identidade de uma
+// pessoa (1 foto de referência + prompt descrevendo a cena) — já funciona
+// pelo mesmo fluxo de I2V que os outros modelos usam (image_url + prompt),
+// só precisa estar selecionado quando um "Personagem" salvo é escolhido.
+const CHARACTER_VIDEO_MODEL_ID = 'vidu-q2-reference';
+
 // ── tiny helpers ──────────────────────────────────────────────────────────────
 
 function getQualitiesForModel(modelList, modelId) {
@@ -272,6 +278,17 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
     const [videoUploading, setVideoUploading] = useState(false);
     const [uploadedVideoName, setUploadedVideoName] = useState(null);
 
+    // ── personagens (fotos de referência salvas) ──
+    const [characters, setCharacters] = useState([]);
+    const [selectedCharacterId, setSelectedCharacterId] = useState(null);
+
+    useEffect(() => {
+        fetch('/api/characters', { credentials: 'include' })
+            .then(r => (r.ok ? r.json() : { characters: [] }))
+            .then(data => setCharacters(data.characters || []))
+            .catch(() => {});
+    }, []);
+
     // ── generation / canvas ──
     const [generating, setGenerating] = useState(false);
     const [generateError, setGenerateError] = useState(null);
@@ -417,6 +434,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                 setImageProgress(pct);
             });
             setUploadedImageUrl(url);
+            setSelectedCharacterId(null);
 
             // Clear v2v if active
             setUploadedVideoUrl(null);
@@ -443,6 +461,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
 
     const clearImageUpload = () => {
         setUploadedImageUrl(null);
+        setSelectedCharacterId(null);
         setImageMode(false);
         const first = (filterEnabled(t2vModels, disabledModelIds)[0] || t2vModels[0]);
         setSelectedModel(first.id);
@@ -473,6 +492,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                 setUploadedImageUrl(null);
                 setImageMode(false);
             }
+            setSelectedCharacterId(null);
             setV2vMode(true);
             // If a V2V tool was already selected (e.g. the person picked one
             // of the prompt-driven editors from the model dropdown before
@@ -535,6 +555,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
 
     // ── model selection from dropdown ─────────────────────────────────────────
     const handleModelSelect = useCallback((m, isV2V) => {
+        setSelectedCharacterId(null);
         if (isV2V) {
             setV2vMode(true);
             setImageMode(false);
@@ -560,6 +581,77 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
             applyControlsForModel(m.id, imageMode, false);
         }
     }, [v2vMode, imageMode, applyControlsForModel]);
+
+    // ── Personagens ──────────────────────────────────────────────────────────
+    // Escolher um personagem salvo: usa a foto de referência dele como se
+    // fosse um upload normal de imagem (i2v), e troca pro modelo de
+    // "reference" da Muapi (mantém o rosto, o prompt só descreve a cena nova).
+    const handleSelectCharacter = useCallback((character) => {
+        const availableI2V = filterEnabled(i2vModels, disabledModelIds);
+        const charModel = availableI2V.find(m => m.id === CHARACTER_VIDEO_MODEL_ID) || availableI2V[0];
+        if (!charModel) {
+            alert('Nenhum modelo de personagem consistente disponível agora.');
+            return;
+        }
+        if (v2vMode) {
+            setV2vMode(false);
+            setUploadedVideoUrl(null);
+            setUploadedVideoName(null);
+            setPromptDisabled(false);
+        }
+        setUploadedImageUrl(character.reference_image_url);
+        setImageMode(true);
+        setSelectedModel(charModel.id);
+        setSelectedModelName(charModel.name);
+        applyControlsForModel(charModel.id, true, false);
+        setSelectedCharacterId(character.id);
+        setOpenDropdown(null);
+    }, [disabledModelIds, v2vMode, applyControlsForModel]);
+
+    // Salva a foto de referência já enviada (modo imagem, i2v) como um
+    // personagem com nome, pra não precisar reenviar a mesma foto depois.
+    const handleSaveCurrentAsCharacter = useCallback(async () => {
+        if (!uploadedImageUrl) {
+            await alert('Envie 1 foto de referência (só o rosto/pessoa) antes de salvar como personagem.');
+            return;
+        }
+        const name = await promptDialog('Nome do personagem:');
+        if (!name) return;
+        try {
+            const res = await fetch('/api/characters', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ name, reference_image_url: uploadedImageUrl }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || 'Falha ao salvar personagem');
+            setCharacters(prev => [...prev, data.character]);
+            setSelectedCharacterId(data.character.id);
+            setOpenDropdown(null);
+        } catch (err) {
+            await alert(`Falha ao salvar personagem: ${err.message}`);
+        }
+    }, [uploadedImageUrl, promptDialog, alert]);
+
+    const handleDeleteCharacter = useCallback(async (character) => {
+        const ok = await confirm(`Excluir o personagem "${character.name}"?`);
+        if (!ok) return;
+        try {
+            const res = await fetch(`/api/characters/${character.id}`, {
+                method: 'DELETE',
+                credentials: 'include',
+            });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || 'Falha ao excluir personagem');
+            }
+            setCharacters(prev => prev.filter(c => c.id !== character.id));
+            if (selectedCharacterId === character.id) setSelectedCharacterId(null);
+        } catch (err) {
+            await alert(`Falha ao excluir personagem: ${err.message}`);
+        }
+    }, [confirm, alert, selectedCharacterId]);
 
     // ── add to local history ──────────────────────────────────────────────────
     const addToLocalHistory = useCallback((entry) => {
@@ -1196,6 +1288,49 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                             )}
                                         </div>
                                     )}
+
+                                    {/* Personagem btn — reaproveita uma foto de referência salva
+                                        (mantém o rosto) ou salva a foto enviada agora como novo
+                                        personagem. */}
+                                    <div className="relative">
+                                        <ControlBtn
+                                            icon={<span className="text-sm">👤</span>}
+                                            label={characters.find(c => c.id === selectedCharacterId)?.name || 'Personagem'}
+                                            onClick={toggleDropdown('personagem')}
+                                        />
+                                        {openDropdown === 'personagem' && (
+                                            <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0F1119] rounded-3xl p-3 border border-white/10 flex flex-col w-64 max-w-[280px] max-h-80 overflow-y-auto">
+                                                <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-3 py-2 border-b border-white/5 mb-2">Meus personagens</div>
+                                                {characters.length === 0 && (
+                                                    <div className="text-xs text-secondary px-3 py-2">Nenhum personagem salvo ainda.</div>
+                                                )}
+                                                <div className="flex flex-col gap-1">
+                                                    {characters.map(c => (
+                                                        <div key={c.id} className="flex items-center gap-2 p-2 rounded-2xl hover:bg-white/5 group/char">
+                                                            <button type="button" onClick={() => handleSelectCharacter(c)} className="flex items-center gap-2 flex-1 text-left min-w-0">
+                                                                <img src={c.reference_image_url} alt={c.name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+                                                                <span className={`text-xs font-bold truncate ${c.id === selectedCharacterId ? 'text-primary' : 'text-white opacity-80'}`}>{c.name}</span>
+                                                            </button>
+                                                            <button type="button" onClick={() => handleDeleteCharacter(c)} className="opacity-0 group-hover/char:opacity-100 text-muted hover:text-red-400 text-sm px-1 transition-opacity" title="Excluir personagem">×</button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="border-t border-white/5 mt-2 pt-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleSaveCurrentAsCharacter}
+                                                        disabled={!uploadedImageUrl}
+                                                        className="w-full text-left text-xs font-bold text-primary px-3 py-2 rounded-2xl hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                                                    >
+                                                        + Salvar foto enviada como personagem
+                                                    </button>
+                                                    {!uploadedImageUrl && (
+                                                        <div className="text-[11px] text-muted px-3 pb-1">Envie 1 foto de referência pra poder salvar.</div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Generate button */}
