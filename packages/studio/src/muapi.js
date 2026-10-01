@@ -26,7 +26,13 @@ export function buildI2IRequest(params) {
     const modelInfo = getI2IModelById(params.model);
     const endpoint = modelInfo?.endpoint || params.model;
     const payload = {};
-    if (params.prompt) payload.prompt = params.prompt;
+    // params.prompt !== undefined (not a truthy check) — same fix already
+    // applied in buildI2VRequest below: some I2I models (e.g. nano-banana-edit)
+    // require this key present even as an empty string, and a plain
+    // `if (params.prompt)` silently drops '' from the payload, which Muapi
+    // then rejects as "prompt: Field required" — a 422 that never even
+    // reaches generation. Confirmed from live error logs (2026-10-01).
+    if (params.prompt !== undefined) payload.prompt = params.prompt;
     const imageField = modelInfo?.imageField || 'image_url';
     const imagesList = params.images_list?.length > 0 ? params.images_list : (params.image_url ? [params.image_url] : null);
     if (imagesList) {
@@ -48,7 +54,10 @@ export function buildVideoRequest(params) {
     const modelInfo = getVideoModelById(params.model);
     const endpoint = modelInfo?.endpoint || params.model;
     const payload = {};
-    if (params.prompt) payload.prompt = params.prompt;
+    // Same fix as buildI2IRequest/buildI2VRequest above — don't silently
+    // drop an explicit empty-string prompt, some video models require the
+    // key present.
+    if (params.prompt !== undefined) payload.prompt = params.prompt;
     if (params.aspect_ratio) payload.aspect_ratio = params.aspect_ratio;
     if (params.duration) payload.duration = params.duration;
     if (params.resolution) payload.resolution = params.resolution;
@@ -90,7 +99,9 @@ export function buildLipSyncRequest(params) {
     if (params.audio_url) payload.audio_url = params.audio_url;
     if (params.image_url) payload.image_url = params.image_url;
     if (params.video_url) payload.video_url = params.video_url;
-    if (params.prompt) payload.prompt = params.prompt;
+    // Same fix as the builders above — don't silently drop an explicit
+    // empty-string prompt.
+    if (params.prompt !== undefined) payload.prompt = params.prompt;
     if (params.resolution) payload.resolution = params.resolution;
     if (params.seed !== undefined && params.seed !== -1) payload.seed = params.seed;
     return { endpoint, payload };
