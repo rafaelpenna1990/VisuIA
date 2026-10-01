@@ -37,6 +37,17 @@ async function downloadImage(url, filename) {
   }
 }
 
+// Builds a public /share link for a result — see app/share/page.js. No
+// backend call, no database row: the media URL is already public on
+// Muapi's CDN (the same URL already used directly in <img> tags), so the
+// link just carries it (+ type + a short prompt snippet) as query params.
+function buildShareUrl(mediaUrl, kind, promptText) {
+  const params = new URLSearchParams({ u: mediaUrl, t: kind });
+  if (promptText) params.set("p", promptText.slice(0, 200));
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  return `${origin}/share?${params.toString()}`;
+}
+
 // ─── UploadButton (inline picker) ───────────────────────────────────────────
 
 function UploadButton({ apiKey, maxImages, onSelect, onClear }) {
@@ -616,6 +627,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
   const [dropdownOpen, setDropdownOpen] = useState(null); // 'model' | 'ar' | 'quality' | null
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState(null);
+  const [shareCopied, setShareCopied] = useState(false);
 
   // ── Canvas / history state ──────────────────────────────────────────────
   const [currentImageUrl, setCurrentImageUrl] = useState(null);
@@ -747,6 +759,21 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
     setSelectedAr(ars[0] || "1:1");
     setSelectedQuality(resolutions[0] || null);
     setMaxImages(1);
+  };
+
+  // ── Share ────────────────────────────────────────────────────────────────
+  const handleShare = async () => {
+    if (!currentImageUrl) return;
+    const entry = history[activeHistoryIdx];
+    const shareUrl = buildShareUrl(currentImageUrl, "image", entry?.prompt);
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+    } catch {
+      window.prompt("Copie o link do compartilhamento:", shareUrl);
+      return;
+    }
+    setShareCopied(true);
+    setTimeout(() => setShareCopied(false), 2000);
   };
 
   // ── Generation ───────────────────────────────────────────────────────────
@@ -900,7 +927,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
           </div>
 
           {/* Canvas controls */}
-          <div className="mt-6 flex gap-3 justify-center">
+          <div className="mt-6 flex flex-wrap gap-3 justify-center">
             <button
               type="button"
               onClick={handleGenerate}
@@ -918,6 +945,13 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
               className="bg-primary text-black px-6 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-glow active:scale-95"
             >
               ↓ Baixar
+            </button>
+            <button
+              type="button"
+              onClick={handleShare}
+              className="bg-white/10 hover:bg-white/20 px-6 py-2.5 rounded-2xl text-xs font-bold transition-all border border-white/5 backdrop-blur-lg text-white"
+            >
+              {shareCopied ? "✓ Link copiado!" : "↗ Compartilhar"}
             </button>
             <button
               type="button"
