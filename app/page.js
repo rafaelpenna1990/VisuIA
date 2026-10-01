@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ImageStudio, VideoStudio, LipSyncStudio, CinemaStudio } from 'studio';
+import dynamic from 'next/dynamic';
 import { useLocalizedFeatures } from '../lib/i18n/useLocalizedContent.js';
 import { useTranslation } from '../lib/i18n/useTranslation.js';
 import { useAuthFlow } from '../lib/useAuthFlow.js';
@@ -11,6 +11,33 @@ import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
 import AuthFlowModals from '../components/AuthFlowModals';
 import ExampleCarousel from '../components/ExampleCarousel';
+
+// Each studio (and the model catalog it pulls in, e.g. models.js at ~260KB)
+// now only downloads when that tab is actually opened, instead of all four
+// shipping together to every anonymous visitor who just lands on the home
+// page. Same component, same props, same behavior — this only changes WHEN
+// the code is fetched, so it's safe to ship without touching anyone's flow.
+const studioLoading = (
+  <div className="w-full h-full flex items-center justify-center">
+    <span className="w-6 h-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+  </div>
+);
+const ImageStudio = dynamic(() => import('studio').then((m) => m.ImageStudio), {
+  ssr: false,
+  loading: () => studioLoading,
+});
+const VideoStudio = dynamic(() => import('studio').then((m) => m.VideoStudio), {
+  ssr: false,
+  loading: () => studioLoading,
+});
+const LipSyncStudio = dynamic(() => import('studio').then((m) => m.LipSyncStudio), {
+  ssr: false,
+  loading: () => studioLoading,
+});
+const CinemaStudio = dynamic(() => import('studio').then((m) => m.CinemaStudio), {
+  ssr: false,
+  loading: () => studioLoading,
+});
 
 export default function LandingPage() {
   const [selectedType, setSelectedType] = useState('image');
@@ -57,7 +84,9 @@ export default function LandingPage() {
         {/* Live studio preview — the real controls, so people can type
             their prompt and pick options freely. Only clicking "Gerar"
             (which each studio now intercepts via onAuthRequired) opens
-            the signup modal — nothing before that is blocked. */}
+            the signup modal — nothing before that is blocked.
+            Each studio below is lazy-loaded (see the dynamic() calls above)
+            so only the tab actually being viewed is downloaded. */}
         <div
           className="relative w-full rounded-3xl overflow-hidden border border-white/10 bg-black"
           style={{ height: 'min(58vh, 600px)', minHeight: '460px' }}
