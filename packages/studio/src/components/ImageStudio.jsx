@@ -646,6 +646,11 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
   const [generateError, setGenerateError] = useState(null);
   const [shareCopied, setShareCopied] = useState(false);
   const [upscaling, setUpscaling] = useState(false);
+  // Galeria de templates vem fechada por padrão — como ela também aparece
+  // embutida no hero da home (espaço bem mais curto que a página do
+  // Estúdio), deixar a grade de 16 cards sempre aberta empurrava/cortava o
+  // resto do estúdio ali. Fechada, ocupa só uma linha; abre com um clique.
+  const [showTemplates, setShowTemplates] = useState(false);
 
   // ── Canvas / history state ──────────────────────────────────────────────
   const [currentImageUrl, setCurrentImageUrl] = useState(null);
@@ -1334,29 +1339,46 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
               ready-made prompts grouped by category. Clicking one only
               fills the prompt + suggested aspect ratio, nothing else. */}
           <div className="w-full max-w-4xl mt-8 md:mt-10 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
-            <div className="flex items-center justify-between px-2 mb-3">
-              <span className="text-xs font-bold text-secondary uppercase tracking-widest opacity-70">
+            <button
+              type="button"
+              onClick={() => setShowTemplates((v) => !v)}
+              className="w-full flex items-center justify-between px-2 mb-3 group"
+            >
+              <span className="text-xs font-bold text-secondary uppercase tracking-widest opacity-70 group-hover:opacity-100 transition-opacity">
                 Comece com um template
               </span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 md:gap-3">
-              {promptTemplates.map((tpl) => (
-                <button
-                  key={tpl.id}
-                  type="button"
-                  onClick={() => handleTemplateSelect(tpl)}
-                  title={tpl.prompt}
-                  className="flex flex-col items-start gap-1.5 p-3.5 bg-[#0F1119]/90 hover:bg-white/5 border border-white/10 hover:border-primary/40 rounded-2xl text-left transition-all group"
-                >
-                  <span className="text-[9px] font-bold text-primary/70 uppercase tracking-widest">
-                    {tpl.category}
-                  </span>
-                  <span className="text-xs font-bold text-white group-hover:text-primary transition-colors leading-snug">
-                    {tpl.title}
-                  </span>
-                </button>
-              ))}
-            </div>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                className={`text-secondary/70 group-hover:text-secondary transition-transform ${showTemplates ? "rotate-180" : ""}`}
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+            {showTemplates && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 md:gap-3">
+                {promptTemplates.map((tpl) => (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    onClick={() => handleTemplateSelect(tpl)}
+                    title={tpl.prompt}
+                    className="flex flex-col items-start gap-1.5 p-3.5 bg-[#0F1119]/90 hover:bg-white/5 border border-white/10 hover:border-primary/40 rounded-2xl text-left transition-all group"
+                  >
+                    <span className="text-[9px] font-bold text-primary/70 uppercase tracking-widest">
+                      {tpl.category}
+                    </span>
+                    <span className="text-xs font-bold text-white group-hover:text-primary transition-colors leading-snug">
+                      {tpl.title}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </>
       )}
