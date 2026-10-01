@@ -14,6 +14,7 @@ import {
   getResolutionsForI2IModel,
   getQualityFieldForI2IModel,
   getMaxImagesForI2IModel,
+  getSecondImageFieldForI2IModel,
 } from "../models.js";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -181,7 +182,7 @@ function UploadButton({ apiKey, maxImages, onSelect, onClear }) {
     e.stopPropagation();
     if (entry.localUrl) URL.revokeObjectURL(entry.localUrl);
     setUploadHistory((prev) => prev.filter((h) => h.id !== entry.id));
-    
+
     const next = selectedEntries.filter((s) => s.url !== entry.url);
     if (next.length !== selectedEntries.length) {
       setSelectedEntries(next);
@@ -663,6 +664,11 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
     ? getQualityFieldForI2IModel(selectedModelId)
     : getQualityFieldForModel(selectedModelId);
   const showQualityBtn = currentResolutions.length > 0;
+  // Models that need two images with DIFFERENT roles (e.g. face swap: a
+  // base photo + a separate "face to use" photo) instead of an
+  // interchangeable images_list — see getSecondImageFieldForI2IModel in
+  // models.js and buildI2IRequest in muapi.js.
+  const currentSecondImageField = imageMode ? getSecondImageFieldForI2IModel(selectedModelId) : null;
 
   // ── Upload picker callbacks ──────────────────────────────────────────────
   const handleUploadSelect = useCallback(
@@ -991,6 +997,15 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
                   className="flex-1 bg-transparent border-none text-white text-base md:text-xl placeholder:text-muted focus:outline-none resize-none pt-2.5 leading-relaxed min-h-[40px] max-h-[150px] md:max-h-[250px] overflow-y-auto custom-scrollbar"
                 />
               </div>
+
+              {/* Hint for models that need two images with different roles
+                  (e.g. face swap: base photo + face photo, in that order) —
+                  only shows while the person hasn't finished picking both. */}
+              {currentSecondImageField && uploadedImageUrls.length < 2 && (
+                <div className="px-2 -mt-1 text-[11px] font-semibold text-primary/80">
+                  Envie 2 fotos, nessa ordem: 1ª a foto base, 2ª o rosto que vai entrar nela.
+                </div>
+              )}
 
               {/* Bottom row: controls + generate */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 px-2 pt-4 border-t border-white/5 relative">

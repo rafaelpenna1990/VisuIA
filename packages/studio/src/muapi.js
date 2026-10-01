@@ -36,8 +36,22 @@ export function buildI2IRequest(params) {
     const imageField = modelInfo?.imageField || 'image_url';
     const imagesList = params.images_list?.length > 0 ? params.images_list : (params.image_url ? [params.image_url] : null);
     if (imagesList) {
-        if (imageField === 'images_list') payload.images_list = imagesList;
-        else payload[imageField] = imagesList[0];
+        // Some models (e.g. ai-image-face-swap) need TWO images with
+        // DIFFERENT roles — a base photo + a separate "face to use" photo —
+        // not an interchangeable images_list. The person selects them in
+        // order in the upload picker; the first maps to the model's normal
+        // imageField, the second to secondImageField. Confirmed from live
+        // error logs (2026-10-01): face swap was only ever sending one
+        // image, so Muapi rejected every request with "swap_url: Field
+        // required".
+        if (modelInfo?.secondImageField && imagesList.length >= 2) {
+            payload[imageField] = imagesList[0];
+            payload[modelInfo.secondImageField] = imagesList[1];
+        } else if (imageField === 'images_list') {
+            payload.images_list = imagesList;
+        } else {
+            payload[imageField] = imagesList[0];
+        }
     }
     if (params.aspect_ratio) payload.aspect_ratio = params.aspect_ratio;
     if (params.resolution) payload.resolution = params.resolution;

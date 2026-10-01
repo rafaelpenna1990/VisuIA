@@ -2550,6 +2550,8 @@ export const i2iModels = [
     "family": "tools",
     "imageField": "image_url",
     "hasPrompt": false,
+    "maxImages": 2,
+    "secondImageField": "swap_url",
     "inputs": {
       "target_index": {
         "type": "int",
@@ -8009,6 +8011,16 @@ export const getQualityFieldForI2IModel = (modelId) => {
 export const getMaxImagesForI2IModel = (modelId) => {
     const model = getI2IModelById(modelId);
     return model?.maxImages || 1;
+};
+
+// Some i2i models need TWO images with DIFFERENT roles (e.g. face swap:
+// a base photo + a separate "face to use" photo) instead of an
+// interchangeable images_list. When this returns a field name, the first
+// image the person selects maps to the model's normal imageField and the
+// second maps to this field — see buildI2IRequest in muapi.js.
+export const getSecondImageFieldForI2IModel = (modelId) => {
+    const model = getI2IModelById(modelId);
+    return model?.secondImageField || null;
 };
 
 // ─── Video-to-Video models ────────────────────────────────────────────────────
