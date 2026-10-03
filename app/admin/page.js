@@ -544,6 +544,7 @@ function UserDetailModal({ userId, adminKey, onClose }) {
       });
       const result = await res.json();
       if (!res.ok) { alert(result.error); return; }
+      if (result.recovered) alert('O vídeo já estava pronto na Muapi — geração recuperada, sem estorno.');
       load(); // refresh both tabs — balance and status both changed
     } finally {
       setFixing(null);
@@ -610,7 +611,7 @@ function UserDetailModal({ userId, adminKey, onClose }) {
                         <button
                           onClick={() => fixStuckGeneration(g.id)}
                           disabled={fixing === g.id}
-                          title="Job travado — estorna o valor reservado e marca como falha"
+                          title="Checa na Muapi primeiro: se já terminou, recupera o vídeo; só estorna e marca como falha se continuar travado"
                           className="px-2.5 py-1 rounded-lg bg-red-500/10 text-red-400 text-[11px] font-semibold hover:bg-red-500/20 transition-colors disabled:opacity-50"
                         >
                           {fixing === g.id ? 'Corrigindo…' : 'Corrigir'}
