@@ -630,7 +630,7 @@ function SimpleDropdown({ title, options, selected, onSelect, onClose }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function ImageStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits }) {
+export default function ImageStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits, onGeneratingChange }) {
   const { alert, confirm, prompt: promptDialog, dialog } = useDialog();
 
   // ── Model / mode state ──────────────────────────────────────────────────
@@ -665,6 +665,14 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
   const [dropdownOpen, setDropdownOpen] = useState(null); // 'model' | 'ar' | 'quality' | 'personagem' | null
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState(null);
+
+  // Tells StandaloneShell whether a generation is in flight here, so it can
+  // warn before letting the person switch studio tabs / leave the page —
+  // reading `generating` itself (instead of calling this at every
+  // setGenerating call site) means no path that flips it can be missed.
+  useEffect(() => {
+    onGeneratingChange?.(generating);
+  }, [generating, onGeneratingChange]);
   const [shareCopied, setShareCopied] = useState(false);
   const [upscaling, setUpscaling] = useState(false);
   // Galeria de templates vem fechada por padrão — como ela também aparece

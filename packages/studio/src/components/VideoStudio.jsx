@@ -236,7 +236,7 @@ function ControlBtn({ icon, label, onClick, style }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function VideoStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits }) {
+export default function VideoStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits, onGeneratingChange }) {
     const { alert, confirm, prompt: promptDialog, dialog } = useDialog();
 
     // ── mode state ──
@@ -292,6 +292,15 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
     // ── generation / canvas ──
     const [generating, setGenerating] = useState(false);
     const [generateError, setGenerateError] = useState(null);
+
+    // Tells StandaloneShell whether a generation is in flight here, so it
+    // can warn before letting the person switch studio tabs / leave the
+    // page — reading `generating` itself (instead of calling this at every
+    // setGenerating call site) means no path that flips it can be missed.
+    useEffect(() => {
+        onGeneratingChange?.(generating);
+    }, [generating, onGeneratingChange]);
+
     const [canvasUrl, setCanvasUrl] = useState(null);
     const [canvasModel, setCanvasModel] = useState(null);
     const [showCanvas, setShowCanvas] = useState(false);

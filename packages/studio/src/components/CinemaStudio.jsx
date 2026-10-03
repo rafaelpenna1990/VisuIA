@@ -476,7 +476,7 @@ function CameraControlsOverlay({ isOpen, onClose, settings, onSettingsChange }) 
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function CinemaStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits }) {
+export default function CinemaStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits, onGeneratingChange }) {
     const { alert, confirm, prompt, dialog } = useDialog();
     const disabledModelIds = useDisabledModels();
     const availableVideoModels = useMemo(
@@ -556,6 +556,16 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
     // ── UI state ──
     const [isOverlayOpen, setIsOverlayOpen] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
+
+    // Tells StandaloneShell whether a generation is in flight here, so it
+    // can warn before letting the person switch studio tabs / leave the
+    // page — reading `isGenerating` itself (instead of calling this at
+    // every setIsGenerating call site) means no path that flips it can be
+    // missed.
+    useEffect(() => {
+        onGeneratingChange?.(isGenerating);
+    }, [isGenerating, onGeneratingChange]);
+
     const [canvasUrl, setCanvasUrl] = useState(null);   // null = prompt view
     const [canvasType, setCanvasType] = useState('photo'); // 'photo' | 'video' — what canvasUrl actually is
     const [activeHistoryIndex, setActiveHistoryIndex] = useState(null);

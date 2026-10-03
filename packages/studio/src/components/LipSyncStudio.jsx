@@ -210,7 +210,7 @@ const VideoIcon = ({ className = 'text-muted group-hover:text-primary transition
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
-export default function LipSyncStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits }) {
+export default function LipSyncStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits, onGeneratingChange }) {
     const { alert, confirm, prompt: promptDialog, dialog } = useDialog();
 
     // ── Mode & model state ──────────────────────────────────────────────────
@@ -249,6 +249,16 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
     // ── Generation / UI state ───────────────────────────────────────────────
     const [isGenerating, setIsGenerating] = useState(false);
     const [generateError, setGenerateError] = useState(null);
+
+    // Tells StandaloneShell whether a generation is in flight here, so it
+    // can warn before letting the person switch studio tabs / leave the
+    // page — reading `isGenerating` itself (instead of calling this at
+    // every setIsGenerating call site) means no path that flips it can be
+    // missed.
+    useEffect(() => {
+        onGeneratingChange?.(isGenerating);
+    }, [isGenerating, onGeneratingChange]);
+
     const [view, setView] = useState('input'); // 'input' | 'result'
     const [activeResultUrl, setActiveResultUrl] = useState(null);
 

@@ -10,6 +10,7 @@ import { formatTokens } from '../lib/tokens.js';
 import { useAssetsVersion } from '../lib/useAssetsVersion.js';
 import Logo from './Logo';
 import { resumePendingJob, getPendingJob } from 'studio/src/api-client.js';
+import { useDialog } from 'studio/src/hooks/useDialog.jsx';
 
 const TABS = [
   {
@@ -55,6 +56,7 @@ export default function StandaloneShell() {
   const assetsVersion = useAssetsVersion();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { confirm, dialog } = useDialog();
   const validTabs = TABS.map((t) => t.id);
   const initialTab = validTabs.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'image';
 
@@ -66,6 +68,40 @@ export default function StandaloneShell() {
   const [hasMounted, setHasMounted] = useState(false);
   const [resuming, setResuming] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Whichever studio is mounted right now reports here whenever it starts
+  // or finishes a generation (see onGeneratingChange below) — used to warn
+  // before letting the person switch tabs, go to Conta/Projetos, or close
+  // the browser tab while something is still running on Muapi's side.
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // Generation taking a while is normal (video/lipsync especially) and the
+  // result isn't lost if they leave — it's already being recovered via
+  // resumePendingJob() above. This just makes sure they know that instead
+  // of worrying something froze.
+  const confirmLeaveIfGenerating = useCallback(async () => {
+    if (!isGenerating) return true;
+    return confirm(
+      'Sua geração ainda está em andamento — isso é normal, pode levar alguns minutos dependendo do modelo. ' +
+      'Não tem problema sair agora: quando terminar, o resultado aparece automaticamente em "Meus Projetos". ' +
+      'Quer saír mesmo assim?'
+    );
+  }, [isGenerating, confirm]);
+
+  // Native browser warning for an actual tab close/refresh/URL change —
+  // the text shown is controlled by the browser itself (Chrome, Firefox
+  // etc. all ignore custom returnValue strings nowadays), but the dialog
+  // still pops up and stops an accidental close while isGenerating is true.
+  useEffect(() => {
+    if (!isGenerating) return;
+    const handler = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isGenerating]);
 
   const refreshUser = useCallback(async () => {
     const res = await fetch('/api/auth/me', { credentials: 'include' });
@@ -166,7 +202,7 @@ export default function StandaloneShell() {
             <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
           </svg>
         </button>
-        <button onClick={() => router.push('/')}>
+        <button onClick={async () => { if (await confirmLeaveIfGenerating()) router.push('/'); }}>
           <Logo version={assetsVersion} className="h-7 w-auto max-w-[120px]" />
         </button>
         <button
@@ -202,7 +238,7 @@ export default function StandaloneShell() {
         </button>
 
         <div className="mb-8 px-2">
-          <button onClick={() => router.push('/')} className="block">
+          <button onClick={async () => { if (await confirmLeaveIfGenerating()) router.push('/'); }} className="block">
             <Logo version={assetsVersion} className="h-12 w-auto max-w-full" />
           </button>
           {resuming && (
@@ -220,7 +256,12 @@ export default function StandaloneShell() {
           {TABS.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => { setActiveTab(tab.id); setMobileMenuOpen(false); }}
+              onClick={async () => {
+                if (tab.id === activeTab) { setMobileMenuOpen(false); return; }
+                if (!(await confirmLeaveIfGenerating())) return;
+                setActiveTab(tab.id);
+                setMobileMenuOpen(false);
+              }}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors text-left ${
                 activeTab === tab.id
                   ? 'bg-[#FF9500] text-black'
@@ -235,7 +276,7 @@ export default function StandaloneShell() {
 
         <div className="mt-auto flex flex-col gap-1">
           <button
-            onClick={() => router.push('/conta?tab=projetos')}
+            onClick={async () => { if (await confirmLeaveIfGenerating()) router.push('/conta?tab=projetos'); }}
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white/60 hover:text-white hover:bg-white/5 transition-colors text-left"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -251,7 +292,7 @@ export default function StandaloneShell() {
             {formatTokens(user.credits_balance)}
           </button>
           <button
-            onClick={() => router.push('/conta')}
+            onClick={async () => { if (await confirmLeaveIfGenerating()) router.push('/conta'); }}
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white/60 hover:text-white hover:bg-white/5 transition-colors text-left"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -265,10 +306,10 @@ export default function StandaloneShell() {
 
       {/* Studio Content */}
       <div className="flex-1 min-w-0 pt-14 md:pt-0">
-        {activeTab === 'image'   && <ImageStudio   apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} />}
-        {activeTab === 'video'   && <VideoStudio   apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} />}
-        {activeTab === 'lipsync' && <LipSyncStudio apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} />}
-        {activeTab === 'cinema'  && <CinemaStudio  apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} />}
+        {activeTab === 'image'   && <ImageStudio   apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} onGeneratingChange={setIsGenerating} />}
+        {activeTab === 'video'   && <VideoStudio   apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} onGeneratingChange={setIsGenerating} />}
+        {activeTab === 'lipsync' && <LipSyncStudio apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} onGeneratingChange={setIsGenerating} />}
+        {activeTab === 'cinema'  && <CinemaStudio  apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} onGeneratingChange={setIsGenerating} />}
       </div>
 
       {showTopUp && <TopUpModal onClose={() => setShowTopUp(false)} />}
@@ -278,6 +319,7 @@ export default function StandaloneShell() {
           onBuyWithoutSubscription={() => { setShowSubscribePrompt(false); setShowTopUp(true); }}
         />
       )}
+      {dialog}
     </div>
   );
 }
