@@ -149,16 +149,20 @@ export default function StandaloneShell() {
   useEffect(() => {
     if (!getPendingJob()) return;
     setResuming(true);
+    // resumePendingJob() now resolves every generation that was still
+    // pending when the page loaded — not just the last one started — so
+    // this reports on each of them instead of assuming there was only one.
     resumePendingJob()
-      .then((result) => {
-        if (result) {
-          window.alert(
-            `Sua geração anterior (${result.kind}) terminou enquanto você estava fora!\n\nLink: ${result.url}`
-          );
+      .then((results) => {
+        for (const result of results) {
+          if (result.error) {
+            window.alert(`Não foi possível recuperar uma geração anterior (${result.kind}): ${result.error}`);
+          } else {
+            window.alert(
+              `Sua geração anterior (${result.kind}) terminou enquanto você estava fora!\n\nLink: ${result.url}`
+            );
+          }
         }
-      })
-      .catch((err) => {
-        window.alert(`Não foi possível recuperar sua geração anterior: ${err.message}`);
       })
       .finally(() => {
         setResuming(false);

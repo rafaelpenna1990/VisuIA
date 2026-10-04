@@ -13,21 +13,43 @@
 // enough for Railway's ~60s proxy timeout to cut it, which is what used to
 // 502 on longer video generations.
 //
-// While a job is pending, its id is saved to localStorage. If the page is
-// refreshed or closed mid-generation, the in-memory polling loop dies —
-// but the job keeps running on Muapi's side, and the pre-charged estimate
-// is still sitting on it. resumePendingJob() (called once on app load, see
-// StandaloneShell.js) picks that saved id back up and keeps polling until
-// it settles, so the credit always gets properly refunded/charged and the
-// result isn't silently lost.
+// While a job is pending, its id is saved to localStorage (alongside any
+// OTHER job that's also still pending — see readPendingJobs below). If
+// the page is refreshed or closed mid-generation, the in-memory polling
+// loop dies — but the job keeps running on Muapi's side, and the
+// pre-charged estimate is still sitting on it. resumePendingJob() (called
+// once on app load, see StandaloneShell.js) picks every saved id back up
+// and keeps polling each until it settles, so the credit always gets
+// properly refunded/charged and the result isn't silently lost.
 
 const POLL_INTERVAL_MS = 3000;
 const MAX_POLLS = 600; // 600 * 3s = 30 minutes, matches the old video budget
-const PENDING_JOB_KEY = 'visuia_pending_job';
+const PENDING_JOBS_KEY = 'visuia_pending_jobs';
 
-function savePendingJob(jobId, kind) {
+// This used to be a single key holding only the MOST RECENT pending job —
+// so starting a second generation before the first one settled silently
+// overwrote the first one's resume record. If the tab then closed or
+// refreshed before THAT first job finished, nothing was ever going to
+// poll it again, even though it kept running (and finishing) on Muapi's
+// side: it just sat 'pending' in the DB until the 30-minute sweep gave up
+// on it. That's the "video ficou pronto na Muapi e não veio pro site"
+// pattern — it only ever happened to a job that wasn't the last one
+// started. Now this is a small list, so every job still pending when the
+// page loads gets resumed, not just the latest.
+function readPendingJobs() {
   try {
-    localStorage.setItem(PENDING_JOB_KEY, JSON.stringify({ jobId, kind, savedAt: Date.now() }));
+    const raw = localStorage.getItem(PENDING_JOBS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writePendingJobs(jobs) {
+  try {
+    if (jobs.length === 0) localStorage.removeItem(PENDING_JOBS_KEY);
+    else localStorage.setItem(PENDING_JOBS_KEY, JSON.stringify(jobs));
   } catch {
     // localStorage unavailable (private browsing, etc.) — worst case the
     // resume-on-refresh feature just doesn't kick in; generation itself
@@ -35,19 +57,24 @@ function savePendingJob(jobId, kind) {
   }
 }
 
-function clearPendingJob() {
-  try {
-    localStorage.removeItem(PENDING_JOB_KEY);
-  } catch {}
+function savePendingJob(jobId, kind) {
+  const jobs = readPendingJobs().filter((j) => j.jobId !== jobId);
+  jobs.push({ jobId, kind, savedAt: Date.now() });
+  writePendingJobs(jobs);
 }
 
+function clearPendingJob(jobId) {
+  writePendingJobs(readPendingJobs().filter((j) => j.jobId !== jobId));
+}
+
+// Kept for any caller that just wants to know "is anything pending at
+// all" — the first tracked job, or null.
 export function getPendingJob() {
-  try {
-    const raw = localStorage.getItem(PENDING_JOB_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+  return readPendingJobs()[0] || null;
+}
+
+export function getPendingJobs() {
+  return readPendingJobs();
 }
 
 async function postJSON(url, body) {
@@ -80,7 +107,7 @@ async function pollUntilDone(jobId) {
     await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
     const poll = await getJSON(`/api/generate/poll?job_id=${jobId}`);
     if (poll.done) {
-      clearPendingJob();
+      clearPendingJob(jobId);
       if (poll.error) throw new Error(poll.error);
       return { url: poll.url, charged_brl: poll.charged_brl };
     }
@@ -100,20 +127,29 @@ async function submitAndPoll(kind, params) {
   return pollUntilDone(initial.job_id);
 }
 
-// Called once when the app loads (StandaloneShell.js). If there's a job
-// left over from before a refresh/close, keeps polling it in the
-// background until it settles — same money-safety guarantee as a normal
-// generation, just without a studio screen watching it live.
+// Called once when the app loads (StandaloneShell.js). If any jobs were
+// left over from before a refresh/close, keeps polling ALL of them in the
+// background until each settles — same money-safety guarantee as a normal
+// generation, just without a studio screen watching any of them live.
+// Each job is resumed independently (Promise.all over per-job try/catch),
+// so one that errors or times out doesn't stop the others from being
+// recovered, and this always resolves to an array — one entry per job
+// that was pending, in the shape { kind, url, charged_brl } on success or
+// { kind, error } if it genuinely failed.
 export async function resumePendingJob() {
-  const pending = getPendingJob();
-  if (!pending) return null;
-  try {
-    const result = await pollUntilDone(pending.jobId);
-    return { ...result, kind: pending.kind };
-  } catch (err) {
-    clearPendingJob();
-    throw err;
-  }
+  const pending = readPendingJobs();
+  if (pending.length === 0) return [];
+  return Promise.all(
+    pending.map(async (job) => {
+      try {
+        const result = await pollUntilDone(job.jobId);
+        return { kind: job.kind, ...result };
+      } catch (err) {
+        clearPendingJob(job.jobId);
+        return { kind: job.kind, error: err.message };
+      }
+    })
+  );
 }
 
 export async function generateImage(_apiKey, params) {
