@@ -8,5 +8,6 @@ export async function GET() {
   const plans = getAllPlans();
   const trialBonusTokens = Number(getSetting('trial_bonus_tokens', '500'));
   const trialEntryFeeCents = Number(getSetting('trial_entry_fee_cents', '0'));
-  return NextResponse.json({ plans, trialBonusTokens, trialEntryFeeCents });
+  const trialDays = Number(getSetting('trial_days', '7')) || 7;
+  return NextResponse.json({ plans, trialBonusTokens, trialEntryFeeCents, trialDays });
 }

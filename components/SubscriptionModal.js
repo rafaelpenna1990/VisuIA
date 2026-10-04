@@ -14,6 +14,7 @@ export default function SubscriptionModal({ onClose, onBuyWithoutSubscription })
   const [plans, setPlans] = useState([]);
   const [trialBonusTokens, setTrialBonusTokens] = useState(500);
   const [trialEntryFeeCents, setTrialEntryFeeCents] = useState(0);
+  const [trialDays, setTrialDays] = useState(7);
   const [subscribing, setSubscribing] = useState(null);
   const [error, setError] = useState(null);
   const { t } = useTranslation();
@@ -25,6 +26,7 @@ export default function SubscriptionModal({ onClose, onBuyWithoutSubscription })
         setPlans(data.plans || []);
         if (data.trialBonusTokens) setTrialBonusTokens(data.trialBonusTokens);
         setTrialEntryFeeCents(data.trialEntryFeeCents || 0);
+        if (data.trialDays) setTrialDays(data.trialDays);
       })
       .catch(() => {});
   }, []);
@@ -72,13 +74,13 @@ export default function SubscriptionModal({ onClose, onBuyWithoutSubscription })
         <p className="text-white/50 text-sm mb-6">
           {hasEntryFee ? (
             <>
-              {t('subscription.descEntryFeePrefix')} <span className="text-primary font-semibold">7 {t('subscription.descEntryFeeMiddle')} {entryFeeLabel}</span> —
-              {' '}{trialBonusTokens.toLocaleString('pt-BR')} {t('subscription.descEntryFeeSuffix')}
+              {t('subscription.descEntryFeePrefix')} <span className="text-primary font-semibold">{trialDays} {t('subscription.descEntryFeeMiddle')} {entryFeeLabel}</span> —
+              {' '}{trialBonusTokens.toLocaleString('pt-BR')} {t('subscription.descEntryFeeSuffix', { days: trialDays })}
             </>
           ) : (
             <>
-              {t('subscription.descFreePrefix')} <span className="text-primary font-semibold">{t('subscription.descFreeDays')}</span> —
-              {' '}{trialBonusTokens.toLocaleString('pt-BR')} {t('subscription.descFreeSuffix')}
+              {t('subscription.descFreePrefix')} <span className="text-primary font-semibold">{t('subscription.descFreeDays', { days: trialDays })}</span> —
+              {' '}{trialBonusTokens.toLocaleString('pt-BR')} {t('subscription.descFreeSuffix', { days: trialDays })}
             </>
           )}
         </p>
@@ -97,7 +99,7 @@ export default function SubscriptionModal({ onClose, onBuyWithoutSubscription })
               )}
               <p className="text-primary font-bold text-xl mb-1">
                 R$ {(plan.amount_cents / 100).toFixed(0)}
-                <span className="text-white/40 text-xs font-normal">{t('subscription.perMonthAfterTrial')}</span>
+                <span className="text-white/40 text-xs font-normal">{t('subscription.perMonthAfterTrial', { days: trialDays })}</span>
               </p>
               <p className="text-white/50 text-xs mb-5">{plan.tokens.toLocaleString('pt-BR')} {t('subscription.tokensPerMonth')}</p>
               <button
