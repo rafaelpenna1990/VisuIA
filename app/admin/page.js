@@ -207,7 +207,19 @@ function ConfigTab({ adminKey }) {
             />
           </div>
           <div>
-            <label className="block text-xs text-white/50 mb-1">Bônus do trial de 7 dias (VisuTokens)</label>
+            <label className="block text-xs text-white/50 mb-1">Duração do trial grátis (dias)</label>
+            <input
+              type="number" min="1" step="1"
+              value={settings.trial_days}
+              onChange={(e) => setSettings({ ...settings, trial_days: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
+            />
+            <p className="text-white/30 text-[11px] mt-1">
+              Só vale pra assinaturas novas — quem já está no meio de um trial continua com o prazo que tinha. Os textos do site (pop-up, página de conta) ainda dizem "7 dias" fixo; me avise se quiser que eu também deixe esses textos automáticos.
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs text-white/50 mb-1">Bônus do trial (VisuTokens)</label>
             <input
               type="number"
               value={settings.trial_bonus_tokens}

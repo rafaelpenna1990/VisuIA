@@ -21,6 +21,7 @@ export async function POST(request) {
 
   const origin = request.headers.get('origin') || process.env.APP_URL;
   const entryFeeCents = Number(getSetting('trial_entry_fee_cents', '0')) || 0;
+  const trialDays = Number(getSetting('trial_days', '7')) || 7;
 
   const lineItems = [{
     price_data: {
@@ -34,7 +35,8 @@ export async function POST(request) {
 
   // Optional one-time entry fee, charged immediately alongside starting
   // the trial — separate from the recurring subscription price above,
-  // which still only charges for real starting day 7 (trial_period_days).
+  // which still only charges for real after trialDays (trial_period_days,
+  // editable in /admin).
   if (entryFeeCents > 0) {
     lineItems.push({
       price_data: {
@@ -54,7 +56,7 @@ export async function POST(request) {
       payment_method_types: ['card'],
       line_items: lineItems,
       subscription_data: {
-        trial_period_days: 7,
+        trial_period_days: trialDays,
       },
       metadata: { user_id: String(user.id), plan },
       success_url: `${origin}/conta?tab=assinatura&sub=success`,
