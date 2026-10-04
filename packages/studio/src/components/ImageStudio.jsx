@@ -990,6 +990,16 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
         await alert("Envie uma imagem de referência primeiro.");
         return;
       }
+      // Modelos i2i com hasPrompt:true (ex.: nano-banana-edit) exigem o
+      // campo prompt na Muapi — sem essa checagem, um prompt vazio nunca
+      // entra em genParams.prompt (ver abaixo) e a Muapi recusa a request
+      // com 422 "prompt: Field required", sem crédito nenhum debitado mas
+      // também sem a geração acontecer.
+      const selectedI2IModel = i2iModels.find((m) => m.id === selectedModelId);
+      if (selectedI2IModel?.hasPrompt && !prompt.trim()) {
+        await alert("Digite um prompt descrevendo a edição desejada.");
+        return;
+      }
     } else {
       if (!prompt.trim()) {
         await alert("Digite um prompt para gerar uma imagem.");
