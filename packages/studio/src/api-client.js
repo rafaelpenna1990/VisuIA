@@ -109,7 +109,7 @@ async function pollUntilDone(jobId) {
     if (poll.done) {
       clearPendingJob(jobId);
       if (poll.error) throw new Error(poll.error);
-      return { url: poll.url, charged_brl: poll.charged_brl };
+      return { url: poll.url, charged_brl: poll.charged_brl, id: poll.id };
     }
   }
   throw new Error('A geração demorou demais. Tente de novo em instantes.');
@@ -120,7 +120,7 @@ async function submitAndPoll(kind, params) {
 
   if (initial.done) {
     if (initial.error) throw new Error(initial.error);
-    return { url: initial.url, charged_brl: initial.charged_brl };
+    return { url: initial.url, charged_brl: initial.charged_brl, id: initial.id };
   }
 
   savePendingJob(initial.job_id, kind);

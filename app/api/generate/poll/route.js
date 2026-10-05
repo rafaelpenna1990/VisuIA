@@ -62,7 +62,7 @@ export async function GET(request) {
   // Muapi or the balance again. This also now covers the case where the
   // sweep above just settled THIS job as failed a moment ago.
   if (job.status === 'completed') {
-    return NextResponse.json({ done: true, url: job.output_url, charged_brl: job.cost_credits });
+    return NextResponse.json({ done: true, url: job.output_url, charged_brl: job.cost_credits, id: job.request_id });
   }
   if (job.status === 'failed') {
     return NextResponse.json({ done: true, error: 'A geração falhou.' });
@@ -119,5 +119,5 @@ export async function GET(request) {
 
   const realCharge = actualChargeBRL(result.raw, job.kind, job.model);
   settleGenerationSuccess(job.id, realCharge, result.url);
-  return NextResponse.json({ done: true, url: result.url, charged_brl: realCharge });
+  return NextResponse.json({ done: true, url: result.url, charged_brl: realCharge, id: job.request_id });
 }

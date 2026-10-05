@@ -77,6 +77,7 @@ export async function POST(request) {
       // this was previously missing, so the input video never actually
       // reached Muapi for any of them.
       video_url: body.video_url,
+      request_id: body.request_id,
     }));
   } else if (kind === 'i2v') {
     ({ endpoint, payload } = buildI2VRequest({
@@ -118,7 +119,7 @@ export async function POST(request) {
     // was just giving away free generations.
     forceChargeCredits(user.id, realCharge, `${body.model} — cobrança real`);
     logGeneration(user.id, body.model, kind, realCharge, 'completed', result.url);
-    return NextResponse.json({ done: true, url: result.url, charged_brl: realCharge });
+    return NextResponse.json({ done: true, url: result.url, charged_brl: realCharge, id: result.requestId });
   }
 
   // 5) Still running — hand the client a job to poll instead of waiting here.

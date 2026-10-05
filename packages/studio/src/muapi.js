@@ -79,6 +79,9 @@ export function buildVideoRequest(params) {
     if (params.mode) payload.mode = params.mode;
     if (params.image_url) payload.image_url = params.image_url;
     if (params.video_url) payload.video_url = params.video_url;
+    // Extend models (ex.: seedance-v2.0-extend) continuam um vídeo anterior
+    // e exigem o request_id da geração original na Muapi.
+    if (params.request_id) payload.request_id = params.request_id;
     return { endpoint, payload };
 }
 
