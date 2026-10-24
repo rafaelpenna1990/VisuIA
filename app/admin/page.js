@@ -804,7 +804,7 @@ function AppearanceTab({ adminKey }) {
       <div className="bg-card-bg border border-white/10 rounded-2xl p-6">
         <h2 className="font-bold text-base mb-1">Vídeo de fundo</h2>
         <p className="text-white/40 text-xs mb-6">
-          Vídeos que passam em tela cheia atrás da página inicial (e bem escurecidos nos estúdios). Só .mp4, sem áudio, de 5 a 10 segundos, 1080p ou 720p e até uns 4 MB cada. Com mais de um, eles se alternam; com um só, ele fica em loop. Enquanto uma posição estiver vazia, vale o vídeo padrão do site.
+          Vídeos que passam em tela cheia atrás da página inicial. Só .mp4, sem áudio, de 5 a 10 segundos, de preferência 1920x1080 (Full HD) e até uns 15 MB cada. Com mais de um, cada um toca uma vez do começo ao fim e passa para o próximo; com um só, ele fica em loop. Enquanto uma posição estiver vazia, vale o vídeo padrão do site.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[1, 2, 3, 4, 5].map((i) => (

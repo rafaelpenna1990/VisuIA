@@ -49,30 +49,31 @@ export default function VideoBackdrop({ variant = 'app', intensity, intervalMs =
     }
   }, []);
 
-  // Troca de vídeo a cada intervalMs (cross-fade feito pelo CSS), só entre os
-  // que existem. Com um único vídeo ele não troca: fica em loop.
-  useEffect(() => {
-    if (still) return;
-    const available = CLIPS.map((_, i) => i).filter((i) => !failed[i]);
-    if (available.length === 0) return;
-    if (!available.includes(active)) setActive(available[0]);
-    if (available.length === 1) return;
-    const timer = setInterval(() => {
-      setActive((prev) => {
-        const pos = available.indexOf(prev);
-        return available[(pos + 1) % available.length];
-      });
-    }, intervalMs);
-    return () => clearInterval(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [still, intervalMs, failed]);
+  // Vídeos que estão funcionando, na ordem.
+  const available = CLIPS.map((_, i) => i).filter((i) => !failed[i]);
+  const single = available.length <= 1;
 
-  // Só o vídeo ativo toca.
+  // Se o vídeo da vez não existe (ou falhou), pula para o primeiro que existe.
+  useEffect(() => {
+    if (available.length > 0 && !available.includes(active)) setActive(available[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [failed]);
+
+  // Quando um vídeo termina, passa para o próximo (cada um toca uma vez só,
+  // do começo ao fim). Com um único vídeo, ele fica em loop.
+  const handleEnded = (i) => {
+    if (single || i !== active) return;
+    const pos = available.indexOf(i);
+    setActive(available[(pos + 1) % available.length]);
+  };
+
+  // Só o vídeo ativo toca, sempre do começo.
   useEffect(() => {
     if (still) return;
     videoRefs.current.forEach((el, i) => {
       if (!el) return;
       if (i === active) {
+        try { el.currentTime = 0; } catch { /* ainda sem metadados */ }
         const p = el.play();
         if (p && typeof p.catch === 'function') p.catch(() => {});
       } else {
@@ -101,7 +102,8 @@ export default function VideoBackdrop({ variant = 'app', intensity, intervalMs =
             className={common}
             style={style}
             muted
-            loop
+            loop={single}
+            onEnded={() => handleEnded(i)}
             playsInline
             preload={i === 0 ? 'auto' : 'metadata'}
             autoPlay={i === 0}
