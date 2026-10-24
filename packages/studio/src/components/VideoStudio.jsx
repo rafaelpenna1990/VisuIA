@@ -72,7 +72,7 @@ function buildShareUrl(mediaUrl, kind, promptText) {
 // ── SVG icons (kept inline to avoid extra deps) ───────────────────────────────
 
 const CheckSvg = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF9500" strokeWidth="4">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FC6305" strokeWidth="4">
         <polyline points="20 6 9 17 4 12" />
     </svg>
 );
@@ -88,7 +88,7 @@ const VideoReadySvg = () => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary">
         <polygon points="23 7 16 12 23 17 23 7" />
         <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-        <polyline points="7 10 10 13 15 8" stroke="#FF9500" strokeWidth="2.5" />
+        <polyline points="7 10 10 13 15 8" stroke="#FC6305" strokeWidth="2.5" />
     </svg>
 );
 
@@ -124,10 +124,10 @@ function ModelDropdown({ imageMode, selectedModel, onSelect, onClose, v2vIntent 
     );
 
     const getIconColor = (m, isV2V) => {
-        if (isV2V) return 'bg-orange-500/10 text-orange-400';
-        if (m.id.includes('kling')) return 'bg-blue-500/10 text-blue-400';
-        if (m.id.includes('veo')) return 'bg-purple-500/10 text-purple-400';
-        if (m.id.includes('sora')) return 'bg-rose-500/10 text-rose-400';
+        if (isV2V) return 'bg-primary/10 text-primary';
+        if (m.id.includes('kling')) return 'bg-primary/10 text-primary';
+        if (m.id.includes('veo')) return 'bg-primary/10 text-primary';
+        if (m.id.includes('sora')) return 'bg-primary/10 text-primary';
         return 'bg-primary/10 text-primary';
     };
 
@@ -144,7 +144,7 @@ function ModelDropdown({ imageMode, selectedModel, onSelect, onClose, v2vIntent 
                 <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-bold text-white tracking-tight">{m.name}</span>
                     {isV2V && (
-                        <span className="text-[9px] text-orange-400/70">
+                        <span className="text-[9px] text-primary/70">
                             {m.hasPrompt ? 'Envie um vídeo e descreva a edição' : 'Envie um vídeo pra usar'}
                         </span>
                     )}
@@ -178,7 +178,7 @@ function ModelDropdown({ imageMode, selectedModel, onSelect, onClose, v2vIntent 
                 // Text-to-video models still show below in case they want to
                 // start a fresh (non-video) generation instead.
                 <div className="flex flex-col gap-1.5 overflow-y-auto custom-scrollbar pr-1 pb-2">
-                    <div className="text-[10px] font-bold text-orange-400/70 uppercase tracking-widest px-3 py-2 shrink-0">
+                    <div className="text-[10px] font-bold text-primary/70 uppercase tracking-widest px-3 py-2 shrink-0">
                         Ferramentas de vídeo
                     </div>
                     {filteredV2V.map(m => renderItem(m, true))}
@@ -199,7 +199,7 @@ function ModelDropdown({ imageMode, selectedModel, onSelect, onClose, v2vIntent 
                     {filteredMain.map(m => renderItem(m, false))}
                     {filteredV2V.length > 0 && (
                         <>
-                            <div className="text-[10px] font-bold text-orange-400/70 uppercase tracking-widest px-3 py-2 mt-1 border-t border-white/5">
+                            <div className="text-[10px] font-bold text-primary/70 uppercase tracking-widest px-3 py-2 mt-1 border-t border-white/5">
                                 Ferramentas de vídeo
                             </div>
                             {filteredV2V.map(m => renderItem(m, true))}
@@ -236,7 +236,7 @@ function ControlBtn({ icon, label, onClick, style }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function VideoStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits, onGeneratingChange }) {
+export default function VideoStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits, onGeneratingChange, minimal = false }) {
     const { alert, confirm, prompt: promptDialog, dialog } = useDialog();
 
     // ── mode state ──
@@ -888,7 +888,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
     return (
         <div
             ref={containerRef}
-            className="w-full h-full flex flex-col items-center justify-center bg-app-bg relative p-4 md:p-6 overflow-y-auto custom-scrollbar overflow-x-hidden"
+            className="w-full h-full flex flex-col items-center justify-center bg-transparent relative p-4 md:p-6 overflow-y-auto custom-scrollbar overflow-x-hidden"
         >
             {dialog}
 
@@ -998,10 +998,10 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
             {!showCanvas && (
                 <>
                     {/* Hero */}
-                    <div className="flex flex-col items-center mb-6 md:mb-10 animate-fade-in-up transition-all duration-700">
+                    <div className={`flex flex-col items-center mb-6 md:mb-10 animate-fade-in-up transition-all duration-700${minimal ? " hidden" : ""}`}>
                         <div className="mb-5 relative group">
                             <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full opacity-40 group-hover:opacity-70 transition-opacity duration-1000" />
-                            <div className="relative w-20 h-20 md:w-28 md:h-28 bg-teal-900/40 rounded-3xl flex items-center justify-center border border-white/5 overflow-hidden">
+                            <div className="relative w-20 h-20 md:w-28 md:h-28 bg-white/40 rounded-3xl flex items-center justify-center border border-white/5 overflow-hidden">
                                 <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-primary opacity-20 absolute -right-4 -bottom-4">
                                     <polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
                                 </svg>
@@ -1023,7 +1023,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
 
                     {/* Prompt Bar */}
                     <div className="w-full max-w-4xl relative z-40 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                        <div className="w-full bg-[#0F1119]/90 backdrop-blur-xl border border-white/10 rounded-[1.5rem] md:rounded-[2.5rem] p-3 md:p-5 flex flex-col gap-3 md:gap-5 shadow-3xl">
+                        <div className={`w-full ${minimal ? "bg-black/30 backdrop-blur-2xl" : "bg-[#0d0d0d]/90 backdrop-blur-xl"} border border-white/10 rounded-[1.5rem] md:rounded-[2.5rem] p-3 md:p-5 flex flex-col gap-3 md:gap-5 shadow-3xl`}>
 
                             {/* Top row: image picker + video picker + textarea */}
                             <div className="flex items-start gap-5 px-2">
@@ -1128,7 +1128,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                             onClick={toggleDropdown('model')}
                                         />
                                         {openDropdown === 'model' && (
-                                            <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0F1119] rounded-3xl p-3 border border-white/10 flex flex-col w-[calc(100vw-3rem)] max-w-xs">
+                                            <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0d0d0d] rounded-3xl p-3 border border-white/10 flex flex-col w-[calc(100vw-3rem)] max-w-xs">
                                                 <ModelDropdown
                                                     imageMode={imageMode}
                                                     selectedModel={selectedModel}
@@ -1170,7 +1170,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                                 onClick={toggleDropdown('ar')}
                                             />
                                             {openDropdown === 'ar' && (
-                                                <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0F1119] rounded-3xl p-3 border border-white/10 flex flex-col w-52 max-w-[240px]">
+                                                <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0d0d0d] rounded-3xl p-3 border border-white/10 flex flex-col w-52 max-w-[240px]">
                                                     <div className="text-[10px] font-bold text-muted uppercase tracking-widest px-3 py-2 border-b border-white/5 mb-2">Proporção</div>
                                                     <div className="flex flex-col gap-1">
                                                         {getCurrentAspectRatios(selectedModel).map(r => (
@@ -1203,7 +1203,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                                 onClick={toggleDropdown('duration')}
                                             />
                                             {openDropdown === 'duration' && (
-                                                <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0F1119] rounded-3xl p-3 border border-white/10 flex flex-col w-52 max-w-[240px]">
+                                                <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0d0d0d] rounded-3xl p-3 border border-white/10 flex flex-col w-52 max-w-[240px]">
                                                     <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-3 py-2 border-b border-white/5 mb-2">Duração</div>
                                                     <div className="flex flex-col gap-1">
                                                         {getCurrentDurations(selectedModel).map(d => (
@@ -1224,7 +1224,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                                 onClick={toggleDropdown('resolution')}
                                             />
                                             {openDropdown === 'resolution' && (
-                                                <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0F1119] rounded-3xl p-3 border border-white/10 flex flex-col w-52 max-w-[240px]">
+                                                <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0d0d0d] rounded-3xl p-3 border border-white/10 flex flex-col w-52 max-w-[240px]">
                                                     <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-3 py-2 border-b border-white/5 mb-2">Resolução</div>
                                                     <div className="flex flex-col gap-1">
                                                         {getCurrentResolutions(selectedModel).map(r => (
@@ -1245,7 +1245,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                                 onClick={toggleDropdown('quality')}
                                             />
                                             {openDropdown === 'quality' && (
-                                                <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0F1119] rounded-3xl p-3 border border-white/10 flex flex-col w-52 max-w-[240px]">
+                                                <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0d0d0d] rounded-3xl p-3 border border-white/10 flex flex-col w-52 max-w-[240px]">
                                                     <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-3 py-2 border-b border-white/5 mb-2">Qualidade</div>
                                                     <div className="flex flex-col gap-1">
                                                         {getQualitiesForModel(getCurrentModels(), selectedModel).map(q => (
@@ -1266,7 +1266,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                                 onClick={toggleDropdown('mode')}
                                             />
                                             {openDropdown === 'mode' && (
-                                                <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0F1119] rounded-3xl p-3 border border-white/10 flex flex-col w-52 max-w-[240px]">
+                                                <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0d0d0d] rounded-3xl p-3 border border-white/10 flex flex-col w-52 max-w-[240px]">
                                                     <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-3 py-2 border-b border-white/5 mb-2">Modo</div>
                                                     <div className="flex flex-col gap-1">
                                                         {getModesForModel(selectedModel).map(m => (
@@ -1286,7 +1286,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                                 onClick={toggleDropdown('effect')}
                                             />
                                             {openDropdown === 'effect' && (
-                                                <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0F1119] rounded-3xl p-3 border border-white/10 flex flex-col w-64 max-w-[280px] max-h-80 overflow-y-auto">
+                                                <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0d0d0d] rounded-3xl p-3 border border-white/10 flex flex-col w-64 max-w-[280px] max-h-80 overflow-y-auto">
                                                     <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-3 py-2 border-b border-white/5 mb-2">Efeito</div>
                                                     <div className="flex flex-col gap-1">
                                                         {getEffectNamesForModel(getCurrentModels(), selectedModel).map(n => (
@@ -1308,7 +1308,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                             onClick={toggleDropdown('personagem')}
                                         />
                                         {openDropdown === 'personagem' && (
-                                            <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0F1119] rounded-3xl p-3 border border-white/10 flex flex-col w-64 max-w-[280px] max-h-80 overflow-y-auto">
+                                            <div ref={dropdownRef} onClick={e => e.stopPropagation()} className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0d0d0d] rounded-3xl p-3 border border-white/10 flex flex-col w-64 max-w-[280px] max-h-80 overflow-y-auto">
                                                 <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-3 py-2 border-b border-white/5 mb-2">Meus personagens</div>
                                                 {characters.length === 0 && (
                                                     <div className="text-xs text-secondary px-3 py-2">Nenhum personagem salvo ainda.</div>
@@ -1320,7 +1320,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
                                                                 <img src={c.reference_image_url} alt={c.name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
                                                                 <span className={`text-xs font-bold truncate ${c.id === selectedCharacterId ? 'text-primary' : 'text-white opacity-80'}`}>{c.name}</span>
                                                             </button>
-                                                            <button type="button" onClick={() => handleDeleteCharacter(c)} className="opacity-0 group-hover/char:opacity-100 text-muted hover:text-red-400 text-sm px-1 transition-opacity" title="Excluir personagem">×</button>
+                                                            <button type="button" onClick={() => handleDeleteCharacter(c)} className="opacity-0 group-hover/char:opacity-100 text-muted hover:text-primary text-sm px-1 transition-opacity" title="Excluir personagem">×</button>
                                                         </div>
                                                     ))}
                                                 </div>

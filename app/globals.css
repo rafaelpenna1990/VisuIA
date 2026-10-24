@@ -5,16 +5,16 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background: #080910;
+  background: #000000;
   color: white;
   font-family: 'Baloo 2', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 :root {
-  --color-primary: #FF9500;
-  --bg-app: #080910;
-  --bg-panel: #0F1119;
-  --bg-card: #161826;
+  --color-primary: #FC6305;
+  --bg-app: #000000;
+  --bg-panel: #0d0d0d;
+  --bg-card: #141414;
   --border-color: rgba(255,255,255,0.08);
   --border-radius-xl: 1rem;
 }

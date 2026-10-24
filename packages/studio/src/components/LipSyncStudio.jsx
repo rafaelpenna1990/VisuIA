@@ -138,7 +138,7 @@ function Dropdown({ isOpen, items, selectedId, onSelect, onClose, anchorRef }) {
         <div
             ref={dropRef}
             onClick={(e) => e.stopPropagation()}
-            className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0F1119] border border-white/10 rounded-2xl shadow-3xl p-2 max-h-[300px] overflow-y-auto custom-scrollbar w-[calc(100vw-3rem)] max-w-xs"
+            className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0d0d0d] border border-white/10 rounded-2xl shadow-3xl p-2 max-h-[300px] overflow-y-auto custom-scrollbar w-[calc(100vw-3rem)] max-w-xs"
         >
             {items.map((item) => (
                 <button
@@ -210,7 +210,7 @@ const VideoIcon = ({ className = 'text-muted group-hover:text-primary transition
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
-export default function LipSyncStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits, onGeneratingChange }) {
+export default function LipSyncStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits, onGeneratingChange, minimal = false }) {
     const { alert, confirm, prompt: promptDialog, dialog } = useDialog();
 
     // ── Mode & model state ──────────────────────────────────────────────────
@@ -508,7 +508,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
 
     // ── Render ──────────────────────────────────────────────────────────────
     return (
-        <div className="w-full h-full flex flex-col items-center justify-center bg-app-bg relative p-4 md:p-6 overflow-y-auto custom-scrollbar overflow-x-hidden">
+        <div className="w-full h-full flex flex-col items-center justify-center bg-transparent relative p-4 md:p-6 overflow-y-auto custom-scrollbar overflow-x-hidden">
             {dialog}
 
             {/* ── History sidebar ── */}
@@ -537,10 +537,10 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
             {view === 'input' && (
                 <>
                     {/* Hero */}
-                    <div className="flex flex-col items-center mb-6 md:mb-10 animate-fade-in-up transition-all duration-700">
+                    <div className={`flex flex-col items-center mb-6 md:mb-10 animate-fade-in-up transition-all duration-700${minimal ? " hidden" : ""}`}>
                         <div className="mb-5 relative group">
                             <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full opacity-40 group-hover:opacity-70 transition-opacity duration-1000" />
-                            <div className="relative w-20 h-20 md:w-28 md:h-28 bg-teal-900/40 rounded-3xl flex items-center justify-center border border-white/5 overflow-hidden">
+                            <div className="relative w-20 h-20 md:w-28 md:h-28 bg-white/40 rounded-3xl flex items-center justify-center border border-white/5 overflow-hidden">
                                 <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-primary opacity-20 absolute -right-4 -bottom-4">
                                     <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
                                     <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
@@ -568,7 +568,7 @@ export default function LipSyncStudio({ apiKey, onGenerationComplete, historyIte
 
                     {/* Input bar */}
                     <div className="w-full max-w-4xl relative z-40 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                        <div className="w-full bg-[#0F1119]/90 backdrop-blur-xl border border-white/10 rounded-[1.5rem] md:rounded-[2.5rem] p-3 md:p-5 flex flex-col gap-3 md:gap-5 shadow-3xl">
+                        <div className={`w-full ${minimal ? "bg-black/30 backdrop-blur-2xl" : "bg-[#0d0d0d]/90 backdrop-blur-xl"} border border-white/10 rounded-[1.5rem] md:rounded-[2.5rem] p-3 md:p-5 flex flex-col gap-3 md:gap-5 shadow-3xl`}>
 
                             {/* Mode toggle row */}
                             <div className="flex items-center gap-2 px-2">

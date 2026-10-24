@@ -55,7 +55,7 @@ export default function SubscriptionModal({ onClose, onBuyWithoutSubscription })
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4 py-8 overflow-y-auto">
-      <div className="bg-[#0F1119] border border-primary/30 rounded-2xl p-6 sm:p-8 w-full max-w-2xl relative shadow-glow">
+      <div className="bg-[#0d0d0d] border border-primary/30 rounded-2xl p-6 sm:p-8 w-full max-w-2xl relative shadow-glow">
         <button
           type="button"
           onClick={onClose}
@@ -113,7 +113,7 @@ export default function SubscriptionModal({ onClose, onBuyWithoutSubscription })
           ))}
         </div>
 
-        {error && <p className="text-red-400 text-xs mb-4">{error}</p>}
+        {error && <p className="text-primary text-xs mb-4">{error}</p>}
 
         <button
           type="button"

@@ -59,7 +59,7 @@ export default function AdminPage() {
   if (!authed) {
     return (
       <div className="min-h-screen bg-app-bg flex items-center justify-center px-4">
-        <form onSubmit={tryLogin} className="bg-[#0F1119] border border-white/10 rounded-2xl p-8 w-full max-w-sm">
+        <form onSubmit={tryLogin} className="bg-[#0d0d0d] border border-white/10 rounded-2xl p-8 w-full max-w-sm">
           <h1 className="text-white font-black text-xl mb-1">Painel Admin</h1>
           <p className="text-white/50 text-sm mb-6">VisuIA</p>
           <input
@@ -567,7 +567,7 @@ function UserDetailModal({ userId, adminKey, onClose }) {
     <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-[#0F1119] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto p-6"
+        className="bg-[#0d0d0d] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto p-6"
       >
         <div className="flex items-center justify-between mb-1">
           <p className="text-white font-black text-lg">{data?.user?.email || 'Carregando…'}</p>

@@ -11,15 +11,15 @@ module.exports = {
         extend: {
             colors: {
                 primary: {
-                    DEFAULT: '#FF9500',
-                    hover: '#E68200',
+                    DEFAULT: '#FC6305',
+                    hover: '#E05400',
                 },
-                accent: '#00D9FF',
-                'app-bg': '#080910',
-                'panel-bg': '#0F1119',
-                'card-bg': '#161826',
-                secondary: '#9FB3C8',
-                muted: '#5A6B80',
+                accent: '#FC6305',
+                'app-bg': '#000000',
+                'panel-bg': '#080808',
+                'card-bg': '#141414',
+                secondary: '#a3a3a3',
+                muted: '#737373',
             },
             fontFamily: {
                 sans: ['Baloo 2', 'system-ui', '-apple-system', 'sans-serif'],
@@ -30,8 +30,8 @@ module.exports = {
                 '3xl': '2rem',
             },
             boxShadow: {
-                'glow': '0 0 24px rgba(255, 149, 0, 0.55)',
-                'glow-accent': '0 0 24px rgba(0, 217, 255, 0.55)',
+                'glow': '0 0 24px rgba(252, 99, 5, 0.55)',
+                'glow-accent': '0 0 24px rgba(252, 99, 5, 0.55)',
                 '3xl': '0 35px 60px -15px rgba(0, 0, 0, 0.8)',
             }
         },

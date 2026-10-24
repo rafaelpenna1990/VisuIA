@@ -9,6 +9,7 @@ import SubscriptionModal from './SubscriptionModal';
 import { formatTokens } from '../lib/tokens.js';
 import { useAssetsVersion } from '../lib/useAssetsVersion.js';
 import Logo from './Logo';
+import VideoBackdrop from './VideoBackdrop';
 import { resumePendingJob, getPendingJob } from 'studio/src/api-client.js';
 import { useDialog } from 'studio/src/hooks/useDialog.jsx';
 
@@ -179,8 +180,8 @@ export default function StandaloneShell() {
   }, [refreshUser]);
 
   if (!hasMounted) return (
-    <div className="min-h-screen bg-[#080910] flex items-center justify-center">
-      <div className="animate-spin text-[#FF9500] text-3xl">◌</div>
+    <div className="min-h-screen bg-[#000000] flex items-center justify-center">
+      <div className="animate-spin text-[#FC6305] text-3xl">◌</div>
     </div>
   );
 
@@ -194,9 +195,10 @@ export default function StandaloneShell() {
   const placeholderKey = 'server-managed';
 
   return (
-    <div className="h-screen bg-[#080910] flex overflow-hidden">
+    <div className="relative h-screen bg-black flex overflow-hidden">
+      <VideoBackdrop variant="app" />
       {/* Mobile top bar — hidden on desktop, where the sidebar is always visible */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-[#0F1119] border-b border-white/5 flex items-center justify-between px-4">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-[#0d0d0d] border-b border-white/5 flex items-center justify-between px-4">
         <button
           onClick={() => setMobileMenuOpen(true)}
           className="text-white/70 hover:text-white p-1 -ml-1"
@@ -211,7 +213,7 @@ export default function StandaloneShell() {
         </button>
         <button
           onClick={() => setShowTopUp(true)}
-          className="text-[#FF9500] text-xs font-bold px-2.5 py-1.5 rounded-lg bg-[#FF9500]/10"
+          className="text-[#FC6305] text-xs font-bold px-2.5 py-1.5 rounded-lg bg-[#FC6305]/10"
         >
           {formatTokens(user.credits_balance)}
         </button>
@@ -227,7 +229,7 @@ export default function StandaloneShell() {
 
       {/* Sidebar — a slide-in drawer on mobile, a normal fixed column on desktop */}
       <aside
-        className={`fixed md:static inset-y-0 left-0 z-50 w-60 shrink-0 bg-[#0F1119] border-r border-white/5 flex flex-col py-6 px-4 transform transition-transform duration-300 ease-out ${
+        className={`fixed md:static inset-y-0 left-0 z-50 w-60 shrink-0 bg-[#0d0d0d] md:bg-transparent border-r border-white/5 md:border-0 flex flex-col py-6 px-4 transform transition-transform duration-300 ease-out ${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         } md:translate-x-0`}
       >
@@ -243,7 +245,7 @@ export default function StandaloneShell() {
 
         <div className="mb-8 px-2">
           <button onClick={async () => { if (await confirmLeaveIfGenerating()) router.push('/'); }} className="block">
-            <Logo version={assetsVersion} className="h-12 w-auto max-w-full" />
+            <Logo version={assetsVersion} className="h-10 w-auto max-w-full" />
           </button>
           {resuming && (
             <div className="text-[10px] text-white/40 flex items-center gap-1.5 mt-1">
@@ -253,8 +255,8 @@ export default function StandaloneShell() {
           )}
         </div>
 
-        <div className="text-[10px] font-bold text-white/30 uppercase tracking-widest px-2 mb-2">
-          Estúdios
+        <div className="text-[11px] font-semibold text-white/35 px-3 mb-2">
+          Gerar
         </div>
         <nav className="flex flex-col gap-1 mb-6">
           {TABS.map((tab) => (
@@ -268,7 +270,7 @@ export default function StandaloneShell() {
               }}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors text-left ${
                 activeTab === tab.id
-                  ? 'bg-[#FF9500] text-black'
+                  ? 'bg-white/10 text-white'
                   : 'text-white/60 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -291,7 +293,7 @@ export default function StandaloneShell() {
           </button>
           <button
             onClick={() => setShowTopUp(true)}
-            className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold text-[#FF9500] bg-[#FF9500]/10 hover:bg-[#FF9500]/20 transition-colors"
+            className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold text-[#FC6305] bg-[#FC6305]/10 hover:bg-[#FC6305]/20 transition-colors"
           >
             {formatTokens(user.credits_balance)}
           </button>
@@ -310,10 +312,14 @@ export default function StandaloneShell() {
 
       {/* Studio Content */}
       <div className="flex-1 min-w-0 pt-14 md:pt-0">
-        {activeTab === 'image'   && <ImageStudio   apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} onGeneratingChange={setIsGenerating} />}
-        {activeTab === 'video'   && <VideoStudio   apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} onGeneratingChange={setIsGenerating} />}
-        {activeTab === 'lipsync' && <LipSyncStudio apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} onGeneratingChange={setIsGenerating} />}
-        {activeTab === 'cinema'  && <CinemaStudio  apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} onGeneratingChange={setIsGenerating} />}
+        <div className="relative h-full">
+        <div className="relative z-10 h-full">
+        {activeTab === 'image'   && <ImageStudio minimal apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} onGeneratingChange={setIsGenerating} />}
+        {activeTab === 'video'   && <VideoStudio minimal apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} onGeneratingChange={setIsGenerating} />}
+        {activeTab === 'lipsync' && <LipSyncStudio minimal apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} onGeneratingChange={setIsGenerating} />}
+        {activeTab === 'cinema'  && <CinemaStudio minimal apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} onGeneratingChange={setIsGenerating} />}
+        </div>
+        </div>
       </div>
 
       {showTopUp && <TopUpModal onClose={() => setShowTopUp(false)} />}

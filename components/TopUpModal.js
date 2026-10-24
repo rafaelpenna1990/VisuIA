@@ -34,7 +34,7 @@ export default function TopUpModal({ onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-      <div className="bg-[#0F1119] border border-white/10 rounded-2xl p-8 w-full max-w-sm">
+      <div className="bg-[#0d0d0d] border border-white/10 rounded-2xl p-8 w-full max-w-sm">
         <h2 className="text-white font-bold text-xl mb-2">{t('topup.title')}</h2>
         <p className="text-white/50 text-sm mb-6">{t('topup.subtitle')}</p>
 
@@ -44,7 +44,7 @@ export default function TopUpModal({ onClose }) {
               key={p.id}
               onClick={() => buy(p.id)}
               disabled={loadingPack !== null}
-              className="w-full py-3 rounded-lg bg-[#FF9500] text-black font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex flex-col items-center leading-tight"
+              className="w-full py-3 rounded-lg bg-[#FC6305] text-black font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex flex-col items-center leading-tight"
             >
               {loadingPack === p.id ? (
                 t('topup.redirecting')
@@ -58,7 +58,7 @@ export default function TopUpModal({ onClose }) {
           ))}
         </div>
 
-        {error && <p className="text-red-400 text-xs mb-3">{error}</p>}
+        {error && <p className="text-primary text-xs mb-3">{error}</p>}
 
         <button
           onClick={onClose}

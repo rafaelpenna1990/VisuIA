@@ -23,7 +23,7 @@ function NavDropdown({ label, isOpen, onToggle, children, panelClassName }) {
         </svg>
       </button>
       {isOpen && (
-        <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-3 bg-[#0F1119] border border-white/10 rounded-2xl shadow-3xl z-50 ${panelClassName || 'w-80'}`}>
+        <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-3 bg-[#0d0d0d] border border-white/10 rounded-2xl shadow-3xl z-50 ${panelClassName || 'w-80'}`}>
           {children}
         </div>
       )}
@@ -107,7 +107,7 @@ export default function SiteHeader({ goToStudioOrAuth, isLoggedIn }) {
     <header ref={navRef} className="flex items-center justify-between px-6 md:px-10 py-5 max-w-6xl mx-auto relative">
       <div className="flex items-center gap-8">
         <button onClick={() => router.push('/')} className="flex items-center">
-          <Logo version={assetsVersion} className="h-40 w-auto max-w-full" />
+          <Logo version={assetsVersion} className="h-10 w-auto max-w-full" />
         </button>
 
         <nav className="hidden md:flex items-center gap-6">
@@ -226,7 +226,7 @@ export default function SiteHeader({ goToStudioOrAuth, isLoggedIn }) {
       </div>
 
       {mobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 mt-2 mx-4 bg-[#0F1119] border border-white/10 rounded-2xl shadow-3xl z-50 px-4 py-1 max-h-[70vh] overflow-y-auto">
+        <div className="md:hidden absolute top-full left-0 right-0 mt-2 mx-4 bg-[#0d0d0d] border border-white/10 rounded-2xl shadow-3xl z-50 px-4 py-1 max-h-[70vh] overflow-y-auto">
           <MobileNavSection label={t('header.navCreate')} isOpen={mobileSection === 'create'} onToggle={toggleMobileSection('create')}>
             {FEATURES.map((f) => (
               <button

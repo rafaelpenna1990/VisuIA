@@ -65,7 +65,7 @@ function DialogModal({ state, onClose }) {
       onClick={handleCancel}
     >
       <div
-        className="bg-[#141720] border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-3xl animate-fade-in"
+        className="bg-[#0d0d0d] border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-3xl animate-fade-in"
         onClick={(e) => e.stopPropagation()}
       >
         <p className="text-white text-sm leading-relaxed whitespace-pre-line mb-5">{state.message}</p>

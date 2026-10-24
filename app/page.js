@@ -1,133 +1,122 @@
 'use client';
 
-import { useState } from 'react';
-import dynamic from 'next/dynamic';
-import { useLocalizedFeatures } from '../lib/i18n/useLocalizedContent.js';
-import { useTranslation } from '../lib/i18n/useTranslation.js';
-import { useAuthFlow } from '../lib/useAuthFlow.js';
-import { usePromoText } from '../lib/usePromoText.js';
-import { useHeroContent, HighlightedText } from '../lib/useHeroContent.js';
-import SiteHeader from '../components/SiteHeader';
-import SiteFooter from '../components/SiteFooter';
-import AuthFlowModals from '../components/AuthFlowModals';
-import ExampleCarousel from '../components/ExampleCarousel';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-// Each studio (and the model catalog it pulls in, e.g. models.js at ~260KB)
-// now only downloads when that tab is actually opened, instead of all four
-// shipping together to every anonymous visitor who just lands on the home
-// page. Same component, same props, same behavior — this only changes WHEN
-// the code is fetched, so it's safe to ship without touching anyone's flow.
-const studioLoading = (
-  <div className="w-full h-full flex items-center justify-center">
-    <span className="w-6 h-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
-  </div>
-);
-const ImageStudio = dynamic(() => import('studio').then((m) => m.ImageStudio), {
-  ssr: false,
-  loading: () => studioLoading,
-});
-const VideoStudio = dynamic(() => import('studio').then((m) => m.VideoStudio), {
-  ssr: false,
-  loading: () => studioLoading,
-});
-const LipSyncStudio = dynamic(() => import('studio').then((m) => m.LipSyncStudio), {
-  ssr: false,
-  loading: () => studioLoading,
-});
-const CinemaStudio = dynamic(() => import('studio').then((m) => m.CinemaStudio), {
-  ssr: false,
-  loading: () => studioLoading,
-});
+function ResetPasswordForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get('token');
 
-export default function LandingPage() {
-  const [selectedType, setSelectedType] = useState('image');
-  const auth = useAuthFlow(selectedType);
-  const { t } = useTranslation();
-  const FEATURES = useLocalizedFeatures();
-  const currentSlug = FEATURES.find((f) => f.id === selectedType)?.slug || 'imagem';
-  const promoText = usePromoText();
-  const hero = useHeroContent();
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
 
-  return (
-    <div className="min-h-screen bg-app-bg text-white">
-      <SiteHeader goToStudioOrAuth={auth.goToStudioOrAuth} isLoggedIn={auth.isLoggedIn} />
+  const submit = async (e) => {
+    e.preventDefault();
+    setError(null);
 
-      {/* Hero */}
-      <section className="px-6 md:px-10 pt-6 md:pt-8 pb-20 max-w-6xl mx-auto">
-        <div className="max-w-3xl">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black leading-tight tracking-tight mb-3">
-            <HighlightedText text={hero.title} />
-          </h1>
-          <p className="text-white/60 text-sm md:text-base leading-relaxed mb-5 max-w-xl">
-            {hero.subtitle}
+    if (password !== confirm) {
+      setError('As senhas não são iguais');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Algo deu errado');
+      setDone(true);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!token) {
+    return (
+      <div className="min-h-screen bg-[#000000] flex items-center justify-center px-4">
+        <div className="bg-[#0d0d0d] border border-white/10 rounded-2xl p-8 w-full max-w-sm text-center">
+          <p className="text-white/70 text-sm">
+            Esse link está incompleto. Peça um novo link em "Esqueci minha senha" na tela de login.
           </p>
         </div>
+      </div>
+    );
+  }
 
-        {/* Type tabs */}
-        <div className="flex items-center gap-2 mb-4 flex-wrap">
-          {FEATURES.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setSelectedType(f.id)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs md:text-sm font-semibold transition-colors ${
-                selectedType === f.id
-                  ? 'bg-primary text-black'
-                  : 'bg-card-bg text-white/50 hover:text-white border border-white/10'
-              }`}
-            >
-              {f.title}
-            </button>
-          ))}
-        </div>
-
-        {/* Live studio preview — the real controls, so people can type
-            their prompt and pick options freely. Only clicking "Gerar"
-            (which each studio now intercepts via onAuthRequired) opens
-            the signup modal — nothing before that is blocked.
-            Each studio below is lazy-loaded (see the dynamic() calls above)
-            so only the tab actually being viewed is downloaded. */}
-        <div
-          className="relative w-full rounded-3xl overflow-hidden border border-white/10 bg-black"
-          style={{ height: 'min(58vh, 600px)', minHeight: '460px' }}
-        >
-          {selectedType === 'image' && <ImageStudio apiKey="preview" onAuthRequired={auth.isLoggedIn ? undefined : () => auth.goToStudioOrAuth('signup')} />}
-          {selectedType === 'video' && <VideoStudio apiKey="preview" onAuthRequired={auth.isLoggedIn ? undefined : () => auth.goToStudioOrAuth('signup')} />}
-          {selectedType === 'lipsync' && <LipSyncStudio apiKey="preview" onAuthRequired={auth.isLoggedIn ? undefined : () => auth.goToStudioOrAuth('signup')} />}
-          {selectedType === 'cinema' && <CinemaStudio apiKey="preview" onAuthRequired={auth.isLoggedIn ? undefined : () => auth.goToStudioOrAuth('signup')} />}
-        </div>
-        <div className="flex items-center gap-2 mt-3 mb-6">
-          <span className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 text-primary text-xs font-bold px-3 py-1.5 rounded-full">
-            {promoText}
-          </span>
-        </div>
-
-        <ExampleCarousel slug={currentSlug} />
-      </section>
-
-      {/* Pricing blurb */}
-      <section className="px-6 md:px-10 py-16 border-t border-white/5">
-        <div className="max-w-6xl mx-auto bg-panel-bg border border-white/10 rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div>
-            <span className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 text-primary text-xs font-bold px-3 py-1.5 rounded-full mb-3">
-              {promoText}
-            </span>
-            <h2 className="text-xl md:text-2xl font-black mb-2">{t('home.payOnlyTitle')}</h2>
-            <p className="text-white/50 text-sm md:text-base max-w-md">
-              {t('home.payOnlyDesc')}
-            </p>
-          </div>
+  if (done) {
+    return (
+      <div className="min-h-screen bg-[#000000] flex items-center justify-center px-4">
+        <div className="bg-[#0d0d0d] border border-white/10 rounded-2xl p-8 w-full max-w-sm text-center">
+          <p className="text-white text-lg font-bold mb-2">Senha redefinida! 🎉</p>
+          <p className="text-white/50 text-sm mb-6">Já pode entrar com sua senha nova.</p>
           <button
-            onClick={() => auth.goToStudioOrAuth('signup')}
-            className="shrink-0 bg-primary hover:opacity-90 text-black font-bold text-sm px-8 py-3.5 rounded-xl transition-opacity shadow-glow"
+            onClick={() => router.push('/')}
+            className="w-full py-2.5 rounded-xl bg-[#FC6305] text-black font-semibold text-sm hover:opacity-90 transition-opacity"
           >
-            {t('home.startFreeNow')}
+            Ir para o login
           </button>
         </div>
-      </section>
+      </div>
+    );
+  }
 
-      <SiteFooter />
-      <AuthFlowModals auth={auth} />
+  return (
+    <div className="min-h-screen bg-[#000000] flex items-center justify-center px-4">
+      <form
+        onSubmit={submit}
+        className="bg-[#0d0d0d] border border-white/10 rounded-2xl p-8 w-full max-w-sm"
+      >
+        <p className="text-white text-lg font-bold mb-1">Escolha uma senha nova</p>
+        <p className="text-white/50 text-sm mb-6">Pelo menos 8 caracteres.</p>
+
+        <label className="block text-white/60 text-xs mb-1">Nova senha</label>
+        <input
+          type="password"
+          required
+          minLength={8}
+          autoFocus
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full mb-4 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-[#FC6305]/50"
+        />
+
+        <label className="block text-white/60 text-xs mb-1">Confirmar nova senha</label>
+        <input
+          type="password"
+          required
+          minLength={8}
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          className="w-full mb-4 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-[#FC6305]/50"
+        />
+
+        {error && <p className="text-primary text-xs mb-4">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-2 rounded-lg bg-[#FC6305] text-black font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          {loading ? 'Aguarde…' : 'Salvar nova senha'}
+        </button>
+      </form>
     </div>
+  );
+}
+
+export default function RedefinirSenhaPage() {
+  return (
+    <Suspense fallback={null}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

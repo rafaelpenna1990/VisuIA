@@ -360,7 +360,7 @@ function UploadButton({ apiKey, maxImages, onSelect, onClear }) {
         <div
           ref={panelRef}
           onClick={(e) => e.stopPropagation()}
-          className="absolute z-50 bottom-[calc(100%+8px)] left-0 bg-[#0F1119] rounded-3xl p-3 shadow-4xl border border-white/10 w-72"
+          className="absolute z-50 bottom-[calc(100%+8px)] left-0 bg-[#0d0d0d] rounded-3xl p-3 shadow-4xl border border-white/10 w-72"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-1 pb-3 mb-2 border-b border-white/5">
@@ -464,7 +464,7 @@ function UploadButton({ apiKey, maxImages, onSelect, onClear }) {
                           type="button"
                           title="Remover do histórico"
                           onClick={(e) => handleRemoveFromHistory(e, entry)}
-                          className="w-5 h-5 bg-red-500/80 hover:bg-red-500 rounded-md flex items-center justify-center transition-colors"
+                          className="w-5 h-5 bg-primary/80 hover:bg-primary rounded-md flex items-center justify-center transition-colors"
                         >
                           <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
                             <line x1="18" y1="6" x2="6" y2="18" />
@@ -570,9 +570,9 @@ function ModelDropdown({ models, selectedModel, onSelect, onClose }) {
               <div
                 className={`w-10 h-10 ${
                   m.family === "kontext"
-                    ? "bg-blue-500/10 text-blue-400"
+                    ? "bg-primary/10 text-primary"
                     : m.family === "effects"
-                    ? "bg-purple-500/10 text-purple-400"
+                    ? "bg-primary/10 text-primary"
                     : "bg-primary/10 text-primary"
                 } border border-white/5 rounded-xl flex items-center justify-center font-black text-sm shadow-inner uppercase`}
               >
@@ -583,7 +583,7 @@ function ModelDropdown({ models, selectedModel, onSelect, onClose }) {
               </div>
             </div>
             {selectedModel === m.id && (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF9500" strokeWidth="4">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FC6305" strokeWidth="4">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             )}
@@ -617,7 +617,7 @@ function SimpleDropdown({ title, options, selected, onSelect, onClose }) {
               {opt}
             </span>
             {selected === opt && (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF9500" strokeWidth="4">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FC6305" strokeWidth="4">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             )}
@@ -630,7 +630,7 @@ function SimpleDropdown({ title, options, selected, onSelect, onClose }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function ImageStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits, onGeneratingChange }) {
+export default function ImageStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits, onGeneratingChange, minimal = false, hideTemplates = false }) {
   const { alert, confirm, prompt: promptDialog, dialog } = useDialog();
 
   // ── Model / mode state ──────────────────────────────────────────────────
@@ -1077,7 +1077,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
 
   // ── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center bg-app-bg relative p-4 md:p-6 overflow-y-auto custom-scrollbar overflow-x-hidden">
+    <div className="w-full h-full flex flex-col items-center justify-center bg-transparent relative p-4 md:p-6 overflow-y-auto custom-scrollbar overflow-x-hidden">
       {dialog}
 
       {/* ── CANVAS VIEW ─────────────────────────────────────────────────── */}
@@ -1196,10 +1196,10 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
       {!showCanvas && (
         <>
           {/* Hero */}
-          <div className="flex flex-col items-center mb-6 md:mb-10 animate-fade-in-up transition-all duration-700">
+          <div className={`flex flex-col items-center mb-6 md:mb-10 animate-fade-in-up transition-all duration-700${minimal ? " hidden" : ""}`}>
             <div className="mb-5 relative group">
               <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full opacity-40 group-hover:opacity-70 transition-opacity duration-1000" />
-              <div className="relative w-20 h-20 md:w-28 md:h-28 bg-teal-900/40 rounded-3xl flex items-center justify-center border border-white/5 overflow-hidden">
+              <div className="relative w-20 h-20 md:w-28 md:h-28 bg-white/40 rounded-3xl flex items-center justify-center border border-white/5 overflow-hidden">
                 <svg
                   width="80"
                   height="80"
@@ -1239,7 +1239,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
 
           {/* Prompt bar */}
           <div className="w-full max-w-4xl relative z-40 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-            <div className="w-full bg-[#0F1119]/90 backdrop-blur-xl border border-white/10 rounded-[1.5rem] md:rounded-[2.5rem] p-3 md:p-5 flex flex-col gap-3 md:gap-5 shadow-3xl">
+            <div className={`w-full ${minimal ? "bg-black/30 backdrop-blur-2xl" : "bg-[#0d0d0d]/90 backdrop-blur-xl"} border border-white/10 rounded-[1.5rem] md:rounded-[2.5rem] p-3 md:p-5 flex flex-col gap-3 md:gap-5 shadow-3xl`}>
 
               {/* Top row: upload picker + textarea */}
               <div className="flex items-start gap-5 px-2">
@@ -1308,7 +1308,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
                       <div
                         ref={dropdownRef}
                         onClick={(e) => e.stopPropagation()}
-                        className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0F1119] rounded-3xl p-3 shadow-4xl border border-white/10 w-[calc(100vw-3rem)] max-w-xs"
+                        className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0d0d0d] rounded-3xl p-3 shadow-4xl border border-white/10 w-[calc(100vw-3rem)] max-w-xs"
                       >
                         <ModelDropdown
                           models={currentModels}
@@ -1360,7 +1360,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
                     {dropdownOpen === "ar" && (
                       <div
                         onClick={(e) => e.stopPropagation()}
-                        className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0F1119] rounded-3xl p-3 shadow-4xl border border-white/10 max-w-[240px]"
+                        className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0d0d0d] rounded-3xl p-3 shadow-4xl border border-white/10 max-w-[240px]"
                       >
                         <SimpleDropdown
                           title="Proporção"
@@ -1414,7 +1414,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
                       {dropdownOpen === "quality" && (
                         <div
                           onClick={(e) => e.stopPropagation()}
-                          className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0F1119] rounded-3xl p-3 shadow-4xl border border-white/10 max-w-[200px]"
+                          className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0d0d0d] rounded-3xl p-3 shadow-4xl border border-white/10 max-w-[200px]"
                         >
                           <SimpleDropdown
                             title="Resolução"
@@ -1452,7 +1452,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
                     {dropdownOpen === "personagem" && (
                       <div
                         onClick={(e) => e.stopPropagation()}
-                        className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0F1119] rounded-3xl p-3 shadow-4xl border border-white/10 w-[calc(100vw-3rem)] max-w-xs max-h-80 overflow-y-auto custom-scrollbar"
+                        className="absolute bottom-[calc(100%+8px)] left-0 z-50 bg-[#0d0d0d] rounded-3xl p-3 shadow-4xl border border-white/10 w-[calc(100vw-3rem)] max-w-xs max-h-80 overflow-y-auto custom-scrollbar"
                       >
                         <div className="text-[10px] font-bold text-muted uppercase tracking-widest px-2 pb-2">
                           Meus personagens
@@ -1484,7 +1484,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
                             <button
                               type="button"
                               onClick={() => handleDeleteCharacter(c)}
-                              className="opacity-0 group-hover/char:opacity-100 text-muted hover:text-red-400 text-sm px-1 transition-opacity"
+                              className="opacity-0 group-hover/char:opacity-100 text-muted hover:text-primary text-sm px-1 transition-opacity"
                               title="Excluir personagem"
                             >
                               ×
@@ -1539,7 +1539,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
           {/* Template gallery — Fase 1 (roadmap item #3): a fixed grid of
               ready-made prompts grouped by category. Clicking one only
               fills the prompt + suggested aspect ratio, nothing else. */}
-          <div className="w-full max-w-4xl mt-8 md:mt-10 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
+          <div className={`w-full max-w-4xl mt-8 md:mt-10 animate-fade-in-up${hideTemplates ? " hidden" : ""}`} style={{ animationDelay: "0.3s" }}>
             <button
               type="button"
               onClick={() => setShowTemplates((v) => !v)}
@@ -1568,7 +1568,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
                     type="button"
                     onClick={() => handleTemplateSelect(tpl)}
                     title={tpl.prompt}
-                    className="flex flex-col items-start gap-1.5 p-3.5 bg-[#0F1119]/90 hover:bg-white/5 border border-white/10 hover:border-primary/40 rounded-2xl text-left transition-all group"
+                    className="flex flex-col items-start gap-1.5 p-3.5 bg-[#0d0d0d]/90 hover:bg-white/5 border border-white/10 hover:border-primary/40 rounded-2xl text-left transition-all group"
                   >
                     <span className="text-[9px] font-bold text-primary/70 uppercase tracking-widest">
                       {tpl.category}

@@ -185,7 +185,7 @@ function Dropdown({ items, selected, onSelect, triggerRef, onClose }) {
     return (
         <div
             ref={menuRef}
-            className="custom-dropdown absolute bottom-[calc(100%+8px)] left-0 bg-[#0F1119] border border-white/10 rounded-xl py-1 shadow-2xl z-50 flex flex-col min-w-[100px] max-h-[280px] overflow-y-auto animate-fade-in"
+            className="custom-dropdown absolute bottom-[calc(100%+8px)] left-0 bg-[#0d0d0d] border border-white/10 rounded-xl py-1 shadow-2xl z-50 flex flex-col min-w-[100px] max-h-[280px] overflow-y-auto animate-fade-in"
         >
             {items.map(item => (
                 <button
@@ -337,11 +337,11 @@ function ScrollColumn({ title, items, columnKey, value, onChange }) {
             <div className="mb-3 text-[9px] font-black text-white/40 uppercase tracking-[0.2em] text-center">
                 {title}
             </div>
-            <div className="relative overflow-hidden w-full h-[40vh] md:h-[320px] bg-[#0F1119]/80 rounded-[2rem] border border-white/5 shadow-2xl backdrop-blur-xl transition-transform duration-300 hover:scale-[1.02] hover:border-white/10">
+            <div className="relative overflow-hidden w-full h-[40vh] md:h-[320px] bg-[#0d0d0d]/80 rounded-[2rem] border border-white/5 shadow-2xl backdrop-blur-xl transition-transform duration-300 hover:scale-[1.02] hover:border-white/10">
                 {/* Top mask */}
-                <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#0F1119] via-[#0F1119]/80 to-transparent z-20 pointer-events-none rounded-t-[2rem]" />
+                <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#0d0d0d] via-[#0d0d0d]/80 to-transparent z-20 pointer-events-none rounded-t-[2rem]" />
                 {/* Bottom mask */}
-                <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#0F1119] via-[#0F1119]/80 to-transparent z-20 pointer-events-none rounded-b-[2rem]" />
+                <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#0d0d0d] via-[#0d0d0d]/80 to-transparent z-20 pointer-events-none rounded-b-[2rem]" />
                 {/* Center glow */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4/5 h-[80px] bg-primary/5 blur-xl rounded-full pointer-events-none z-0" />
 
@@ -476,7 +476,7 @@ function CameraControlsOverlay({ isOpen, onClose, settings, onSettingsChange }) 
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function CinemaStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits, onGeneratingChange }) {
+export default function CinemaStudio({ apiKey, onGenerationComplete, historyItems, onAuthRequired, onInsufficientCredits, onGeneratingChange, minimal = false }) {
     const { alert, confirm, prompt, dialog } = useDialog();
     const disabledModelIds = useDisabledModels();
     const availableVideoModels = useMemo(
@@ -969,7 +969,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
     const showCanvas = canvasUrl !== null;
 
     return (
-        <div className="w-full h-full flex flex-col items-center justify-center bg-app-bg relative p-4 md:p-6 overflow-y-auto custom-scrollbar overflow-x-hidden">
+        <div className="w-full h-full flex flex-col items-center justify-center bg-transparent relative p-4 md:p-6 overflow-y-auto custom-scrollbar overflow-x-hidden">
             {dialog}
 
             {/* ── History Sidebar ── */}
@@ -1069,10 +1069,10 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
             {!showCanvas && (
                 <>
                     {/* Hero */}
-                    <div className="flex flex-col items-center mb-6 md:mb-10 animate-fade-in-up transition-all duration-700">
+                    <div className={`flex flex-col items-center mb-6 md:mb-10 animate-fade-in-up transition-all duration-700${minimal ? " hidden" : ""}`}>
                         <div className="mb-5 relative group">
                             <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full opacity-40 group-hover:opacity-70 transition-opacity duration-1000" />
-                            <div className="relative w-20 h-20 md:w-28 md:h-28 bg-teal-900/40 rounded-3xl flex items-center justify-center border border-white/5 overflow-hidden">
+                            <div className="relative w-20 h-20 md:w-28 md:h-28 bg-white/40 rounded-3xl flex items-center justify-center border border-white/5 overflow-hidden">
                                 <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-primary opacity-20 absolute -right-4 -bottom-4">
                                     <path d="M23 7l-7 5 7 5V7z" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
                                 </svg>
@@ -1112,7 +1112,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
 
                     {/* Prompt Bar */}
                     <div className="w-full max-w-4xl relative z-40 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                        <div className="w-full bg-[#0F1119]/90 backdrop-blur-xl border border-white/10 rounded-[1.5rem] md:rounded-[2.5rem] p-3 md:p-5 flex flex-col gap-3 md:gap-5 shadow-3xl">
+                        <div className={`w-full ${minimal ? "bg-black/30 backdrop-blur-2xl" : "bg-[#0d0d0d]/90 backdrop-blur-xl"} border border-white/10 rounded-[1.5rem] md:rounded-[2.5rem] p-3 md:p-5 flex flex-col gap-3 md:gap-5 shadow-3xl`}>
 
                             {/* Input row */}
                             <div className="flex items-start gap-5 px-2">
@@ -1265,7 +1265,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                                         {openDropdown === 'personagem' && (
                                             <div
                                                 ref={personagemMenuRef}
-                                                className="custom-dropdown absolute bottom-[calc(100%+8px)] left-0 bg-[#0F1119] border border-white/10 rounded-xl p-3 shadow-2xl z-50 flex flex-col w-64 max-w-[280px] max-h-80 overflow-y-auto animate-fade-in"
+                                                className="custom-dropdown absolute bottom-[calc(100%+8px)] left-0 bg-[#0d0d0d] border border-white/10 rounded-xl p-3 shadow-2xl z-50 flex flex-col w-64 max-w-[280px] max-h-80 overflow-y-auto animate-fade-in"
                                             >
                                                 <div className="text-[10px] font-bold text-secondary uppercase tracking-widest px-1 pb-2 border-b border-white/5 mb-2">Meus personagens</div>
                                                 {selectedCharacter && (
@@ -1283,7 +1283,7 @@ export default function CinemaStudio({ apiKey, onGenerationComplete, historyItem
                                                                 <img src={c.reference_image_url} alt={c.name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
                                                                 <span className={`text-xs font-bold truncate ${c.id === selectedCharacterId ? 'text-primary' : 'text-white opacity-80'}`}>{c.name}</span>
                                                             </button>
-                                                            <button type="button" onClick={() => handleDeleteCharacter(c)} className="opacity-0 group-hover/char:opacity-100 text-muted hover:text-red-400 text-sm px-1 transition-opacity" title="Excluir personagem">×</button>
+                                                            <button type="button" onClick={() => handleDeleteCharacter(c)} className="opacity-0 group-hover/char:opacity-100 text-muted hover:text-primary text-sm px-1 transition-opacity" title="Excluir personagem">×</button>
                                                         </div>
                                                     ))}
                                                 </div>

@@ -61,7 +61,7 @@ export default function SupportBubble() {
         <div className="fixed inset-0 z-[70] flex items-end justify-center sm:justify-end bg-black/50 sm:bg-transparent px-4 sm:px-0 sm:pr-6 sm:pb-24" onClick={closeAndReset}>
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-[#0F1119] border border-white/10 rounded-2xl w-full sm:w-96 max-h-[85vh] overflow-y-auto p-6 mb-4 sm:mb-0 shadow-3xl"
+            className="bg-[#0d0d0d] border border-white/10 rounded-2xl w-full sm:w-96 max-h-[85vh] overflow-y-auto p-6 mb-4 sm:mb-0 shadow-3xl"
           >
             <div className="flex items-center justify-between mb-1">
               <p className="text-white font-black text-lg">Fale com a gente</p>
@@ -102,7 +102,7 @@ export default function SupportBubble() {
                   rows={4}
                   className="px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50 resize-none"
                 />
-                {error && <p className="text-red-400 text-xs">{error}</p>}
+                {error && <p className="text-primary text-xs">{error}</p>}
                 <button
                   type="submit"
                   disabled={sending}

@@ -418,7 +418,7 @@ function ContaContent() {
 
             <button
               onClick={handleLogout}
-              className="w-full py-2.5 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm font-semibold transition-colors"
+              className="w-full py-2.5 rounded-xl bg-primary/20 text-primary hover:bg-primary/30 text-sm font-semibold transition-colors"
             >
               Sair da conta
             </button>
@@ -472,7 +472,7 @@ function ContaContent() {
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); handleDeleteCollection(c); }}
-                      className="w-4 h-4 rounded-full bg-black/80 text-red-400 hover:text-red-300 text-[9px] flex items-center justify-center"
+                      className="w-4 h-4 rounded-full bg-black/80 text-primary hover:text-primary text-[9px] flex items-center justify-center"
                       title="Excluir"
                     >
                       ×
@@ -508,7 +508,7 @@ function ContaContent() {
               ))}
             </div>
 
-            {projectsError && <p className="text-red-400 text-sm mb-6">{projectsError}</p>}
+            {projectsError && <p className="text-primary text-sm mb-6">{projectsError}</p>}
 
             {!projects && !projectsError && (
               <div className="flex items-center justify-center py-24">
@@ -603,7 +603,7 @@ function ContaContent() {
                           {moveMenuId === item.id && (
                             <div
                               onClick={(e) => e.stopPropagation()}
-                              className="absolute top-9 right-0 z-20 bg-[#17181f] border border-white/10 rounded-xl py-1.5 min-w-[160px] shadow-2xl"
+                              className="absolute top-9 right-0 z-20 bg-[#0d0d0d] border border-white/10 rounded-xl py-1.5 min-w-[160px] shadow-2xl"
                             >
                               <button
                                 onClick={() => handleMoveToCollection(item, null)}
@@ -793,14 +793,14 @@ function ContaContent() {
                 )}
 
                 {subscription.status === 'canceling' ? (
-                  <p className="text-yellow-400 text-sm mb-4">
+                  <p className="text-primary text-sm mb-4">
                     Cancelamento agendado — você mantém o acesso até o fim do período já pago.
                   </p>
                 ) : (
                   <button
                     onClick={handleCancelSubscription}
                     disabled={canceling}
-                    className="w-full py-2.5 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm font-semibold transition-colors disabled:opacity-50"
+                    className="w-full py-2.5 rounded-xl bg-primary/20 text-primary hover:bg-primary/30 text-sm font-semibold transition-colors disabled:opacity-50"
                   >
                     {canceling ? 'Cancelando…' : 'Cancelar assinatura'}
                   </button>
@@ -919,7 +919,7 @@ function ChangePasswordCard({ hasPassword }) {
         className="w-full mb-3 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
       />
 
-      {error && <p className="text-red-400 text-xs mb-3">{error}</p>}
+      {error && <p className="text-primary text-xs mb-3">{error}</p>}
       {success && <p className="text-primary text-xs mb-3">Senha atualizada!</p>}
 
       <div className="flex gap-2">
