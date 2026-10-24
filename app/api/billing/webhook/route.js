@@ -103,7 +103,7 @@ export async function POST(request) {
       const plan = planId ? getPlanById(planId) : null;
       if (userId && plan) {
         createSubscription(userId, session.subscription, session.customer, planId);
-        addCredits(userId, trialBonusReais(), `Bônus de 7 dias grátis — plano ${plan.name}`, session.id);
+        addCredits(userId, trialBonusReais(), `Bônus do período grátis — plano ${plan.name}`, session.id);
         await sendOaiqConversion(session.id, event.created, `${process.env.APP_URL || 'https://www.visuia.ai'}/conta?tab=assinatura`);
       }
     } else {

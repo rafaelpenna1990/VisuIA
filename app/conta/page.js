@@ -202,7 +202,7 @@ function ContaContent() {
   };
 
   const handleEndTrial = async () => {
-    if (!(await confirm('Isso cobra seu cartão agora (em vez de esperar o fim dos 7 dias grátis) e libera o restante dos VisuTokens do plano na hora. Continuar?'))) return;
+    if (!(await confirm('Isso cobra seu cartão agora (em vez de esperar o fim do período grátis) e libera o restante dos VisuTokens do plano na hora. Continuar?'))) return;
     setEndingTrial(true);
     try {
       const res = await fetch('/api/billing/end-trial', { method: 'POST', credentials: 'include' });
@@ -777,9 +777,9 @@ function ContaContent() {
 
                 {subscription.status === 'trialing' && (
                   <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 mb-4">
-                    <p className="text-primary text-sm font-semibold mb-1">Você está no período grátis de 7 dias</p>
+                    <p className="text-primary text-sm font-semibold mb-1">Você está no período grátis</p>
                     <p className="text-white/50 text-xs mb-3">
-                      Sem cobrar nada do cartão ainda. Se o saldo grátis acabar antes do 7º dia, dá pra antecipar
+                      Sem cobrar nada do cartão ainda. Se o saldo grátis acabar antes do fim do período, dá pra antecipar
                       a cobrança e já receber o restante dos tokens do plano agora.
                     </p>
                     <button

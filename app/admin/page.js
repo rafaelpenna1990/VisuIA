@@ -215,7 +215,7 @@ function ConfigTab({ adminKey }) {
               className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
             />
             <p className="text-white/30 text-[11px] mt-1">
-              Só vale pra assinaturas novas — quem já está no meio de um trial continua com o prazo que tinha. Os textos do site (pop-up, página de conta) ainda dizem "7 dias" fixo; me avise se quiser que eu também deixe esses textos automáticos.
+              Só vale pra assinaturas novas — quem já está no meio de um trial continua com o prazo que tinha. O pop-up de assinatura mostra esse número sozinho. O texto da faixa de promoção (abaixo) é livre, então ajuste ele à mão.
             </p>
           </div>
           <div>
@@ -286,7 +286,7 @@ function ConfigTab({ adminKey }) {
             className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
           />
           <p className="text-white/30 text-[11px] mt-1">
-            Cobrada uma vez, na hora, além da mensalidade normal a partir do 7º dia. O texto do pop-up de assinatura se ajusta sozinho.
+            Cobrada uma vez, na hora, além da mensalidade normal depois do período grátis. O texto do pop-up de assinatura se ajusta sozinho.
           </p>
         </div>
         <div className="mb-4 pt-4 border-t border-white/5">
@@ -897,10 +897,10 @@ function MarketingTab({ adminKey }) {
   const [headline, setHeadline] = useState('Seus 500 VisuTokens grátis ainda estão esperando');
   const [body, setBody] = useState(
     'Você criou sua conta no VisuIA, mas ainda não assinou nenhum plano. Que tal experimentar de verdade?\n' +
-    'Comece agora com 7 dias grátis — os 500 VisuTokens caem na sua conta na hora, sem cobrar nada do cartão até o 7º dia.\n' +
+    'Comece agora com o teste grátis — os 500 VisuTokens caem na sua conta na hora, sem cobrar nada do cartão durante o período grátis.\n' +
     'Crie imagens, vídeos, sincronia labial e efeitos de cinema com inteligência artificial — suporte 100% em português, sem enrolação.'
   );
-  const [buttonText, setButtonText] = useState('Começar meus 7 dias grátis');
+  const [buttonText, setButtonText] = useState('Começar meu teste grátis');
   const [buttonLink, setButtonLink] = useState('https://www.visuia.ai/conta?tab=assinatura');
 
   const [previewHtml, setPreviewHtml] = useState(null);
