@@ -802,16 +802,48 @@ function AppearanceTab({ adminKey }) {
       </div>
 
       <div className="bg-card-bg border border-white/10 rounded-2xl p-6">
+        <h2 className="font-bold text-base mb-1">Vídeo de fundo</h2>
+        <p className="text-white/40 text-xs mb-6">
+          Vídeos que passam em tela cheia atrás da página inicial (e bem escurecidos nos estúdios). Só .mp4, sem áudio, de 5 a 10 segundos, 1080p ou 720p e até uns 4 MB cada. Com mais de um, eles se alternam; com um só, ele fica em loop. Enquanto uma posição estiver vazia, vale o vídeo padrão do site.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-black/30 border border-white/10 rounded-xl p-3">
+              <p className="text-white/40 text-[10px] mb-2">Vídeo {i}</p>
+              <div className="w-full aspect-video rounded-lg bg-black/40 border border-white/10 mb-2 overflow-hidden flex items-center justify-center">
+                <video
+                  key={`bg-${i}-${version}`}
+                  src={`/api/assets/bg/bg-${i}.mp4?v=${version}`}
+                  className="w-full h-full object-cover"
+                  muted
+                  loop
+                  playsInline
+                  autoPlay
+                />
+              </div>
+              <input
+                type="file"
+                accept=".mp4,video/mp4"
+                onChange={(e) => upload(e.target.files[0], 'bg', String(i))}
+                className="text-xs text-white/60 file:mr-2 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-primary file:text-black file:font-semibold file:text-xs file:cursor-pointer w-full"
+              />
+              {uploading === String(i) && <p className="text-white/40 text-[10px] mt-1">Enviando…</p>}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-card-bg border border-white/10 rounded-2xl p-6">
         <h2 className="font-bold text-base mb-1">Carrossel de exemplos</h2>
         <p className="text-white/40 text-xs mb-6">
-          Foto (.jpg/.png/.webp) ou vídeo (.mp4/.webm) — 3 posições por categoria. Aparecem na página inicial e em cada página /criar/....
+          Fotos (.jpg/.png/.webp) — até 5 posições por categoria. Formam o leque de exemplos acima da caixa de prompt, na página inicial.
         </p>
         <div className="flex flex-col gap-6">
           {CATEGORY_SLUGS.map((cat) => (
             <div key={cat.slug}>
               <p className="text-white text-sm font-semibold mb-2">{cat.label}</p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {[1, 2, 3].map((i) => {
+                {[1, 2, 3, 4, 5].map((i) => {
                   const slotKey = `${cat.slug}-${i}`;
                   return (
                     <div key={i} className="bg-black/30 border border-white/10 rounded-xl p-3">
