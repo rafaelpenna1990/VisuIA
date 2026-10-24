@@ -379,12 +379,20 @@ function ContaContent() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-white font-black text-2xl">Minha Conta</h1>
-          <button
-            onClick={() => router.push('/studio')}
-            className="text-sm font-semibold text-white/70 hover:text-white transition-colors border border-white/10 rounded-xl px-4 py-2"
-          >
-            ← Voltar ao Estúdio
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.push('/')}
+              className="text-sm font-semibold text-white/70 hover:text-white transition-colors border border-white/10 rounded-xl px-4 py-2"
+            >
+              Início
+            </button>
+            <button
+              onClick={() => router.push('/studio')}
+              className="text-sm font-semibold text-white/70 hover:text-white transition-colors border border-white/10 rounded-xl px-4 py-2"
+            >
+              ← Voltar ao Estúdio
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}

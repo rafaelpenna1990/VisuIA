@@ -111,6 +111,13 @@ export default function SiteHeader({ goToStudioOrAuth, isLoggedIn }) {
         </button>
 
         <nav className="hidden md:flex items-center gap-6">
+          <button
+            type="button"
+            onClick={() => goTo('/')}
+            className="text-sm font-semibold text-white/80 hover:text-white transition-colors"
+          >
+            Início
+          </button>
           <NavDropdown label={t('header.navCreate')} isOpen={openNav === 'create'} onToggle={toggleNav('create')}>
             <div className="p-3">
               {FEATURES.map((f) => (
@@ -227,6 +234,13 @@ export default function SiteHeader({ goToStudioOrAuth, isLoggedIn }) {
 
       {mobileMenuOpen && (
         <div className="md:hidden absolute top-full left-0 right-0 mt-2 mx-4 bg-[#0d0d0d] border border-white/10 rounded-2xl shadow-3xl z-50 px-4 py-1 max-h-[70vh] overflow-y-auto">
+          <button
+            type="button"
+            onClick={() => goTo('/')}
+            className="w-full text-left py-3.5 text-sm font-bold text-white border-b border-white/5"
+          >
+            Início
+          </button>
           <MobileNavSection label={t('header.navCreate')} isOpen={mobileSection === 'create'} onToggle={toggleMobileSection('create')}>
             {FEATURES.map((f) => (
               <button

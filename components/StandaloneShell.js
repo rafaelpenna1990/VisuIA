@@ -9,7 +9,6 @@ import SubscriptionModal from './SubscriptionModal';
 import { formatTokens } from '../lib/tokens.js';
 import { useAssetsVersion } from '../lib/useAssetsVersion.js';
 import Logo from './Logo';
-import VideoBackdrop from './VideoBackdrop';
 import { resumePendingJob, getPendingJob } from 'studio/src/api-client.js';
 import { useDialog } from 'studio/src/hooks/useDialog.jsx';
 
@@ -196,7 +195,6 @@ export default function StandaloneShell() {
 
   return (
     <div className="relative h-screen bg-black flex overflow-hidden">
-      <VideoBackdrop variant="app" />
       {/* Mobile top bar — hidden on desktop, where the sidebar is always visible */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-[#0d0d0d] border-b border-white/5 flex items-center justify-between px-4">
         <button
@@ -254,6 +252,16 @@ export default function StandaloneShell() {
             </div>
           )}
         </div>
+
+        <button
+          onClick={async () => { if (await confirmLeaveIfGenerating()) router.push('/'); }}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white/60 hover:text-white hover:bg-white/5 transition-colors text-left mb-4"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z" />
+          </svg>
+          Início
+        </button>
 
         <div className="text-[11px] font-semibold text-white/35 px-3 mb-2">
           Gerar
@@ -314,7 +322,7 @@ export default function StandaloneShell() {
       <div className="flex-1 min-w-0 pt-14 md:pt-0">
         <div className="relative h-full">
         <div className="relative z-10 h-full">
-        {activeTab === 'image'   && <ImageStudio minimal apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} onGeneratingChange={setIsGenerating} />}
+        {activeTab === 'image'   && <ImageStudio minimal hideTemplates apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} onGeneratingChange={setIsGenerating} />}
         {activeTab === 'video'   && <VideoStudio minimal apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} onGeneratingChange={setIsGenerating} />}
         {activeTab === 'lipsync' && <LipSyncStudio minimal apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} onGeneratingChange={setIsGenerating} />}
         {activeTab === 'cinema'  && <CinemaStudio minimal apiKey={placeholderKey} onGenerationComplete={refreshUser} onInsufficientCredits={handleInsufficientCredits} onGeneratingChange={setIsGenerating} />}
