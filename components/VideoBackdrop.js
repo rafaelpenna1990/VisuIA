@@ -5,7 +5,7 @@ import { useAssetsVersion } from '../lib/useAssetsVersion.js';
 
 // Vídeos suaves passando ao fundo do site, bem fracos, atrás das letras.
 //
-// Os arquivos ficam em public/bg/ como bg-1.mp4, bg-2.mp4, bg-3.mp4 (e um
+// Os arquivos ficam em public/bg/ como bg-1.mp4 até bg-5.mp4 (e um
 // bg-1.jpg, bg-2.jpg, bg-3.jpg de capa). Para usar seus próprios vídeos,
 // é só trocar esses arquivos mantendo os nomes e fazer o deploy — não
 // precisa mexer em código. Dica: vídeos curtos (5 a 10 s), 960x540 ou
@@ -20,7 +20,7 @@ import { useAssetsVersion } from '../lib/useAssetsVersion.js';
 // Os vídeos são servidos por /api/assets/bg/: o que foi enviado pelo painel
 // Admin (aba Aparência) tem prioridade; enquanto nada for enviado, vale o
 // arquivo que já vem em public/bg/.
-const CLIPS = [1, 2, 3].map((n) => ({
+const CLIPS = [1, 2, 3, 4, 5].map((n) => ({
   mp4: `/api/assets/bg/bg-${n}.mp4`,
   poster: `/bg/bg-${n}.jpg`,
 }));

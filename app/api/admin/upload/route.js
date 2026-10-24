@@ -10,7 +10,7 @@ const ALLOWED_EXT = ['.png', '.jpg', '.jpeg', '.webp', '.mp4', '.webm'];
 
 // Handles two kinds of uploads, chosen by the "target" field:
 //   target=logo             → saved as logo.<ext>, replacing any previous logo
-//   target=bg&slot=1|2|3    → vídeo de fundo, saved as bg/bg-<slot>.<ext>
+//   target=bg&slot=1..5    → vídeo de fundo, saved as bg/bg-<slot>.<ext>
 //   target=carousel&slot=X  → saved as carousel/<slot>.<ext> (slot like
 //                              "imagem-1", "video-2", etc — matches
 //                              ExampleCarousel's naming convention)
@@ -43,7 +43,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Slot inválido' }, { status: 400 });
     }
     destRelPath = path.join('carousel', `${slot}${originalExt}`);
-  } else if (target === 'bg' && ['1', '2', '3'].includes(String(slot))) {
+  } else if (target === 'bg' && ['1', '2', '3', '4', '5'].includes(String(slot))) {
     // Vídeo de fundo da vitrine: só .mp4. Fica em bg/bg-N.mp4
     if (originalExt !== '.mp4') {
       return NextResponse.json({ error: 'O fundo precisa ser um vídeo .mp4' }, { status: 400 });
