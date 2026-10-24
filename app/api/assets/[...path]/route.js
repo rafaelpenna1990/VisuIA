@@ -71,10 +71,39 @@ export async function GET(request, { params }) {
   const ext = path.extname(source).toLowerCase();
   const contentType = CONTENT_TYPES[ext] || 'application/octet-stream';
 
-  return new NextResponse(data, {
-    headers: {
-      'Content-Type': contentType,
-      'Cache-Control': 'public, max-age=300', // 5 min — short, so admin swaps show up fast
-    },
-  });
+  const headers = {
+    'Content-Type': contentType,
+    'Cache-Control': 'public, max-age=300', // 5 min — short, so admin swaps show up fast
+    'Accept-Ranges': 'bytes',
+  };
+
+  // Navegadores pedem vídeo em pedaços (Range). Sem responder 206, o vídeo
+  // pode não tocar (Safari/iPhone) ou demorar a começar.
+  const range = request.headers.get('range');
+  const match = range && /^bytes=(\d*)-(\d*)$/.exec(range);
+  if (match && (match[1] || match[2])) {
+    const total = data.length;
+    let start;
+    let end;
+    if (match[1] === '') {
+      start = Math.max(total - Number(match[2]), 0);
+      end = total - 1;
+    } else {
+      start = Number(match[1]);
+      end = match[2] ? Math.min(Number(match[2]), total - 1) : total - 1;
+    }
+    if (start >= total || start > end) {
+      return new NextResponse(null, { status: 416, headers: { 'Content-Range': `bytes */${total}` } });
+    }
+    return new NextResponse(data.subarray(start, end + 1), {
+      status: 206,
+      headers: {
+        ...headers,
+        'Content-Range': `bytes ${start}-${end}/${total}`,
+        'Content-Length': String(end - start + 1),
+      },
+    });
+  }
+
+  return new NextResponse(data, { headers });
 }

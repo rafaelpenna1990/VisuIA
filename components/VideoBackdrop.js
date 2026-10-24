@@ -79,7 +79,7 @@ export default function VideoBackdrop({ variant = 'app', intensity, intervalMs =
         el.pause();
       }
     });
-  }, [active, still]);
+  }, [active, still, version]);
 
   return (
     <div className={`${contained ? 'absolute' : 'fixed'} inset-0 z-0 overflow-hidden pointer-events-none`} aria-hidden="true">
@@ -96,7 +96,7 @@ export default function VideoBackdrop({ variant = 'app', intensity, intervalMs =
           />
         ) : (
           <video
-            key={clip.mp4}
+            key={`${clip.mp4}-${version}`}
             ref={(el) => { videoRefs.current[i] = el; }}
             className={common}
             style={style}
