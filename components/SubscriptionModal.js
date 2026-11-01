@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from '../lib/i18n/useTranslation.js';
+import PagarmeCardModal from './PagarmeCardModal.js';
 
 // Shown right after a first-time signup (see page.js) — same popup
 // pattern as AuthModal. The person either starts a plan's 7-day free
@@ -17,6 +18,7 @@ export default function SubscriptionModal({ onClose, onBuyWithoutSubscription })
   const [trialDays, setTrialDays] = useState(7);
   const [subscribing, setSubscribing] = useState(null);
   const [error, setError] = useState(null);
+  const [pagarmeForm, setPagarmeForm] = useState(null);
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -46,12 +48,21 @@ export default function SubscriptionModal({ onClose, onBuyWithoutSubscription })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || t('subscription.genericError'));
+      if (data.pagarme_form) {
+        setPagarmeForm(data.pagarme_form);
+        setSubscribing(null);
+        return;
+      }
       window.location.href = data.checkout_url;
     } catch (err) {
       setError(err.message);
       setSubscribing(null);
     }
   };
+
+  if (pagarmeForm) {
+    return <PagarmeCardModal config={pagarmeForm} onClose={() => setPagarmeForm(null)} />;
+  }
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4 py-8 overflow-y-auto">

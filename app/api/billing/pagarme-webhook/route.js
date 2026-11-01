@@ -1,19 +1,12 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import {
-  addCredits,
   wasWebhookEventProcessed,
   markWebhookEventProcessed,
-  createSubscription,
-  getSubscriptionByStripeId,
   updateSubscriptionStatus,
-  markFirstChargeDone,
-  getPlanById,
-  getUserById,
-  getSetting,
 } from '../../../../lib/db.js';
 import { pagarmeRequest } from '../../../../lib/pagarme.js';
-import { parsePagarmePlanName, userIdFromCustomerCode } from '../../../../lib/pagarmeBilling.js';
+import { creditPaidCharge, ensureLocalSubscription, userFromCustomer } from '../../../../lib/pagarmeSync.js';
 import { sendPaymentFailedEmail } from '../../../../lib/paymentFailedEmail.js';
 
 // Recebe os avisos (webhooks) da Pagar.me. Cadastre a URL
@@ -33,94 +26,6 @@ function tokenIsValid(request) {
   const a = Buffer.from(given);
   const b = Buffer.from(expected);
   return a.length === b.length && crypto.timingSafeEqual(a, b);
-}
-
-function trialBonusReais() {
-  return Number(getSetting('trial_bonus_tokens', '500')) / 100;
-}
-
-async function userFromCustomer(customerRef) {
-  let code = customerRef?.code;
-  if (!code && customerRef?.id) {
-    const customer = await pagarmeRequest('GET', `/customers/${customerRef.id}`);
-    code = customer?.code;
-  }
-  const userId = userIdFromCustomerCode(code);
-  return userId ? getUserById(userId) : null;
-}
-
-// Garante que a assinatura da Pagar.me existe no nosso banco (cria e dá o
-// bônus do período grátis na primeira vez). Devolve a linha local.
-async function ensureLocalSubscription(pagarmeSubscriptionId) {
-  const existing = getSubscriptionByStripeId(pagarmeSubscriptionId);
-  if (existing) return existing;
-
-  const sub = await pagarmeRequest('GET', `/subscriptions/${pagarmeSubscriptionId}`);
-  const user = await userFromCustomer(sub.customer);
-  if (!user) throw new Error(`Assinatura ${pagarmeSubscriptionId} sem cliente VisuIA reconhecido`);
-
-  let planName = sub.plan?.name;
-  if (!planName && sub.plan?.id) {
-    planName = (await pagarmeRequest('GET', `/plans/${sub.plan.id}`))?.name;
-  }
-  const parsed = parsePagarmePlanName(planName);
-  const plan = parsed ? getPlanById(parsed.planId) : null;
-  if (!plan) throw new Error(`Plano não reconhecido na assinatura ${pagarmeSubscriptionId}: ${planName}`);
-
-  // Pode ter sido criada por outro aviso enquanto buscávamos os dados.
-  const raced = getSubscriptionByStripeId(pagarmeSubscriptionId);
-  if (raced) return raced;
-
-  createSubscription(user.id, pagarmeSubscriptionId, sub.customer?.id || '', plan.id, 'pagarme');
-  addCredits(user.id, trialBonusReais(), `Bônus do período grátis — plano ${plan.name}`, `pagarme:sub:${pagarmeSubscriptionId}`);
-  return getSubscriptionByStripeId(pagarmeSubscriptionId);
-}
-
-// Descobre a qual assinatura uma cobrança pertence (null = compra avulsa).
-async function subscriptionIdOfCharge(charge) {
-  const invoice = charge.invoice;
-  if (!invoice) return null;
-  const direct = invoice.subscription?.id || invoice.subscription_id || invoice.subscriptionId;
-  if (direct) return direct;
-  if (invoice.id) {
-    const full = await pagarmeRequest('GET', `/invoices/${invoice.id}`);
-    const found = full?.subscription?.id || full?.subscription_id;
-    if (found) return found;
-  }
-  // Tem fatura, mas não achamos a assinatura: melhor falhar (a Pagar.me
-  // tenta de novo) do que tratar uma mensalidade como compra avulsa.
-  throw new Error(`Cobrança ${charge.id} tem fatura mas a assinatura não foi encontrada`);
-}
-
-async function handleChargePaid(chargeId) {
-  const dedupeKey = `pagarme:charge:${chargeId}`;
-  if (wasWebhookEventProcessed(dedupeKey)) return;
-
-  const charge = await pagarmeRequest('GET', `/charges/${chargeId}`);
-  if (charge.status !== 'paid') return;
-  const paidCents = Number(charge.paid_amount ?? charge.amount ?? 0);
-  if (!(paidCents > 0)) return;
-
-  const user = await userFromCustomer(charge.customer);
-  if (!user) throw new Error(`Cobrança ${chargeId} sem cliente VisuIA reconhecido`);
-
-  const subscriptionId = await subscriptionIdOfCharge(charge);
-
-  if (subscriptionId) {
-    const sub = await ensureLocalSubscription(subscriptionId);
-    const plan = getPlanById(sub.plan);
-    if (!plan) throw new Error(`Plano ${sub.plan} não existe mais`);
-    const description = sub.first_charge_done
-      ? `Assinatura ${plan.name} — renovação mensal`
-      : `Assinatura ${plan.name} — fim do período grátis`;
-    addCredits(sub.user_id, plan.tokens / 100, description, dedupeKey);
-    if (!sub.first_charge_done) markFirstChargeDone(subscriptionId);
-  } else {
-    // Compra avulsa (cartão ou Pix): cada R$ 1 pago vira R$ 1 de saldo.
-    addCredits(user.id, paidCents / 100, 'Recarga via Pagar.me', dedupeKey);
-  }
-
-  markWebhookEventProcessed(dedupeKey);
 }
 
 async function handleChargeFailed(chargeId) {
@@ -159,7 +64,7 @@ export async function POST(request) {
         if (objectId) updateSubscriptionStatus(objectId, 'canceled');
         break;
       case 'charge.paid':
-        if (objectId) await handleChargePaid(objectId);
+        if (objectId) await creditPaidCharge(objectId);
         break;
       case 'charge.payment_failed':
         if (objectId) await handleChargeFailed(objectId);

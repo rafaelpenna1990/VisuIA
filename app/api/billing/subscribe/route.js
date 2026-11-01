@@ -4,6 +4,7 @@ import { getSessionUser } from '../../../../lib/auth.js';
 import { getPlanById, getSetting } from '../../../../lib/db.js';
 import { getBillingProviderForUser } from '../../../../lib/billingProvider.js';
 import { createSubscriptionLink } from '../../../../lib/pagarmeBilling.js';
+import { pagarmeFormEnabled, getPagarmePublicKey } from '../../../../lib/pagarmeForm.js';
 
 const stripe = new Stripe((process.env.STRIPE_SECRET_KEY || '').trim(), {
   maxNetworkRetries: 2,
@@ -22,6 +23,17 @@ export async function POST(request) {
   const trialDays = Number(getSetting('trial_days', '7')) || 7;
 
   if (getBillingProviderForUser(user) === 'pagarme') {
+    if (pagarmeFormEnabled()) {
+      // O navegador abre o formulário de cartão do próprio VisuIA.
+      return NextResponse.json({
+        pagarme_form: {
+          kind: 'subscription',
+          publicKey: getPagarmePublicKey(),
+          plan: { id: chosen.id, name: chosen.name, amount_cents: chosen.amount_cents },
+          trialDays,
+        },
+      });
+    }
     try {
       const url = await createSubscriptionLink(user, chosen, { trialDays, entryFeeCents });
       return NextResponse.json({ checkout_url: url });

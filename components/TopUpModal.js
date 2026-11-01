@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from '../lib/i18n/useTranslation.js';
+import PagarmeCardModal from './PagarmeCardModal.js';
 
 const PACKS = [
   { id: 'small', tokens: '2.000', price: 'R$ 20' },
@@ -13,6 +14,7 @@ export default function TopUpModal({ onClose }) {
   const { t } = useTranslation();
   const [loadingPack, setLoadingPack] = useState(null);
   const [error, setError] = useState(null);
+  const [pagarmeForm, setPagarmeForm] = useState(null);
 
   const buy = async (pack) => {
     setError(null);
@@ -25,12 +27,21 @@ export default function TopUpModal({ onClose }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || t('topup.genericError'));
+      if (data.pagarme_form) {
+        setPagarmeForm(data.pagarme_form);
+        setLoadingPack(null);
+        return;
+      }
       window.location.href = data.checkout_url;
     } catch (err) {
       setError(err.message);
       setLoadingPack(null);
     }
   };
+
+  if (pagarmeForm) {
+    return <PagarmeCardModal config={pagarmeForm} onClose={() => setPagarmeForm(null)} />;
+  }
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">

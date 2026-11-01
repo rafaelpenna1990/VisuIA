@@ -4,6 +4,7 @@ import { getSessionUser } from '../../../../lib/auth.js';
 import { PACKS } from '../../../../lib/packs.js';
 import { getBillingProviderForUser } from '../../../../lib/billingProvider.js';
 import { createPackLink } from '../../../../lib/pagarmeBilling.js';
+import { pagarmeFormEnabled, getPagarmePublicKey } from '../../../../lib/pagarmeForm.js';
 
 const stripe = new Stripe((process.env.STRIPE_SECRET_KEY || '').trim(), {
   maxNetworkRetries: 2,
@@ -19,6 +20,15 @@ export async function POST(request) {
   if (!chosen) return NextResponse.json({ error: 'Pacote inválido' }, { status: 400 });
 
   if (getBillingProviderForUser(user) === 'pagarme') {
+    if (pagarmeFormEnabled()) {
+      return NextResponse.json({
+        pagarme_form: {
+          kind: 'pack',
+          publicKey: getPagarmePublicKey(),
+          pack: { id: pack, label: chosen.label, amount_cents: chosen.amount_cents },
+        },
+      });
+    }
     try {
       const url = await createPackLink(user, chosen);
       return NextResponse.json({ checkout_url: url });

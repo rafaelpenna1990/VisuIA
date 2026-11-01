@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { formatTokens } from '../../lib/tokens.js';
 import { usePromoText } from '../../lib/usePromoText.js';
 import TopUpModal from '../../components/TopUpModal';
+import PagarmeCardModal from '../../components/PagarmeCardModal';
 import { generateI2I } from '../../packages/studio/src/api-client.js';
 import { useDialog } from '../../packages/studio/src/hooks/useDialog.jsx';
 
@@ -80,6 +81,7 @@ function ContaContent() {
   const [subscription, setSubscription] = useState(undefined); // undefined = loading, null = none
   const [plans, setPlans] = useState([]);
   const [subscribing, setSubscribing] = useState(null);
+  const [pagarmeForm, setPagarmeForm] = useState(null);
   const [showTopUp, setShowTopUp] = useState(false);
 
   // Compartilhar / Melhorar na galeria de projetos — mesmo par de ações que
@@ -179,6 +181,11 @@ function ContaContent() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Não foi possível iniciar a assinatura');
+      if (data.pagarme_form) {
+        setPagarmeForm(data.pagarme_form);
+        setSubscribing(null);
+        return;
+      }
       window.location.href = data.checkout_url;
     } catch (err) {
       await alert(err.message);
@@ -375,6 +382,7 @@ function ContaContent() {
   return (
     <div className="min-h-screen bg-app-bg px-4 sm:px-6 py-8">
       {dialog}
+      {pagarmeForm && <PagarmeCardModal config={pagarmeForm} onClose={() => setPagarmeForm(null)} />}
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
