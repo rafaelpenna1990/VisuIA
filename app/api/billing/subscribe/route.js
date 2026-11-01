@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getSessionUser } from '../../../../lib/auth.js';
 import { getPlanById, getSetting } from '../../../../lib/db.js';
+import { getBillingProviderForUser } from '../../../../lib/billingProvider.js';
+import { createSubscriptionLink } from '../../../../lib/pagarmeBilling.js';
 
 const stripe = new Stripe((process.env.STRIPE_SECRET_KEY || '').trim(), {
   maxNetworkRetries: 2,
@@ -11,17 +13,28 @@ const stripe = new Stripe((process.env.STRIPE_SECRET_KEY || '').trim(), {
 export async function POST(request) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
-  if (!process.env.STRIPE_SECRET_KEY) {
-    return NextResponse.json({ error: 'STRIPE_SECRET_KEY não configurada' }, { status: 500 });
-  }
 
   const { plan } = await request.json();
   const chosen = getPlanById(plan);
   if (!chosen) return NextResponse.json({ error: 'Plano inválido' }, { status: 400 });
 
-  const origin = request.headers.get('origin') || process.env.APP_URL;
   const entryFeeCents = Number(getSetting('trial_entry_fee_cents', '0')) || 0;
   const trialDays = Number(getSetting('trial_days', '7')) || 7;
+
+  if (getBillingProviderForUser(user) === 'pagarme') {
+    try {
+      const url = await createSubscriptionLink(user, chosen, { trialDays, entryFeeCents });
+      return NextResponse.json({ checkout_url: url });
+    } catch (err) {
+      return NextResponse.json({ error: `Falha ao criar assinatura na Pagar.me: ${err.message}` }, { status: 502 });
+    }
+  }
+
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return NextResponse.json({ error: 'STRIPE_SECRET_KEY não configurada' }, { status: 500 });
+  }
+
+  const origin = request.headers.get('origin') || process.env.APP_URL;
 
   const lineItems = [{
     price_data: {

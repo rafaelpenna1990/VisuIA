@@ -19,6 +19,13 @@ export async function POST(request) {
   const sub = getActiveSubscriptionForUser(user.id);
   if (!sub) return NextResponse.json({ error: 'Nenhuma assinatura encontrada' }, { status: 404 });
 
+  if (sub.provider === 'pagarme') {
+    return NextResponse.json(
+      { error: 'Para trocar o cartão, cancele a assinatura e assine de novo, ou fale com o suporte.' },
+      { status: 400 }
+    );
+  }
+
   const origin = request.headers.get('origin') || process.env.APP_URL;
 
   try {
