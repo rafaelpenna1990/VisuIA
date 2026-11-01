@@ -2,6 +2,36 @@
 
 import { useState, useEffect, useRef } from 'react';
 
+
+// Máscaras dos campos (só dígitos entram; a formatação aparece sozinha).
+const digitsOnly = (v) => String(v || '').replace(/\D/g, '');
+
+function maskCpf(v) {
+  const d = digitsOnly(v).slice(0, 11);
+  return d
+    .replace(/^(\d{3})(\d)/, '$1.$2')
+    .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3-$4');
+}
+
+function maskPhone(v) {
+  const d = digitsOnly(v).slice(0, 11);
+  if (d.length === 0) return '';
+  if (d.length <= 2) return `(${d}`;
+  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+}
+
+function maskCardNumber(v) {
+  return digitsOnly(v).slice(0, 19).replace(/(\d{4})(?=\d)/g, '$1 ');
+}
+
+function maskExpiry(v) {
+  const d = digitsOnly(v).slice(0, 4);
+  return d.length <= 2 ? d : `${d.slice(0, 2)}/${d.slice(2)}`;
+}
+
 // Formulário de pagamento do VisuIA (cartão e Pix) usando a Pagar.me.
 // O número do cartão vai direto do navegador para a Pagar.me (tokenização com
 // a chave pública) — nosso servidor só recebe o token.
@@ -88,6 +118,8 @@ export default function PagarmeCardModal({ config, onClose, onSuccess }) {
     setError(null);
     setBusy(true);
     try {
+      if (digitsOnly(cpf).length !== 11) throw new Error('CPF incompleto');
+      if (digitsOnly(phone).length < 10) throw new Error('Celular incompleto — informe com DDD');
       const buyer = { name, cpf, phone };
       let body;
       let url;
@@ -175,17 +207,17 @@ export default function PagarmeCardModal({ config, onClose, onSuccess }) {
 
             <input className={input} placeholder="Nome completo" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" required />
             <div className="grid grid-cols-2 gap-2">
-              <input className={input} placeholder="CPF" inputMode="numeric" value={cpf} onChange={(e) => setCpf(e.target.value)} required />
-              <input className={input} placeholder="Celular com DDD" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" required />
+              <input className={input} placeholder="CPF (000.000.000-00)" inputMode="numeric" maxLength={14} value={cpf} onChange={(e) => setCpf(maskCpf(e.target.value))} required />
+              <input className={input} placeholder="Celular (11) 91234-5678" inputMode="tel" maxLength={15} value={phone} onChange={(e) => setPhone(maskPhone(e.target.value))} autoComplete="tel" required />
             </div>
 
             {(isSub || method === 'card') && (
               <>
-                <input className={input} placeholder="Número do cartão" inputMode="numeric" autoComplete="cc-number" value={number} onChange={(e) => setNumber(e.target.value)} required />
+                <input className={input} placeholder="Número do cartão" inputMode="numeric" maxLength={23} autoComplete="cc-number" value={number} onChange={(e) => setNumber(maskCardNumber(e.target.value))} required />
                 <input className={input} placeholder="Nome impresso no cartão" autoComplete="cc-name" value={holder} onChange={(e) => setHolder(e.target.value)} required />
                 <div className="grid grid-cols-2 gap-2">
-                  <input className={input} placeholder="MM/AA" autoComplete="cc-exp" value={expiry} onChange={(e) => setExpiry(e.target.value)} required />
-                  <input className={input} placeholder="CVV" inputMode="numeric" autoComplete="cc-csc" value={cvv} onChange={(e) => setCvv(e.target.value)} required />
+                  <input className={input} placeholder="MM/AA" inputMode="numeric" maxLength={5} autoComplete="cc-exp" value={expiry} onChange={(e) => setExpiry(maskExpiry(e.target.value))} required />
+                  <input className={input} placeholder="CVV" inputMode="numeric" maxLength={4} autoComplete="cc-csc" value={cvv} onChange={(e) => setCvv(digitsOnly(e.target.value).slice(0, 4))} required />
                 </div>
               </>
             )}
