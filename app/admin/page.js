@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Logo from '../../components/Logo';
+import AdminSubscribersTab from '../../components/AdminSubscribersTab';
 
 const CATEGORY_SLUGS = [
   { slug: 'imagem', label: 'Imagem' },
@@ -13,6 +14,7 @@ const CATEGORY_SLUGS = [
 const TABS = [
   { id: 'config', label: 'Configurações' },
   { id: 'users', label: 'Usuários' },
+  { id: 'subscribers', label: 'Assinantes' },
   { id: 'appearance', label: 'Aparência' },
   { id: 'marketing', label: 'Marketing' },
   { id: 'models', label: 'Modelos' },
@@ -113,6 +115,7 @@ export default function AdminPage() {
 
         {tab === 'config' && <ConfigTab adminKey={key} />}
         {tab === 'users' && <UsersTab adminKey={key} />}
+        {tab === 'subscribers' && <AdminSubscribersTab adminKey={key} />}
         {tab === 'appearance' && <AppearanceTab adminKey={key} />}
         {tab === 'marketing' && <MarketingTab adminKey={key} />}
         {tab === 'models' && <ModelsTab adminKey={key} />}
