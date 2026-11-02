@@ -21,7 +21,12 @@ export async function POST() {
     try {
       await pagarmeRequest('DELETE', `/subscriptions/${sub.stripe_subscription_id}`, { cancel_pending_invoices: true });
     } catch (err) {
-      return NextResponse.json({ error: `Falha ao cancelar: ${err.message}` }, { status: 502 });
+      // 404 = a Pagar.me não conhece essa assinatura (por exemplo, criada no
+      // ambiente de teste e agora estamos com as chaves de produção): não há
+      // mais nada a cancelar lá, então só encerramos o registro local.
+      if (err.status !== 404) {
+        return NextResponse.json({ error: `Falha ao cancelar: ${err.message}` }, { status: 502 });
+      }
     }
     updateSubscriptionStatus(sub.stripe_subscription_id, 'canceled');
     return NextResponse.json({ ok: true });
