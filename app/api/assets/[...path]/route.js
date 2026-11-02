@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { Readable } from 'stream';
 
 // Serves admin-uploaded files (logo, carousel photos/videos) straight from
 // the persistent volume (the same disk the SQLite DB lives on — see
@@ -17,6 +18,48 @@ const CONTENT_TYPES = {
   '.webm': 'video/webm',
 };
 
+function isFile(p) {
+  try {
+    return fs.statSync(p).isFile();
+  } catch {
+    return false;
+  }
+}
+
+// Descobre qual arquivo servir: primeiro o que o admin enviou (volume
+// persistente); enquanto nada foi enviado para aquele espaço, vale o
+// arquivo que já vem em public/. Devolve null se não existe.
+function resolveSource(segments, filePath) {
+  if (isFile(filePath)) return filePath;
+
+  // The exact requested extension isn't in uploads — but if this slot
+  // was customized with a DIFFERENT extension (e.g. the admin replaced
+  // a .jpg photo with an .mp4 video, or uploaded a .jpg logo when
+  // everything requests logo.png), don't silently fall back to the old
+  // public/ placeholder — that would mask the real upload forever.
+  // Only fall back when NOTHING for this slot exists in uploads at all.
+  const dir = path.dirname(filePath);
+  const wantedBase = path.basename(filePath, path.extname(filePath));
+  let customizedElsewhere = false;
+  try {
+    customizedElsewhere = fs.readdirSync(dir).some(
+      (f) => path.basename(f, path.extname(f)) === wantedBase
+    );
+  } catch {
+    // dir doesn't exist yet — nothing uploaded for anything in it.
+  }
+  if (customizedElsewhere) return null;
+
+  const publicPath = path.join(process.cwd(), 'public', ...segments);
+  return isFile(publicPath) ? publicPath : null;
+}
+
+// Lê só o pedaço pedido do disco (em vez de carregar o arquivo inteiro na
+// memória a cada pedido), o que deixa os vídeos começarem bem mais rápido.
+function streamBody(source, start, end) {
+  return Readable.toWeb(fs.createReadStream(source, { start, end }));
+}
+
 export async function GET(request, { params }) {
   const segments = params.path || [];
   // Guard against path traversal — only allow plain filenames/segments.
@@ -29,51 +72,22 @@ export async function GET(request, { params }) {
     return NextResponse.json({ error: 'Caminho inválido' }, { status: 400 });
   }
 
-  // Prefer whatever the admin uploaded (persistent volume). Until the
-  // first upload for a given slot, fall back to the file already shipped
-  // in public/ — so existing logo/carousel images keep working exactly
-  // as before, with nothing to re-upload on day one.
-  let data;
-  let source = filePath;
-  try {
-    data = fs.readFileSync(filePath);
-  } catch {
-    // The exact requested extension isn't in uploads — but if this slot
-    // was customized with a DIFFERENT extension (e.g. the admin replaced
-    // a .jpg photo with an .mp4 video, or uploaded a .jpg logo when
-    // everything requests logo.png), don't silently fall back to the old
-    // public/ placeholder — that would mask the real upload forever.
-    // Only fall back when NOTHING for this slot exists in uploads at all.
-    const dir = path.dirname(filePath);
-    const wantedBase = path.basename(filePath, path.extname(filePath));
-    let customizedElsewhere = false;
-    try {
-      customizedElsewhere = fs.readdirSync(dir).some(
-        (f) => path.basename(f, path.extname(f)) === wantedBase
-      );
-    } catch {
-      // dir doesn't exist yet — nothing uploaded for anything in it.
-    }
-
-    if (customizedElsewhere) {
-      return NextResponse.json({ error: 'Arquivo não encontrado' }, { status: 404 });
-    }
-
-    const publicPath = path.join(process.cwd(), 'public', ...segments);
-    try {
-      data = fs.readFileSync(publicPath);
-      source = publicPath;
-    } catch {
-      return NextResponse.json({ error: 'Arquivo não encontrado' }, { status: 404 });
-    }
+  const source = resolveSource(segments, filePath);
+  if (!source) {
+    return NextResponse.json({ error: 'Arquivo não encontrado' }, { status: 404 });
   }
 
+  const total = fs.statSync(source).size;
   const ext = path.extname(source).toLowerCase();
   const contentType = CONTENT_TYPES[ext] || 'application/octet-stream';
 
+  // Os endereços com ?v=<versão> mudam sozinhos quando o admin troca o
+  // arquivo, então podem ficar guardados no navegador por muito tempo (a
+  // segunda visita já abre na hora). Sem versão, o cache é curto.
+  const versioned = new URL(request.url).searchParams.has('v');
   const headers = {
     'Content-Type': contentType,
-    'Cache-Control': 'public, max-age=300', // 5 min — short, so admin swaps show up fast
+    'Cache-Control': versioned ? 'public, max-age=31536000, immutable' : 'public, max-age=300',
     'Accept-Ranges': 'bytes',
   };
 
@@ -82,7 +96,6 @@ export async function GET(request, { params }) {
   const range = request.headers.get('range');
   const match = range && /^bytes=(\d*)-(\d*)$/.exec(range);
   if (match && (match[1] || match[2])) {
-    const total = data.length;
     let start;
     let end;
     if (match[1] === '') {
@@ -95,7 +108,7 @@ export async function GET(request, { params }) {
     if (start >= total || start > end) {
       return new NextResponse(null, { status: 416, headers: { 'Content-Range': `bytes */${total}` } });
     }
-    return new NextResponse(data.subarray(start, end + 1), {
+    return new NextResponse(streamBody(source, start, end), {
       status: 206,
       headers: {
         ...headers,
@@ -105,5 +118,8 @@ export async function GET(request, { params }) {
     });
   }
 
-  return new NextResponse(data, { headers });
+  if (total === 0) return new NextResponse(null, { headers: { ...headers, 'Content-Length': '0' } });
+  return new NextResponse(streamBody(source, 0, total - 1), {
+    headers: { ...headers, 'Content-Length': String(total) },
+  });
 }

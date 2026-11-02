@@ -11,7 +11,6 @@ import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
 import AuthFlowModals from '../components/AuthFlowModals';
 import VideoBackdrop from '../components/VideoBackdrop';
-import ExampleFan from '../components/ExampleFan';
 import SiteSidebar from '../components/SiteSidebar';
 
 // Each studio (and the model catalog it pulls in, e.g. models.js at ~260KB)
@@ -49,7 +48,6 @@ export default function LandingPage() {
   const auth = useAuthFlow(selectedType);
   const { t } = useTranslation();
   const FEATURES = useLocalizedFeatures();
-  const currentSlug = FEATURES.find((f) => f.id === selectedType)?.slug || 'imagem';
   const hero = useHeroContent();
 
   return (
@@ -123,8 +121,6 @@ export default function LandingPage() {
                   {hero.subtitle}
                 </p>
               </div>
-
-              <ExampleFan slug={currentSlug} />
 
               {/* Abas só no celular — no computador a escolha fica na barra lateral */}
               <div className="md:hidden flex items-center justify-center gap-2 mb-5 flex-wrap">

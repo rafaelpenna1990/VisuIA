@@ -59,27 +59,48 @@ export default function VideoBackdrop({ variant = 'app', intensity, intervalMs =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [failed]);
 
+  // O próximo vídeo da fila: já começa a baixar enquanto o atual toca, para
+  // a troca não travar esperando carregar.
+  const nextIndex = single ? -1 : available[(available.indexOf(active) + 1) % available.length];
+
+  const goNext = () => {
+    if (single || nextIndex < 0) return;
+    setActive(nextIndex);
+  };
+
   // Quando um vídeo termina, passa para o próximo (cada um toca uma vez só,
   // do começo ao fim). Com um único vídeo, ele fica em loop.
   const handleEnded = (i) => {
-    if (single || i !== active) return;
-    const pos = available.indexOf(i);
-    setActive(available[(pos + 1) % available.length]);
+    if (i !== active) return;
+    goNext();
   };
 
-  // Só o vídeo ativo toca, sempre do começo.
+  // Perto do fim do vídeo atual, se o próximo já está carregado, começa a
+  // troca (fade cruzado) sem esperar o final: não fica tela parada.
+  const handleTimeUpdate = (i) => {
+    if (single || i !== active) return;
+    const cur = videoRefs.current[i];
+    const nxt = videoRefs.current[nextIndex];
+    if (!cur || !nxt || !Number.isFinite(cur.duration)) return;
+    if (cur.duration - cur.currentTime <= 1.6 && nxt.readyState >= 3) goNext();
+  };
+
+  // Só o vídeo ativo começa do zero; o anterior continua mais 2 segundos
+  // (enquanto some devagar) e só depois é pausado.
   useEffect(() => {
-    if (still) return;
+    if (still) return undefined;
     videoRefs.current.forEach((el, i) => {
-      if (!el) return;
-      if (i === active) {
-        try { el.currentTime = 0; } catch { /* ainda sem metadados */ }
-        const p = el.play();
-        if (p && typeof p.catch === 'function') p.catch(() => {});
-      } else {
-        el.pause();
-      }
+      if (!el || i !== active) return;
+      try { el.currentTime = 0; } catch { /* ainda sem metadados */ }
+      const p = el.play();
+      if (p && typeof p.catch === 'function') p.catch(() => {});
     });
+    const timer = setTimeout(() => {
+      videoRefs.current.forEach((el, i) => {
+        if (el && i !== active) el.pause();
+      });
+    }, 2300);
+    return () => clearTimeout(timer);
   }, [active, still, version]);
 
   return (
@@ -104,8 +125,10 @@ export default function VideoBackdrop({ variant = 'app', intensity, intervalMs =
             muted
             loop={single}
             onEnded={() => handleEnded(i)}
+            onTimeUpdate={() => handleTimeUpdate(i)}
             playsInline
-            preload={i === 0 ? 'auto' : 'metadata'}
+            poster={clip.poster}
+            preload={i === active || i === nextIndex ? 'auto' : 'metadata'}
             autoPlay={i === 0}
           >
             <source
