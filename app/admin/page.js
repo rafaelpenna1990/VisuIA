@@ -323,6 +323,44 @@ function ConfigTab({ adminKey }) {
             className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
           />
         </div>
+        <div className="mb-4 pt-4 border-t border-white/5">
+          <h3 className="text-sm font-bold mb-3">📧 E-mail de nova assinatura</h3>
+          <p className="text-white/30 text-[11px] mb-3">
+            Enviado quando alguém começa uma assinatura, com um botão para a conta da pessoa. Atalhos que viram os dados reais:
+            {' '}{'{plano} {tokens} {bonus} {dias} {valor} {data}'}. Campos em branco usam o texto padrão.
+          </p>
+          <label className="block text-xs text-white/50 mb-1">Assunto</label>
+          <input
+            value={settings.subscription_email_subject || ''}
+            onChange={(e) => setSettings({ ...settings, subscription_email_subject: e.target.value })}
+            className="w-full mb-3 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
+          />
+          <label className="block text-xs text-white/50 mb-1">Selo (badge)</label>
+          <input
+            value={settings.subscription_email_badge || ''}
+            onChange={(e) => setSettings({ ...settings, subscription_email_badge: e.target.value })}
+            className="w-full mb-3 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
+          />
+          <label className="block text-xs text-white/50 mb-1">Título</label>
+          <input
+            value={settings.subscription_email_headline || ''}
+            onChange={(e) => setSettings({ ...settings, subscription_email_headline: e.target.value })}
+            className="w-full mb-3 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
+          />
+          <label className="block text-xs text-white/50 mb-1">Corpo do texto (uma frase por linha)</label>
+          <textarea
+            value={settings.subscription_email_body || ''}
+            onChange={(e) => setSettings({ ...settings, subscription_email_body: e.target.value })}
+            rows={5}
+            className="w-full mb-3 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
+          />
+          <label className="block text-xs text-white/50 mb-1">Texto do botão</label>
+          <input
+            value={settings.subscription_email_button_text || ''}
+            onChange={(e) => setSettings({ ...settings, subscription_email_button_text: e.target.value })}
+            className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-primary/50"
+          />
+        </div>
         <p className="text-white/30 text-xs mb-4">
           Essas mudanças valem na hora, sem precisar reiniciar o site.
         </p>

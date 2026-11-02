@@ -10,7 +10,9 @@ import {
   markFirstChargeDone,
   getPlanById,
   getSetting,
+  getUserById,
 } from '../../../../lib/db.js';
+import { sendSubscriptionWelcomeEmail } from '../../../../lib/subscriptionWelcomeEmail.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
@@ -104,6 +106,7 @@ export async function POST(request) {
       if (userId && plan) {
         createSubscription(userId, session.subscription, session.customer, planId);
         addCredits(userId, trialBonusReais(), `Bônus do período grátis — plano ${plan.name}`, session.id);
+        await sendSubscriptionWelcomeEmail(getUserById(userId), plan, { trialDays: Number(getSetting('trial_days', '7')) || 7 });
         await sendOaiqConversion(session.id, event.created, `${process.env.APP_URL || 'https://www.visuia.ai'}/conta?tab=assinatura`);
       }
     } else {

@@ -22,6 +22,7 @@ export async function POST(request) {
     'usd_to_brl', 'price_markup', 'trial_bonus_tokens', 'signup_free_credits', 'trial_days',
     'promo_text', 'hero_title', 'hero_subtitle', 'support_email', 'trial_entry_fee_cents',
     'welcome_email_badge', 'welcome_email_headline', 'welcome_email_body', 'welcome_email_button_text',
+    'subscription_email_subject', 'subscription_email_badge', 'subscription_email_headline', 'subscription_email_body', 'subscription_email_button_text',
   ];
   for (const key of allowedKeys) {
     if (body[key] !== undefined && body[key] !== '') {
