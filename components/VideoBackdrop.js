@@ -93,7 +93,12 @@ export default function VideoBackdrop({ variant = 'app', intensity, intervalMs =
       if (!el || i !== active) return;
       try { el.currentTime = 0; } catch { /* ainda sem metadados */ }
       const p = el.play();
-      if (p && typeof p.catch === 'function') p.catch(() => {});
+      // Se o aparelho não deixa tocar sozinho (ex.: iPhone no modo de baixo
+      // consumo), mostra só a imagem de capa em vez de um vídeo parado com
+      // botão de play por cima.
+      if (p && typeof p.catch === 'function') {
+        p.catch((err) => { if (err && err.name === 'NotAllowedError') setStill(true); });
+      }
     });
     const timer = setTimeout(() => {
       videoRefs.current.forEach((el, i) => {
