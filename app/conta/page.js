@@ -208,6 +208,23 @@ function ContaContent() {
     }
   };
 
+  const [openingCardChange, setOpeningCardChange] = useState(false);
+
+  // Abre o formulário para trocar o cartão da assinatura (Pagar.me/Stone).
+  const handleChangeCard = async () => {
+    setOpeningCardChange(true);
+    try {
+      const res = await fetch('/api/billing/pagarme/change-card', { credentials: 'include' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Não foi possível abrir a troca de cartão');
+      setPagarmeForm(data.pagarme_form);
+    } catch (err) {
+      await alert(err.message);
+    } finally {
+      setOpeningCardChange(false);
+    }
+  };
+
   const handleEndTrial = async () => {
     if (!(await confirm('Isso cobra seu cartão agora (em vez de esperar o fim do período grátis) e libera o restante dos VisuTokens do plano na hora. Continuar?'))) return;
     setEndingTrial(true);
@@ -791,7 +808,38 @@ function ContaContent() {
                   {subscription.tokensPerMonth.toLocaleString('pt-BR')} VisuTokens
                 </p>
 
-                {subscription.status === 'trialing' && (
+                {subscription.provider === 'pagarme' && subscription.paymentFailed && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-4">
+                    <p className="text-red-400 text-sm font-semibold mb-1">Não conseguimos cobrar seu cartão</p>
+                    <p className="text-white/60 text-xs">
+                      O banco não aprovou a cobrança da assinatura. Troque o cartão (ou use o mesmo, se o banco já tiver
+                      liberado) e a cobrança é refeita na hora — seus VisuTokens entram em seguida.
+                    </p>
+                  </div>
+                )}
+
+                {subscription.provider === 'pagarme' && (
+                  <div className="mb-4">
+                    {subscription.card && (
+                      <p className="text-white/50 text-xs mb-2">
+                        Cartão atual: {subscription.card.brand ? `${subscription.card.brand} ` : ''}final {subscription.card.last_four}
+                      </p>
+                    )}
+                    <button
+                      onClick={handleChangeCard}
+                      disabled={openingCardChange}
+                      className={`w-full py-2.5 rounded-xl text-sm font-bold transition-opacity disabled:opacity-50 ${
+                        subscription.paymentFailed
+                          ? 'bg-primary text-black hover:opacity-90'
+                          : 'border border-white/15 text-white/80 hover:bg-white/5 font-semibold'
+                      }`}
+                    >
+                      {openingCardChange ? 'Abrindo…' : subscription.paymentFailed ? 'Trocar cartão e pagar agora' : 'Trocar cartão'}
+                    </button>
+                  </div>
+                )}
+
+                {subscription.status === 'trialing' && !subscription.paymentFailed && (
                   <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 mb-4">
                     <p className="text-primary text-sm font-semibold mb-1">Você está no período grátis</p>
                     <p className="text-white/50 text-xs mb-3">

@@ -38,9 +38,10 @@ function maskExpiry(v) {
 //
 // config vem da API: { kind: 'subscription'|'pack', publicKey, plan|pack, trialDays }
 export default function PagarmeCardModal({ config, onClose, onSuccess }) {
+  const isChange = config.kind === 'card-change';
   const isSub = config.kind === 'subscription';
-  const amountCents = isSub ? config.plan.amount_cents : config.pack.amount_cents;
-  const title = isSub ? `Plano ${config.plan.name}` : config.pack.label;
+  const amountCents = isSub || isChange ? config.plan.amount_cents : config.pack.amount_cents;
+  const title = isChange ? 'Trocar cartão' : isSub ? `Plano ${config.plan.name}` : config.pack.label;
   const money = `R$ ${(amountCents / 100).toFixed(2).replace('.', ',')}`;
 
   const [method, setMethod] = useState('card');
@@ -123,7 +124,10 @@ export default function PagarmeCardModal({ config, onClose, onSuccess }) {
       const buyer = { name, cpf, phone };
       let body;
       let url;
-      if (isSub) {
+      if (isChange) {
+        url = '/api/billing/pagarme/change-card';
+        body = { ...buyer, token: await tokenizeCard() };
+      } else if (isSub) {
         url = '/api/billing/pagarme/subscribe';
         body = { ...buyer, plan: config.plan.id, token: await tokenizeCard() };
       } else {
@@ -166,7 +170,11 @@ export default function PagarmeCardModal({ config, onClose, onSuccess }) {
         <button type="button" onClick={onClose} className="absolute top-4 right-4 text-white/30 hover:text-white" aria-label="Fechar">✕</button>
         <h2 className="text-white font-black text-lg mb-1">{title}</h2>
         <p className="text-white/50 text-sm mb-4">
-          {isSub
+          {isChange
+            ? config.payNow
+              ? `A última cobrança não foi aprovada. Vamos cobrar ${money} agora no cartão novo e liberar seus VisuTokens do plano.`
+              : 'O cartão novo passa a valer para as próximas cobranças. Nada é cobrado agora.'
+            : isSub
             ? config.trialDays > 0
               ? `${config.trialDays} dias grátis, depois ${money}/mês. Cancele quando quiser.`
               : `${money}/mês. Cancele quando quiser.`
@@ -174,7 +182,9 @@ export default function PagarmeCardModal({ config, onClose, onSuccess }) {
         </p>
 
         {done ? (
-          <p className="text-green-400 font-semibold text-sm py-6 text-center">Pagamento confirmado! Atualizando…</p>
+          <p className="text-green-400 font-semibold text-sm py-6 text-center">
+            {isChange && !config.payNow ? 'Cartão atualizado! Atualizando…' : 'Pagamento confirmado! Atualizando…'}
+          </p>
         ) : pix ? (
           <div className="flex flex-col items-center gap-3">
             <p className="text-white/70 text-sm text-center">Escaneie o QR Code ou copie o código Pix. Assim que pagar, seus tokens entram automaticamente.</p>
@@ -190,7 +200,7 @@ export default function PagarmeCardModal({ config, onClose, onSuccess }) {
           </div>
         ) : (
           <form onSubmit={submit} className="flex flex-col gap-3">
-            {!isSub && (
+            {!isSub && !isChange && (
               <div className="grid grid-cols-2 gap-2">
                 {[['card', 'Cartão'], ['pix', 'Pix']].map(([id, label]) => (
                   <button
@@ -211,7 +221,7 @@ export default function PagarmeCardModal({ config, onClose, onSuccess }) {
               <input className={input} placeholder="Celular (11) 91234-5678" inputMode="tel" maxLength={15} value={phone} onChange={(e) => setPhone(maskPhone(e.target.value))} autoComplete="tel" required />
             </div>
 
-            {(isSub || method === 'card') && (
+            {(isSub || isChange || method === 'card') && (
               <>
                 <input className={input} placeholder="Número do cartão" inputMode="numeric" maxLength={23} autoComplete="cc-number" value={number} onChange={(e) => setNumber(maskCardNumber(e.target.value))} required />
                 <input className={input} placeholder="Nome impresso no cartão" autoComplete="cc-name" value={holder} onChange={(e) => setHolder(e.target.value)} required />
@@ -227,6 +237,8 @@ export default function PagarmeCardModal({ config, onClose, onSuccess }) {
             <button type="submit" disabled={busy} className="w-full py-3 rounded-xl bg-primary text-black font-bold text-sm hover:opacity-90 disabled:opacity-50">
               {busy
                 ? 'Processando…'
+                : isChange
+                  ? config.payNow ? `Trocar cartão e pagar ${money}` : 'Salvar novo cartão'
                 : isSub
                   ? config.trialDays > 0 ? 'Começar teste grátis' : `Assinar por ${money}/mês`
                   : method === 'pix' ? 'Gerar Pix' : `Pagar ${money}`}
