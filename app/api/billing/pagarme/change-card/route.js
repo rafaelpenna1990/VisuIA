@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSessionUser } from '../../../../../lib/auth.js';
 import { getActiveSubscriptionForUser, getPlanById } from '../../../../../lib/db.js';
 import { ensureCustomer, saveCardFromToken } from '../../../../../lib/pagarmeBilling.js';
-import { readBuyerData, getPagarmePublicKey, pagarmeFormEnabled } from '../../../../../lib/pagarmeForm.js';
+import { readBuyerData, getPagarmePublicKey, pagarmeTokenizationAvailable } from '../../../../../lib/pagarmeForm.js';
 import { inspectPagarmeSubscription, changeSubscriptionCard } from '../../../../../lib/pagarmeCardChange.js';
 
 function pagarmeSubscriptionOf(user) {
@@ -16,7 +16,7 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
   const sub = pagarmeSubscriptionOf(user);
   if (!sub) return NextResponse.json({ error: 'Nenhuma assinatura da Pagar.me encontrada' }, { status: 404 });
-  if (!pagarmeFormEnabled()) return NextResponse.json({ error: 'Troca de cartão indisponível' }, { status: 503 });
+  if (!pagarmeTokenizationAvailable()) return NextResponse.json({ error: 'Troca de cartão indisponível' }, { status: 503 });
 
   try {
     const info = await inspectPagarmeSubscription(sub);

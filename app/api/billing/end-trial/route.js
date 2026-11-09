@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 import { getSessionUser } from '../../../../lib/auth.js';
 import { getActiveSubscriptionForUser, getPlanById, updateSubscriptionStatus } from '../../../../lib/db.js';
 import { pagarmeRequest } from '../../../../lib/pagarme.js';
-import { createCardSubscription, parsePagarmePlanName } from '../../../../lib/pagarmeBilling.js';
+import { createCardSubscription, describeRemotePlan } from '../../../../lib/pagarmeBilling.js';
 import { ensureLocalSubscription, creditPaidCharge } from '../../../../lib/pagarmeSync.js';
 
 const stripe = new Stripe((process.env.STRIPE_SECRET_KEY || '').trim(), {
@@ -29,7 +29,7 @@ export async function POST() {
     let created;
     try {
       const old = await pagarmeRequest('GET', `/subscriptions/${oldId}`);
-      const parsed = parsePagarmePlanName(old.plan?.name);
+      const parsed = await describeRemotePlan(old.plan);
       const plan = getPlanById(parsed?.planId || sub.plan);
       if (!plan) throw new Error('Plano da assinatura não encontrado');
       if (!old.card?.id || !old.customer?.id) throw new Error('Cartão da assinatura não encontrado');
