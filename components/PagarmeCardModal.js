@@ -32,6 +32,44 @@ function maskExpiry(v) {
   return d.length <= 2 ? d : `${d.slice(0, 2)}/${d.slice(2)}`;
 }
 
+// Bandeira do cartão a partir dos primeiros dígitos (só para mostrar ao cliente).
+function cardBrand(v) {
+  const d = digitsOnly(v);
+  if (d.length < 2) return null;
+  const n2 = Number(d.slice(0, 2));
+  const n4 = Number(d.slice(0, 4));
+  const n6 = Number(d.slice(0, 6));
+  if (/^(4011|4312|4389|4514|4576|5041|5066|5067|509|6277|6362|6363|650|6516|6550)/.test(d)) return 'Elo';
+  if (d.startsWith('606282') || d.startsWith('3841')) return 'Hipercard';
+  if (d[0] === '4') return 'Visa';
+  if ((n2 >= 51 && n2 <= 55) || (n4 >= 2221 && n4 <= 2720)) return 'Mastercard';
+  if (n2 === 34 || n2 === 37) return 'Amex';
+  if (n2 === 36 || n2 === 38 || (n6 >= 300000 && n6 <= 305999)) return 'Diners';
+  return null;
+}
+
+const formatDate = (date) => date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+// Quadro "Entenda as cobranças": mostra o que será cobrado e quando.
+function ChargeSummary({ rows }) {
+  return (
+    <div className="bg-white/5 border border-white/10 rounded-xl p-3">
+      <p className="text-white/80 text-xs font-bold mb-2">Entenda as cobranças</p>
+      <ul className="flex flex-col gap-2">
+        {rows.map((r, i) => (
+          <li key={i} className="flex items-start gap-2">
+            <span className={`mt-1 w-2 h-2 rounded-full shrink-0 ${r.now ? 'bg-primary' : 'bg-white/25'}`} />
+            <div className="flex-1">
+              <p className={`text-xs font-semibold ${r.now ? 'text-white' : 'text-white/70'}`}>{r.title}</p>
+              <p className="text-white/40 text-[11px]">{r.note}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 // Formulário de pagamento do VisuIA (cartão e Pix) usando a Pagar.me.
 // O número do cartão vai direto do navegador para a Pagar.me (tokenização com
 // a chave pública) — nosso servidor só recebe o token.
@@ -43,6 +81,30 @@ export default function PagarmeCardModal({ config, onClose, onSuccess }) {
   const amountCents = isSub || isChange ? config.plan.amount_cents : config.pack.amount_cents;
   const title = isChange ? 'Trocar cartão' : isSub ? `Plano ${config.plan.name}` : config.pack.label;
   const money = `R$ ${(amountCents / 100).toFixed(2).replace('.', ',')}`;
+
+  const chargeRows = (() => {
+    if (isChange) {
+      return config.payNow
+        ? [
+            { now: true, title: `Hoje · ${money}`, note: 'Cobrança da assinatura no cartão novo; os VisuTokens do plano entram em seguida.' },
+            { title: `Todo mês · ${money}`, note: 'As próximas cobranças seguem no cartão novo.' },
+          ]
+        : null;
+    }
+    if (!isSub) return null;
+    if (config.trialDays > 0) {
+      const first = new Date(Date.now() + config.trialDays * 86400000);
+      return [
+        { now: true, title: 'Hoje · R$ 0,00', note: `Nada é cobrado agora. Você tem ${config.trialDays} dias grátis.` },
+        { title: `${formatDate(first)} · ${money}`, note: 'Primeira cobrança, ao fim do período grátis. Cancele antes disso e não paga nada.' },
+        { title: `Depois · ${money} todo mês`, note: 'Cancele quando quiser, direto na sua conta.' },
+      ];
+    }
+    return [
+      { now: true, title: `Hoje · ${money}`, note: 'Cobrança da assinatura ao finalizar.' },
+      { title: `Todo mês · ${money}`, note: 'Cancele quando quiser, direto na sua conta.' },
+    ];
+  })();
 
   const [method, setMethod] = useState('card');
   const [name, setName] = useState('');
@@ -223,7 +285,14 @@ export default function PagarmeCardModal({ config, onClose, onSuccess }) {
 
             {(isSub || isChange || method === 'card') && (
               <>
-                <input className={input} placeholder="Número do cartão" inputMode="numeric" maxLength={23} autoComplete="cc-number" value={number} onChange={(e) => setNumber(maskCardNumber(e.target.value))} required />
+                <div className="relative">
+                  <input className={`${input} pr-24`} placeholder="Número do cartão" inputMode="numeric" maxLength={23} autoComplete="cc-number" value={number} onChange={(e) => setNumber(maskCardNumber(e.target.value))} required />
+                  {cardBrand(number) && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold text-white/80 bg-white/10 rounded px-2 py-0.5">
+                      {cardBrand(number)}
+                    </span>
+                  )}
+                </div>
                 <input className={input} placeholder="Nome impresso no cartão" autoComplete="cc-name" value={holder} onChange={(e) => setHolder(e.target.value)} required />
                 <div className="grid grid-cols-2 gap-2">
                   <input className={input} placeholder="MM/AA" inputMode="numeric" maxLength={5} autoComplete="cc-exp" value={expiry} onChange={(e) => setExpiry(maskExpiry(e.target.value))} required />
@@ -231,6 +300,8 @@ export default function PagarmeCardModal({ config, onClose, onSuccess }) {
                 </div>
               </>
             )}
+
+            {chargeRows && (method === 'card' || isSub || isChange) && <ChargeSummary rows={chargeRows} />}
 
             {error && <p className="text-primary text-xs">{error}</p>}
 
@@ -243,7 +314,16 @@ export default function PagarmeCardModal({ config, onClose, onSuccess }) {
                   ? config.trialDays > 0 ? 'Começar teste grátis' : `Assinar por ${money}/mês`
                   : method === 'pix' ? 'Gerar Pix' : `Pagar ${money}`}
             </button>
-            <p className="text-white/30 text-[11px] text-center">Pagamento processado com segurança pela Pagar.me (Stone).</p>
+            <div className="flex items-start gap-2 text-white/40 text-[11px] leading-snug">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5" aria-hidden="true">
+                <rect x="4" y="11" width="16" height="10" rx="2" />
+                <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+              </svg>
+              <p>
+                Pagamento seguro. Os dados do cartão são enviados direto para a Pagar.me (Stone), que processa a
+                cobrança, e não passam pelo VisuIA.
+              </p>
+            </div>
           </form>
         )}
       </div>
