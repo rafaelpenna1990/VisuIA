@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useAssetsVersion } from '../lib/useAssetsVersion.js';
+import { useAssetsVersionState } from '../lib/useAssetsVersion.js';
 
 // Vídeos suaves passando ao fundo do site, bem fracos, atrás das letras.
 //
@@ -30,7 +30,7 @@ const CLIPS = [1, 2, 3, 4, 5].map((n) => ({
 // variant="app": telas de uso (estúdios logados) — o mesmo vídeo, bem mais
 //   escuro, para não atrapalhar quem está criando.
 export default function VideoBackdrop({ variant = 'app', intensity, intervalMs = 9000, contained = false }) {
-  const version = useAssetsVersion();
+  const { version, ready } = useAssetsVersionState();
   const hero = variant === 'hero';
   const level = intensity ?? (hero ? 0.95 : 0.22);
   const [active, setActive] = useState(0);
@@ -110,7 +110,9 @@ export default function VideoBackdrop({ variant = 'app', intensity, intervalMs =
         const visible = i === active;
         const style = { opacity: visible ? level : 0 };
         const common = 'absolute inset-0 w-full h-full object-cover transition-opacity duration-[2000ms] ease-in-out';
-        return still ? (
+        // Enquanto a versão dos arquivos não chegou, mostra só a capa (sem
+        // baixar vídeo com endereço provisório que seria descartado logo depois).
+        return still || !ready ? (
           <div
             key={clip.mp4}
             className={`${common} bg-cover bg-center`}
