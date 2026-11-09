@@ -1077,7 +1077,7 @@ export default function ImageStudio({ apiKey, onGenerationComplete, historyItems
 
   // ── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center bg-transparent relative p-4 md:p-6 overflow-y-auto custom-scrollbar overflow-x-hidden">
+    <div className={`w-full h-full flex flex-col items-center justify-center bg-transparent relative p-4 md:p-6 ${minimal ? "overflow-visible" : "overflow-y-auto custom-scrollbar overflow-x-hidden"}`}>
       {dialog}
 
       {/* ── CANVAS VIEW ─────────────────────────────────────────────────── */}

@@ -888,7 +888,7 @@ export default function VideoStudio({ apiKey, onGenerationComplete, historyItems
     return (
         <div
             ref={containerRef}
-            className="w-full h-full flex flex-col items-center justify-center bg-transparent relative p-4 md:p-6 overflow-y-auto custom-scrollbar overflow-x-hidden"
+            className={`w-full h-full flex flex-col items-center justify-center bg-transparent relative p-4 md:p-6 ${minimal ? "overflow-visible" : "overflow-y-auto custom-scrollbar overflow-x-hidden"}`}
         >
             {dialog}
 
