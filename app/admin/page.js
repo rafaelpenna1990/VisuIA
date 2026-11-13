@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Logo from '../../components/Logo';
 import AdminSubscribersTab from '../../components/AdminSubscribersTab';
+import AdminInvoicesTab from '../../components/AdminInvoicesTab';
 
 const CATEGORY_SLUGS = [
   { slug: 'imagem', label: 'Imagem' },
@@ -15,6 +16,7 @@ const TABS = [
   { id: 'config', label: 'Configurações' },
   { id: 'users', label: 'Usuários' },
   { id: 'subscribers', label: 'Assinantes' },
+  { id: 'invoices', label: 'Notas a emitir' },
   { id: 'appearance', label: 'Aparência' },
   { id: 'marketing', label: 'Marketing' },
   { id: 'models', label: 'Modelos' },
@@ -27,12 +29,17 @@ export default function AdminPage() {
   const [authError, setAuthError] = useState(null);
   const [tab, setTab] = useState('config');
   const [failureCount, setFailureCount] = useState(0);
+  const [pendingInvoices, setPendingInvoices] = useState(0);
 
   useEffect(() => {
     if (!authed) return;
     fetch(`/api/admin/failures?key=${encodeURIComponent(key)}`)
       .then((res) => res.json())
       .then((data) => setFailureCount(data.total || 0))
+      .catch(() => {});
+    fetch(`/api/admin/invoices?key=${encodeURIComponent(key)}&status=pending`)
+      .then((res) => res.json())
+      .then((data) => setPendingInvoices(data.counts?.pending || 0))
       .catch(() => {});
   }, [authed, key, tab]);
 
@@ -104,6 +111,11 @@ export default function AdminPage() {
               }`}
             >
               {t.label}
+              {t.id === 'invoices' && pendingInvoices > 0 && (
+                <span className="bg-primary text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                  {pendingInvoices}
+                </span>
+              )}
               {t.id === 'errors' && failureCount > 0 && (
                 <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
                   {failureCount}
@@ -116,6 +128,7 @@ export default function AdminPage() {
         {tab === 'config' && <ConfigTab adminKey={key} />}
         {tab === 'users' && <UsersTab adminKey={key} />}
         {tab === 'subscribers' && <AdminSubscribersTab adminKey={key} />}
+        {tab === 'invoices' && <AdminInvoicesTab adminKey={key} onCountsChange={setPendingInvoices} />}
         {tab === 'appearance' && <AppearanceTab adminKey={key} />}
         {tab === 'marketing' && <MarketingTab adminKey={key} />}
         {tab === 'models' && <ModelsTab adminKey={key} />}
