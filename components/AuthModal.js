@@ -191,6 +191,15 @@ export default function AuthModal({ initialMode = 'login', onAuthenticated, onCl
               {loading ? 'Aguarde…' : mode === 'login' ? 'Entrar' : 'Criar conta'}
             </button>
 
+            {mode === 'signup' && (
+              <p className="mt-3 text-white/40 text-[11px] leading-snug text-center">
+                Ao criar a conta, você concorda com os{' '}
+                <a href="/termos" target="_blank" rel="noopener noreferrer" className="underline hover:text-white">Termos de Uso</a>
+                {' '}e a{' '}
+                <a href="/privacidade" target="_blank" rel="noopener noreferrer" className="underline hover:text-white">Política de Privacidade</a>.
+              </p>
+            )}
+
             <button
               type="button"
               onClick={() => goToMode(mode === 'login' ? 'signup' : 'login')}
